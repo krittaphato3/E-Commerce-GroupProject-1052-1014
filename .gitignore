@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.py
+
+# ZCode agent configuration & local session data
+.zcode/
+
+# Graphify caches and local machine paths
+graphify-out/.*
+graphify-out/cache/
+graphify-out/cost.json
+
+# OS and Editor metadata
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# other
+*.pdf
+.graphify-out/

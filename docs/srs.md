@@ -1,0 +1,173 @@
+# CampusBites — Software Requirements Specification (SRS)
+
+| Item | Value |
+|---|---|
+| Document | `docs/srs.md` |
+| Version | 1.3 (baseline, committed before Sprint 1 implementation) |
+| Date | 2026-11-05 |
+| Course / Theme | CPE 334, Semester 1/2026 — Theme 4: E-Commerce or Ordering System |
+| Student 1 | Krittaphat Panyasomphan (67070501052) |
+| Student 2 | Napat Kasemweerasan (67070501014) |
+| Repository | https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014 |
+
+### Revision history
+| Version | Date | Author | Change | Reason |
+|---|---|---|---|---|
+| 1.0 | 2026-11-03 | Both | Initial baseline | Deliverable 1 |
+| 1.1 | 2026-11-05 | Both | BR-13 reduced to lower bounds only (`priceSatang > 0`, `stockQty >= 0`); BR-15 now names the acting user; NFR-05 restated with zero 5xx, 20 concurrent connections, 30 s per endpoint, a 500-order seed and a stock-provisioned order-test item; Q-03 resolved (403 for another customer's order); Q-04 resolved (targets in NFR-05) | Audit corrections: align the SRS with the System SDS, the contracts and AC-46 |
+| 1.2 | 2026-11-05 | Both | BR-04 sprint cell updated to 1 (snapshot), 2 (catalog edits); BR-06 sprint cell updated to 1 (F-04); 2 (F-06, F-08); 3 (F-09, F-12) | Align BR-04 and BR-06 sprint allocations with traceability.md and features.md |
+| 1.3 | 2026-11-05 | Both | BR-10 extended: prohibit cancellation from PREPARING, READY and COMPLETED with 409 INVALID_TRANSITION; added assumption A-08 and matching exclusion in §3.2 for partial fulfillment, waste tracking and no-show terminal state | Clarify cancellation boundaries and out-of-system resolution |
+
+---
+
+## 1. Stakeholder problem and context
+
+**Context chosen:** a food pre-order system for a small campus food stall, **CampusBites** (one shop, one kitchen, a short daily menu).
+
+**Problem.** At lunch peak the stall takes orders verbally at the counter. Queues are long, staff lose track of what was ordered and what has been accepted, and limited-stock dishes get oversold. Customers (students and staff) cannot see what is still available before they walk over.
+
+**Solution.** A web application where customers log in, pre-order available dishes for pickup, and track the order. Shop operators see incoming orders, accept or reject them, move them through preparation to pickup, and review sales. Payment is **simulated** (no real payment gateway).
+
+## 2. Actors
+
+| Actor | Description | Responsibilities |
+|---|---|---|
+| Anonymous visitor | Not logged in | View the menu only |
+| Customer | Logged-in student/staff member | Submit, view, pay for (simulated) and cancel **own** orders |
+| Operator | Logged-in stall staff. All operators have identical permissions (single shop) | Manage the catalog; accept, reject, fulfil and cancel orders; view sales summary |
+
+Each account has exactly one role. Seeded accounts only (no self-registration).
+
+## 3. Scope
+
+### 3.1 In scope
+Authentication (login/logout/current user), role-based authorization, menu catalog with stock, order submission with server-side price calculation, order lifecycle (accept, reject, cancel, prepare, ready, complete), simulated payment, order history/status timeline, filtering/search, sales summary.
+
+### 3.2 Explicit exclusions
+Real payment gateway or card data; delivery; multiple shops or branches; self-registration, password recovery, email verification; email/SMS/push notifications; coupons, discounts, taxes and tips; editing an order after submission; pickup time-slot scheduling; user administration screens; native mobile apps; multi-role accounts; partial fulfillment, waste tracking or a no-show terminal state (resolved outside the system).
+
+## 4. Functional requirements (FR)
+
+| ID | Requirement (observable behavior) | Actor | Sprint |
+|---|---|---|---|
+| FR-01 | A user can log in with email and password. Valid credentials start a session; invalid credentials are rejected with a generic error that does not reveal whether the email exists. | All | 1 |
+| FR-02 | A logged-in user can log out. The session is unusable immediately afterwards. | All | 1 |
+| FR-03 | The system returns the identity (id, display name, role) of the logged-in user. Anonymous requests are rejected. | All | 1 |
+| FR-04 | Any visitor can view the menu: name, description, price in THB, and whether each item is currently available. | Anonymous, Customer, Operator | 1 |
+| FR-05 | A Customer can submit an order with one or more menu items, quantities and an optional pickup note. The order is saved as `PENDING` and `UNPAID` with a server-calculated total. | Customer | 1 |
+| FR-06 | A Customer can open the detail of their own order: items, unit prices, line totals, total, status, payment status and status history. | Customer | 1 |
+| FR-07 | A Customer can list their own orders, newest first. | Customer | 1 |
+| FR-08 | An Operator can list incoming orders (oldest first) and filter by status. | Operator | 1 |
+| FR-09 | An Operator can accept a `PENDING` order. The order becomes `ACCEPTED` and the change is recorded in the history. | Operator | 1 |
+| FR-10 | An Operator can create menu items, edit name, description, price and stock, and enable or disable availability. | Operator | 2 |
+| FR-11 | A Customer can cancel their own `PENDING` order. Reserved stock is restored. | Customer | 2 |
+| FR-12 | An Operator can advance a paid `ACCEPTED` order to `PREPARING`, then `READY`, then `COMPLETED`. | Operator | 2 |
+| FR-13 | A Customer can pay (simulated) for their own `ACCEPTED` order. | Customer | 2 |
+| FR-14 | An Operator can reject a `PENDING` order and must give a reason. Reserved stock is restored. | Operator | 3 |
+| FR-15 | Customers (own orders) and Operators (all orders) can filter and search orders by status, date range and order number; Operators can also search by customer name. | Customer, Operator | 3 |
+| FR-16 | An Operator can view a sales summary for a date range: total sales, order count per status, top-selling items. | Operator | 3 |
+| FR-17 | An Operator can cancel an `ACCEPTED` order before preparation starts. Stock is restored and a paid order is marked `REFUNDED` (simulated). | Operator | 3 |
+
+## 5. Business rules (BR)
+
+| ID | Rule | Enforced in | Sprint |
+|---|---|---|---|
+| BR-01 | Each order line has an integer quantity from 1 to 10. An order has 1 to 10 lines, and no menu item appears twice in one order. | Service + schema validation | 1 |
+| BR-02 | An item can be ordered only if it is enabled and its stock is at least the requested quantity. If any line fails, the whole order is rejected and nothing is saved. | Service (transaction) | 1 |
+| BR-03 | The order total is calculated by the server from current database prices: total = sum(unit price × quantity). Prices or totals sent by the client are rejected. | Service + schema | 1 |
+| BR-04 | The unit price and item name at order time are stored on the order line. Later catalog changes do not alter existing orders. | Data model + service | 1 (snapshot), 2 (catalog edits) |
+| BR-05 | Stock is reserved (decremented) atomically when an order is submitted. Two concurrent orders for the last unit cannot both succeed, and stock never goes below 0. | Conditional DB update + CHECK constraint | 1 |
+| BR-06 | Order status changes only along the allowed transitions in section 7. Any other transition is rejected and nothing changes. | Service (state machine) | 1 (F-04); 2 (F-06, F-08); 3 (F-09, F-12) |
+| BR-07 | A Customer can access only their own orders. Operators can access all orders (single shop). | Backend authorization | 1 |
+| BR-08 | Only Operators can accept, reject, fulfil or cancel orders and change the catalog. Customers cannot. | Backend authorization | 1 |
+| BR-09 | An order cannot move to `PREPARING` unless its payment status is `PAID`. | Service | 2 |
+| BR-10 | A Customer can cancel only while the order is `PENDING`. Cancellation restores the reserved stock. Cancellation is not allowed from `PREPARING`, `READY` or `COMPLETED` by any role; such a request is rejected with 409 `INVALID_TRANSITION`. | Service | 2 |
+| BR-11 | Simulated payment is allowed only for the owner's `ACCEPTED`, `UNPAID` order, the amount must equal the order total, and an order can be paid at most once. | Service | 2 |
+| BR-12 | Rejection requires a reason of 5 to 200 characters. | Schema + service | 3 |
+| BR-13 | Catalog price is a positive integer in satang (`priceSatang > 0`). Stock is a non-negative integer (`stockQty >= 0`). | Schema + DB CHECK | 2 (DB check in 1) |
+| BR-14 | Each order has a unique, human-readable order number `CB-` followed by the order id padded to 6 digits (for example `CB-000012`). | Service | 1 |
+| BR-15 | Every order creation and status change records a history entry: previous status, new status, the acting user (actor identity), the acting role and a timestamp. | Service (same transaction as the change) | 1 |
+
+## 6. Non-functional requirements (NFR)
+
+| ID | Category | Measurable target | Verification method | Sprint |
+|---|---|---|---|---|
+| NFR-01 | Security — authentication | Every protected endpoint returns 401 with no private data when called without a valid session. 100% of protected routes covered. | Table-driven API test over the route list | Established 1, extended each sprint |
+| NFR-02 | Security — authorization | Every protected endpoint returns 403 with no private data for a wrong role or non-owner. 100% of protected routes covered. | Table-driven API test | Established 1, extended each sprint |
+| NFR-03 | Security — passwords | No plaintext passwords stored. Stored value is a bcrypt hash. API responses never contain the hash. | DB inspection test + response assertion | 1 |
+| NFR-04 | Security — session | Session lifetime is 8 hours. After logout the old session token is rejected immediately (the next request returns 401). | API tests (logout, expiry) | 1 |
+| NFR-05 | Performance | p95 response time ≤ 500 ms and zero 5xx responses for `GET /api/menu` and `POST /api/orders`, measured at 20 concurrent connections for 30 s per endpoint, on a database seeded with 500 orders and an order-test item with enough stock for the whole run. | autocannon script run on the local or deployed build; raw output and tested commit saved as evidence | 3 |
+| NFR-06 | Reliability — durability | Orders, stock and accounts persist across an application restart and a redeployment. | Create order, restart/redeploy, retrieve the same order; screenshot and logs | 2 (deployment from Lab 5) |
+| NFR-07 | Safe error handling | Invalid input returns 400 with the standard error shape. Unexpected errors return 500 with a generic message; no stack trace or SQL is exposed. | API tests with malformed input and a forced internal error | 1 |
+| NFR-08 | Reproducibility | A fresh clone reaches a running app and a passing test run by following the README in 8 commands or fewer. Seed is repeatable. | Fresh-clone manual check + seed idempotence test | 1 |
+| NFR-09 | Usability | Every list or data screen has loading, empty and error states. | UI component tests + manual checklist | Partly 1, complete 3 |
+| NFR-10 | Test quality | At least 85% line coverage on the service layer (business rules). | Vitest coverage report | 2 |
+| NFR-11 | Brute-force protection | After 5 consecutive failed logins for one email within 15 minutes, further attempts return 429 for 15 minutes. | API test with fake clock | 3 |
+
+## 7. Order lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: submit (Customer, S1)
+    PENDING --> ACCEPTED: accept (Operator, S1)
+    PENDING --> REJECTED: reject with reason (Operator, S3)
+    PENDING --> CANCELLED: cancel (Customer owner, S2)
+    ACCEPTED --> PREPARING: start (Operator, paid only, S2)
+    ACCEPTED --> CANCELLED: cancel (Operator, S3)
+    PREPARING --> READY: mark ready (Operator, S2)
+    READY --> COMPLETED: hand over (Operator, S2)
+    REJECTED --> [*]
+    CANCELLED --> [*]
+    COMPLETED --> [*]
+```
+
+| From | Action | To | Who | Extra precondition | Sprint |
+|---|---|---|---|---|---|
+| (none) | submit | PENDING | Customer | BR-01..BR-05 satisfied | 1 |
+| PENDING | accept | ACCEPTED | Operator | none | 1 |
+| PENDING | cancel | CANCELLED | Customer (owner) | stock restored | 2 |
+| ACCEPTED | start | PREPARING | Operator | paymentStatus = PAID | 2 |
+| PREPARING | ready | READY | Operator | none | 2 |
+| READY | complete | COMPLETED | Operator | none | 2 |
+| PENDING | reject | REJECTED | Operator | reason, stock restored | 3 |
+| ACCEPTED | cancel | CANCELLED | Operator | stock restored; PAID becomes REFUNDED | 3 |
+
+Payment status: `UNPAID` → `PAID` (Customer pays an `ACCEPTED` order, Sprint 2) → `REFUNDED` (operator cancels a paid order, Sprint 3). Terminal order statuses: `REJECTED`, `CANCELLED`, `COMPLETED`.
+
+## 8. Assumptions
+
+| ID | Assumption |
+|---|---|
+| A-01 | One shop and one kitchen. All operators have the same permissions and see all orders. |
+| A-02 | Currency is Thai Baht. Money is stored as integer satang (1 THB = 100 satang) so no floating-point arithmetic is used. |
+| A-03 | Timestamps are stored in UTC and displayed in Asia/Bangkok. |
+| A-04 | Users access the app with a current desktop or mobile browser. |
+| A-05 | The operator sets daily stock manually through catalog management (Sprint 2). Until then stock comes from the seed. |
+| A-06 | Demo data is synthetic. Seeded accounts use the `@campusbites.test` domain. |
+| A-07 | Pickup happens at the stall; there are no time slots. |
+| A-08 | The system does not support partial fulfillment, waste tracking or a no-show terminal state. If a customer does not collect an order at READY, or ingredients run out during PREPARING, the operator resolves it outside the system. |
+
+## 9. Decision log
+
+| ID | Decision | Rationale | Date |
+|---|---|---|---|
+| DEC-01 | Context is a campus food pre-order stall (Theme 4). | Small, bounded domain with clear stock and lifecycle rules. | 2026-11-03 |
+| DEC-02 | Stack is React + TypeScript + Vite, Node.js + Express + TypeScript, PostgreSQL + Prisma, Vitest + Supertest + Playwright. | Same stack as Labs 1–4. Docker and GCP friendly. | 2026-11-03 |
+| DEC-03 | Money is stored as integer satang. | Avoids rounding errors; total calculation is exact. | 2026-11-03 |
+| DEC-04 | Stock is reserved at order submission, not at acceptance. | Prevents overselling while an order waits for an operator. Restored on cancel or reject. | 2026-11-03 |
+| DEC-05 | Sessions are server-side: an opaque random token in an httpOnly cookie, stored hashed in the database. JWT is not used. | Logout can invalidate the session immediately and be tested. | 2026-11-03 |
+| DEC-06 | Ownership and role violations return 403 with a generic body. Non-existent resources return 404. | Simple, testable. The small information leak about order id existence is accepted for coursework scale (see Q-03). | 2026-11-03 |
+| DEC-07 | Request schemas are strict: unknown fields (for example `totalSatang` or `unitPriceSatang`) cause a 400. | Makes BR-03 explicit and testable. | 2026-11-03 |
+| DEC-08 | Payment is simulated and happens after the operator accepts the order; the operator cannot start preparing an unpaid order. | Gives BR-09 and BR-11 a real cross-feature rule. | 2026-11-03 |
+| DEC-09 | The menu is publicly readable. | Customers can check availability before logging in. | 2026-11-03 |
+| DEC-10 | Orders cannot be edited after submission. | Keeps price and stock logic simple; the customer cancels and re-orders. | 2026-11-03 |
+| DEC-11 | Sprint 1 slice is: login, menu, customer submits order, operator accepts. | Matches the Theme 4 Sprint 1 example exactly. | 2026-11-03 |
+
+## 10. Questions and resolutions
+
+| ID | Question | Resolution / status |
+|---|---|---|
+| Q-01 | Is the Sprint 1 slice (submit order, operator accepts) sufficient for Theme 4? | Resolved: it follows the Sprint 1 example in the Group Work Specification. |
+| Q-02 | Is a concurrency test for the last stock unit expected? | Resolved: included (AC-24) because the specification asks for tests of competing requests in similar themes and it is a meaningful rule. |
+| Q-03 | Is returning 403 (instead of 404) for another customer's order acceptable? | Resolved (team decision, 2026-11-05): a customer requesting another customer's order receives HTTP 403 with the standard error body and no order data. |
+| Q-04 | Are the NFR-05 performance numbers acceptable? | Resolved (team decision, 2026-11-05): targets defined in NFR-05. |
