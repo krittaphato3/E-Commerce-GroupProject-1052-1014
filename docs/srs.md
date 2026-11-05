@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/srs.md` |
-| Version | 1.2 (baseline, committed before Sprint 1 implementation) |
+| Version | 1.3 (baseline, committed before Sprint 1 implementation) |
 | Date | 2026-11-05 |
 | Course / Theme | CPE 334, Semester 1/2026 — Theme 4: E-Commerce or Ordering System |
 | Student 1 | Krittaphat Panyasomphan (67070501052) |
@@ -16,6 +16,7 @@
 | 1.0 | 2026-11-03 | Both | Initial baseline | Deliverable 1 |
 | 1.1 | 2026-11-05 | Both | BR-13 reduced to lower bounds only (`priceSatang > 0`, `stockQty >= 0`); BR-15 now names the acting user; NFR-05 restated with zero 5xx, 20 concurrent connections, 30 s per endpoint, a 500-order seed and a stock-provisioned order-test item; Q-03 resolved (403 for another customer's order); Q-04 resolved (targets in NFR-05) | Audit corrections: align the SRS with the System SDS, the contracts and AC-46 |
 | 1.2 | 2026-11-05 | Both | BR-04 sprint cell updated to 1 (snapshot), 2 (catalog edits); BR-06 sprint cell updated to 1 (F-04); 2 (F-06, F-08); 3 (F-09, F-12) | Align BR-04 and BR-06 sprint allocations with traceability.md and features.md |
+| 1.3 | 2026-11-05 | Both | BR-10 extended: prohibit cancellation from PREPARING, READY and COMPLETED with 409 INVALID_TRANSITION; added assumption A-08 and matching exclusion in §3.2 for partial fulfillment, waste tracking and no-show terminal state | Clarify cancellation boundaries and out-of-system resolution |
 
 ---
 
@@ -43,7 +44,7 @@ Each account has exactly one role. Seeded accounts only (no self-registration).
 Authentication (login/logout/current user), role-based authorization, menu catalog with stock, order submission with server-side price calculation, order lifecycle (accept, reject, cancel, prepare, ready, complete), simulated payment, order history/status timeline, filtering/search, sales summary.
 
 ### 3.2 Explicit exclusions
-Real payment gateway or card data; delivery; multiple shops or branches; self-registration, password recovery, email verification; email/SMS/push notifications; coupons, discounts, taxes and tips; editing an order after submission; pickup time-slot scheduling; user administration screens; native mobile apps; multi-role accounts.
+Real payment gateway or card data; delivery; multiple shops or branches; self-registration, password recovery, email verification; email/SMS/push notifications; coupons, discounts, taxes and tips; editing an order after submission; pickup time-slot scheduling; user administration screens; native mobile apps; multi-role accounts; partial fulfillment, waste tracking or a no-show terminal state (resolved outside the system).
 
 ## 4. Functional requirements (FR)
 
@@ -80,7 +81,7 @@ Real payment gateway or card data; delivery; multiple shops or branches; self-re
 | BR-07 | A Customer can access only their own orders. Operators can access all orders (single shop). | Backend authorization | 1 |
 | BR-08 | Only Operators can accept, reject, fulfil or cancel orders and change the catalog. Customers cannot. | Backend authorization | 1 |
 | BR-09 | An order cannot move to `PREPARING` unless its payment status is `PAID`. | Service | 2 |
-| BR-10 | A Customer can cancel only while the order is `PENDING`. Cancellation restores the reserved stock. | Service | 2 |
+| BR-10 | A Customer can cancel only while the order is `PENDING`. Cancellation restores the reserved stock. Cancellation is not allowed from `PREPARING`, `READY` or `COMPLETED` by any role; such a request is rejected with 409 `INVALID_TRANSITION`. | Service | 2 |
 | BR-11 | Simulated payment is allowed only for the owner's `ACCEPTED`, `UNPAID` order, the amount must equal the order total, and an order can be paid at most once. | Service | 2 |
 | BR-12 | Rejection requires a reason of 5 to 200 characters. | Schema + service | 3 |
 | BR-13 | Catalog price is a positive integer in satang (`priceSatang > 0`). Stock is a non-negative integer (`stockQty >= 0`). | Schema + DB CHECK | 2 (DB check in 1) |
@@ -144,6 +145,7 @@ Payment status: `UNPAID` → `PAID` (Customer pays an `ACCEPTED` order, Sprint 2
 | A-05 | The operator sets daily stock manually through catalog management (Sprint 2). Until then stock comes from the seed. |
 | A-06 | Demo data is synthetic. Seeded accounts use the `@campusbites.test` domain. |
 | A-07 | Pickup happens at the stall; there are no time slots. |
+| A-08 | The system does not support partial fulfillment, waste tracking or a no-show terminal state. If a customer does not collect an order at READY, or ingredients run out during PREPARING, the operator resolves it outside the system. |
 
 ## 9. Decision log
 

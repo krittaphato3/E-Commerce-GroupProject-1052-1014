@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/traceability.md` |
-| Version | 1.3 (planned status; no tests executed yet) |
+| Version | 1.4 (planned status; no tests executed yet) |
 | Date | 2026-11-05 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md` |
 
@@ -14,6 +14,7 @@
 | 1.1 | 2026-11-05 | FR-09 row adds AC-42 and TEST-42; BR-02 mapped to F-02 (defines) and F-03 (enforces); NFR-05 row carries the full target including the order-test item with enough stock | Audit corrections: close the AC-42 traceability gap and align requirement ownership |
 | 1.2 | 2026-11-05 | BR-04 adds F-05; BR-06 adds F-06, F-08, F-09 and F-12 with the sprint split; BR-07 adds R-01; BR-13 stays F-05 and R-03 | Align the feature column with the inventory in `docs/features.md` |
 | 1.3 | 2026-11-05 | BR-04 AC cell updated with S1/S2 split; BR-06 sprint cell explicitly lists features per sprint (1 (F-04); 2 (F-06, F-08); 3 (F-09, F-12)) | Align BR-04 AC scope and BR-06 sprint allocations with srs.md |
+| 1.4 | 2026-11-05 | BR-10 AC cell updated to note verifying AC definition in Sprint 2 contract (F-06) | Align BR-10 traceability note with Sprint 2 contract |
 
 ### How to use this file
 - Sprint 1 test IDs follow the rule **TEST-nn verifies AC-nn** (for example TEST-24 verifies AC-24).
@@ -56,7 +57,7 @@
 | BR-07 | F-03, F-04, R-01 | 1 | AC-27, AC-28, AC-39 | TEST-27, 28, 39 | | NOT RUN | |
 | BR-08 | F-04, R-01 | 1 | AC-26, AC-37, AC-38, AC-43 | TEST-26, 37, 38, 43 | | NOT RUN | |
 | BR-09 | F-08 | 2 | To be defined in Sprint 2 contract | TBD | | NOT RUN | |
-| BR-10 | F-06 | 2 | To be defined in Sprint 2 contract | TBD | | NOT RUN | |
+| BR-10 | F-06 | 2 | To be defined in the Sprint 2 contract (F-06) | TBD | | NOT RUN | |
 | BR-11 | F-07 | 2 | To be defined in Sprint 2 contract | TBD | | NOT RUN | |
 | BR-12 | F-09 | 3 | To be defined in Sprint 3 contract | TBD | | NOT RUN | |
 | BR-13 | F-05, R-03 | 1 (DB), 2 (API) | S1: AC-46 (DB constraints). S2: API validation in contract | TEST-46, then TBD | | NOT RUN | |
