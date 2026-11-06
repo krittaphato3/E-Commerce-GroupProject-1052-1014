@@ -48,7 +48,7 @@ test("TEST-29: a customer places an order and sees the saved total", async ({ pa
   await expect(page.getByText("฿150.00")).toBeVisible();
   await expect(page.getByText("Basil Pork Rice")).toBeVisible();
 
-  await page.getByRole("link", { name: "My orders" }).click();
+  await page.getByRole("main").getByRole("link", { name: "My orders" }).click();
   await expect(page).toHaveURL(/\/orders$/);
   await expect(page.getByRole("cell", { name: orderNumber })).toBeVisible();
 });

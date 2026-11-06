@@ -8,13 +8,13 @@ test("TEST-12: anonymous menu shows formatted prices and sold-out items", async 
   await expect(basilCard.getByText("฿60.00")).toBeVisible();
 
   const sandwichCard = page.locator("article").filter({ hasText: "Chicken Sandwich" });
-  await expect(sandwichCard.getByText("Sold out")).toBeVisible();
+  await expect(sandwichCard.getByText("Sold out", { exact: true })).toBeVisible();
   await expect(
     sandwichCard.getByRole("button", { name: "Add Chicken Sandwich to cart" })
   ).toBeDisabled();
 
   const padThaiCard = page.locator("article").filter({ hasText: "Pad Thai" });
-  await expect(padThaiCard.getByText("Sold out")).toBeVisible();
+  await expect(padThaiCard.getByText("Sold out", { exact: true })).toBeVisible();
 
   await expect(page.getByRole("link", { name: "Log in to order" })).toBeVisible();
 });
