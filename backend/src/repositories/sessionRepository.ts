@@ -1,12 +1,7 @@
-import type { Role } from "@prisma/client";
 import { prisma } from "../db/prisma.js";
+import type { PublicUser } from "./userRepository.js";
 
-export interface SessionUser {
-  id: number;
-  email: string;
-  displayName: string;
-  role: Role;
-}
+export type SessionUser = PublicUser;
 
 export const sessionRepository = {
   create(data: { userId: number; tokenHash: string; expiresAt: Date }) {

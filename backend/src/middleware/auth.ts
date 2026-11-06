@@ -5,13 +5,6 @@ import { AppError } from "./error.js";
 
 export const SESSION_COOKIE_NAME = "cb_session";
 
-export interface AuthUser {
-  id: number;
-  email: string;
-  displayName: string;
-  role: Role;
-}
-
 /** Loads the user from the cb_session cookie or rejects with 401 UNAUTHENTICATED. */
 export async function requireAuth(
   req: Request,
