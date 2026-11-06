@@ -48,7 +48,7 @@ model Session {
   expiresAt DateTime
   createdAt DateTime @default(now())
 
-  @@index([tokenHash])
+  @@index([userId])
 }
 
 model MenuItem {
@@ -75,6 +75,8 @@ model Order {
   updatedAt     DateTime             @updatedAt
   items         OrderItem[]
   history       OrderStatusHistory[]
+
+  @@index([customerId])
 }
 
 model OrderItem {
@@ -89,6 +91,7 @@ model OrderItem {
   lineTotalSatang Int
 
   @@unique([orderId, menuItemId])
+  @@index([menuItemId])
 }
 
 model OrderStatusHistory {
@@ -102,4 +105,6 @@ model OrderStatusHistory {
   actorRole Role
   note      String?
   createdAt DateTime     @default(now())
+
+  @@index([orderId])
 }

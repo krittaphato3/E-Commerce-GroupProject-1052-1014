@@ -63,4 +63,41 @@ describe("Central Error Handler (R-02, AC-44, NFR-07)", () => {
       },
     });
   });
+
+  it("A rejected async handler reaches the error handler as 500 INTERNAL_ERROR", async () => {
+    const app = createApp((server) => {
+      server.get("/api/test-async-crash", async () => {
+        throw new Error("PrismaClientKnownRequestError: SELECT * FROM sensitive_table");
+      });
+    });
+
+    const response = await request(app).get("/api/test-async-crash");
+
+    expect(response.status).toBe(500);
+    expect(response.body).toEqual({
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "Something went wrong.",
+      },
+    });
+    expect(JSON.stringify(response.body)).not.toContain("Prisma");
+  });
+
+  it("A rejected async handler throwing AppError keeps its status code", async () => {
+    const app = createApp((server) => {
+      server.get("/api/test-async-app-error", async () => {
+        throw new AppError(409, "CONFLICT", "Stock changed while ordering");
+      });
+    });
+
+    const response = await request(app).get("/api/test-async-app-error");
+
+    expect(response.status).toBe(409);
+    expect(response.body).toEqual({
+      error: {
+        code: "CONFLICT",
+        message: "Stock changed while ordering",
+      },
+    });
+  });
 });

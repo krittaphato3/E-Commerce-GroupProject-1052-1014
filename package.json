@@ -18,8 +18,5 @@
     "db:seed": "npm run db:seed --workspace=backend",
     "db:reset": "npm run db:reset --workspace=backend",
     "db:generate": "npm run db:generate --workspace=backend"
-  },
-  "devDependencies": {
-    "concurrently": "^9.1.2"
   }
 }

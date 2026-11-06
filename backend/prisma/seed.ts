@@ -166,25 +166,27 @@ export async function seedPerformanceOrders(
   const batchSize = 100;
   for (let b = 0; b < ordersNeeded; b += batchSize) {
     const currentBatch = Math.min(batchSize, ordersNeeded - b);
-    for (let i = 0; i < currentBatch; i++) {
-      await client.order.create({
-        data: {
-          customerId: customer.id,
-          status: OrderStatus.ACCEPTED,
-          paymentStatus: PaymentStatus.PAID,
-          totalSatang: perfItem.priceSatang,
-          items: {
-            create: {
-              menuItemId: perfItem.id,
-              itemName: perfItem.name,
-              unitPriceSatang: perfItem.priceSatang,
-              quantity: 1,
-              lineTotalSatang: perfItem.priceSatang,
-            },
-          },
-        },
-      });
-    }
+
+    const orders = await client.order.createManyAndReturn({
+      data: Array.from({ length: currentBatch }, () => ({
+        customerId: customer.id,
+        status: OrderStatus.ACCEPTED,
+        paymentStatus: PaymentStatus.PAID,
+        totalSatang: perfItem.priceSatang,
+      })),
+      select: { id: true },
+    });
+
+    await client.orderItem.createMany({
+      data: orders.map((order) => ({
+        orderId: order.id,
+        menuItemId: perfItem.id,
+        itemName: perfItem.name,
+        unitPriceSatang: perfItem.priceSatang,
+        quantity: 1,
+        lineTotalSatang: perfItem.priceSatang,
+      })),
+    });
   }
 }
 

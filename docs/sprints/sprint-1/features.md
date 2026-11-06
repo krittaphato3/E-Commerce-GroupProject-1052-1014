@@ -657,7 +657,7 @@ In addition to the Product Definition of Done:
 
 README setup (target 8 commands or fewer, NFR-08):
 1. `git clone <repository URL>`
-2. `cp .env.example .env`
+2. `cp backend/.env.example backend/.env`
 3. `docker compose up -d db`
 4. `npm install`
 5. `npm run db:reset` (migrate and seed)

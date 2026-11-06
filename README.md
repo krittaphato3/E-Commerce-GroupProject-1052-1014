@@ -9,13 +9,13 @@ CampusBites is an online food ordering platform designed for a university cantee
 Following the reproducibility specification (NFR-08), you can get the full application up, migrated, seeded, and tested in 8 commands or fewer:
 
 ```bash
-# 1. Copy environment variables
-cp .env.example .env
+# 1. Copy environment variables (the backend loads .env from its own folder)
+cp backend/.env.example backend/.env
 
 # 2. Start PostgreSQL 16 database
 docker compose up -d
 
-# 3. Install dependencies across workspaces
+# 3. Install dependencies across workspaces (also runs `prisma generate`)
 npm install
 
 # 4. Apply database migrations
@@ -54,8 +54,8 @@ The database seed (`npm run db:seed`) creates default test accounts with bcrypt-
 ```text
 ├── package.json          # Root workspace configuration
 ├── docker-compose.yml    # PostgreSQL 16 service
-├── .env.example          # Baseline environment template
 ├── backend/              # Node.js + Express + Prisma modular monolith API
+│   ├── .env.example      # Baseline environment template (copy to backend/.env)
 │   ├── prisma/           # Schema, migrations (with raw SQL CHECK constraints), and seed script
 │   ├── src/              # Routes, controllers, services, repositories, and middleware
 │   └── tests/            # Supertest & Vitest integration test suite
@@ -75,3 +75,4 @@ The database seed (`npm run db:seed`) creates default test accounts with bcrypt-
 - `npm run db:migrate`: Apply pending Prisma migrations to the active database.
 - `npm run db:seed`: Run idempotent seed script.
 - `npm run db:reset`: Drop, re-migrate, and re-seed database.
+- `npm run db:generate`: Regenerate the Prisma client (runs automatically after `npm install`).
