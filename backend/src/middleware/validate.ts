@@ -5,7 +5,12 @@ import { AppError } from "./error.js";
 export const loginSchema = z
   .object({
     email: z.string().trim().toLowerCase().email().max(254),
-    password: z.string().min(1).max(128),
+    password: z
+      .string()
+      .min(1)
+      .refine((val) => Buffer.byteLength(val, "utf8") <= 72, {
+        message: "Password must be at most 72 bytes",
+      }),
   })
   .strict();
 
