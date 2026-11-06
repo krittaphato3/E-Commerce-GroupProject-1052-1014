@@ -1,0 +1,22 @@
+{
+  "name": "campusbites",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CampusBites - Online Food Ordering Platform for University Canteen",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "db:migrate": "npm run db:migrate --workspace=backend",
+    "db:seed": "npm run db:seed --workspace=backend",
+    "db:reset": "npm run db:reset --workspace=backend",
+    "db:generate": "npm run db:generate --workspace=backend"
+  }
+}

@@ -277,7 +277,7 @@ A hidden button is not authorization. Sprint 1 rows are enforced by backend midd
 | `SESSION_TTL_HOURS` | Session lifetime | `8` | No |
 | `COOKIE_SECURE` | `true` in production | `false` | No |
 | `BCRYPT_ROUNDS` | Hash cost | `10` | No |
-| `CORS_ORIGIN` | Allowed browser origin | `http://localhost:5173` | No |
+| `CLIENT_ORIGIN` | Allowed browser origin | `http://localhost:5173` | No |
 | `SEED_CUSTOMER_PASSWORD` | Demo customer password | `change-me-local` | Yes (do not reuse) |
 | `SEED_OPERATOR_PASSWORD` | Demo operator password | `change-me-local` | Yes (do not reuse) |
 
@@ -301,7 +301,7 @@ campusbites/
   backend/   src/{routes,middleware,controllers,services,repositories}, prisma/, tests/
   frontend/  src/{pages,components,api}, tests/, e2e/
   docs/      srs.md, features.md, traceability.md, system-sds.md, sprints/plan.md, sprints/sprint-1/features.md
-  docker-compose.yml, .env.example, README.md
+  docker-compose.yml, backend/.env.example, README.md
 ```
 
 ## 8. Test and workflow strategy
