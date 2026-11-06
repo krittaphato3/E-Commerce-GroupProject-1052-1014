@@ -13,6 +13,15 @@ const envSchema = z
     TEST_DATABASE_URL: z.string().optional(),
     SESSION_SECRET: z.string().default(DEV_SESSION_SECRET),
     SESSION_TTL_HOURS: z.string().default("8").transform((val) => parseInt(val, 10)),
+    BCRYPT_ROUNDS: z
+      .string()
+      .default("10")
+      .transform((val) => parseInt(val, 10))
+      .pipe(z.number().int().min(4).max(15)),
+    COOKIE_SECURE: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((val) => val === "true"),
     CLIENT_ORIGIN: z.string().min(1).optional(),
   })
   .superRefine((value, ctx) => {

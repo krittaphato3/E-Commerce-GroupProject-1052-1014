@@ -4,13 +4,14 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { healthRouter } from "./routes/health.js";
 import { errorHandler } from "./middleware/error.js";
+import { env } from "./config/env.js";
 
 export function createApp(configureRoutes?: (app: express.Express) => void) {
   const app = express();
 
   app.use(
     cors({
-      origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+      origin: env.CLIENT_ORIGIN || "http://localhost:5173",
       credentials: true,
     })
   );

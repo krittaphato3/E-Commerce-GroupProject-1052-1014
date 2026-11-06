@@ -38,14 +38,18 @@ npm run dev:frontend
 
 ## Seed Accounts & Test Credentials
 
-The database seed (`npm run db:seed`) creates default test accounts with bcrypt-hashed passwords:
+The database seed (`npm run db:seed`) creates these synthetic accounts and stores only bcrypt hashes:
 
-| Role | Email | Password | Display Name |
-|---|---|---|---|
-| **Customer** | `customer1@campusbites.test` | `customer123!` | Alice Customer |
-| **Customer** | `customer2@campusbites.test` | `customer123!` | Bob Customer |
-| **Operator** | `operator1@campusbites.test` | `operator123!` | Staff Operator 1 |
-| **Operator** | `operator2@campusbites.test` | `operator123!` | Staff Operator 2 |
+| Role | Email | Display Name |
+|---|---|---|
+| **Customer** | `customer1@campusbites.test` | Alice Customer |
+| **Customer** | `customer2@campusbites.test` | Bob Customer |
+| **Operator** | `operator1@campusbites.test` | Staff Operator 1 |
+| **Operator** | `operator2@campusbites.test` | Staff Operator 2 |
+
+Passwords are **not** stored in this repository. The seed reads `SEED_CUSTOMER_PASSWORD` and `SEED_OPERATOR_PASSWORD` from `backend/.env` (copied from `backend/.env.example` in step 1). Replace the `change-me-local` placeholders with your own local values before seeding; all customers share the customer password and all operators share the operator password. The seed refuses to run when either value is missing, and refuses the placeholder value when `NODE_ENV=production`.
+
+Playwright (TEST-09) reads the same two variables from `backend/.env`, so log in with the values you chose there.
 
 ---
 
