@@ -2,14 +2,23 @@ import { createHash, randomBytes } from "node:crypto";
 import { env } from "../config/env.js";
 import { sessionRepository } from "../repositories/sessionRepository.js";
 import { userRepository, type PublicUser } from "../repositories/userRepository.js";
-import { verifyPassword } from "./password.js";
+import { hashPassword, verifyPassword } from "./password.js";
+
+const SESSION_TOKEN_BYTES = 32;
 
 /**
- * A fixed bcrypt hash used only to spend the same hashing time when the email
- * does not exist, so login timing does not reveal registered emails.
+ * Lazily creates and caches a dummy bcrypt hash at the configured BCRYPT_ROUNDS
+ * cost so unknown-email login attempts spend the same hashing work as existing users.
  */
-const DUMMY_PASSWORD_HASH = "$2b$10$tc7NwgWdFKcEqe2yqZ14c.EQDtFJBlb2MmiCcRsdsgacNmHU3Tnga";
-const SESSION_TOKEN_BYTES = 32;
+let dummyHashPromise: Promise<string> | null = null;
+
+function dummyPasswordHash(): Promise<string> {
+  dummyHashPromise ??= hashPassword(
+    randomBytes(SESSION_TOKEN_BYTES).toString("base64url"),
+    env.BCRYPT_ROUNDS
+  );
+  return dummyHashPromise;
+}
 
 export interface LoginResult {
   user: PublicUser;
@@ -28,7 +37,7 @@ export const authService = {
     const user = await userRepository.findByEmail(normalizedEmail);
 
     if (!user) {
-      await verifyPassword(password, DUMMY_PASSWORD_HASH);
+      await verifyPassword(password, await dummyPasswordHash());
       return null;
     }
 
