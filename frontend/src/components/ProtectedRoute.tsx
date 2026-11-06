@@ -38,7 +38,11 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
     const currentPath = location.pathname.replace(/\/+$/, "") || "/";
     const targetPath = destination.replace(/\/+$/, "") || "/";
     if (currentPath === targetPath) {
-      return <Navigate to="/login" replace />;
+      return (
+        <div className="alert alert-warning" role="alert">
+          403 Forbidden: You have no access to this page.
+        </div>
+      );
     }
     return <Navigate to={destination} replace />;
   }
