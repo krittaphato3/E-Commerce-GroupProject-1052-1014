@@ -150,7 +150,33 @@ describe("F-01 Authentication API (AC-01 to AC-08)", () => {
     expect(anonymous.body).not.toHaveProperty("user");
   });
 
-  it("TEST-06: logout invalidates the saved session cookie and deletes the session row", async () => {
+  it("TEST-06: logout invalidates the seeded session cookie and deletes the session row", async () => {
+    const user = await testPrisma.user.findUniqueOrThrow({ where: { email: CUSTOMER_EMAIL } });
+    const token = randomBytes(32).toString("hex");
+    await testPrisma.session.create({
+      data: {
+        userId: user.id,
+        tokenHash: sha256(token),
+        expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000),
+      },
+    });
+    const cookie = `${SESSION_COOKIE}=${token}`;
+
+    const logout = await request(app).post("/api/auth/logout").set("Cookie", cookie);
+    expect(logout.status).toBe(204);
+
+    const cleared = setCookies(logout).find((value) => value.startsWith(`${SESSION_COOKIE}=`));
+    expect(cleared).toBeDefined();
+    expect(cleared as string).toMatch(/^cb_session=;/);
+
+    const me = await request(app).get("/api/auth/me").set("Cookie", cookie);
+    expect(me.status).toBe(401);
+    expect(me.body.error.code).toBe("UNAUTHENTICATED");
+
+    expect(await testPrisma.session.count({ where: { userId: user.id } })).toBe(0);
+  });
+
+  it("TEST-06 (supporting): a session created by login stops working after logout", async () => {
     const loggedIn = await loginAs(CUSTOMER_EMAIL, CUSTOMER_PASSWORD);
     expect(loggedIn.status).toBe(200);
     const cookie = sessionCookie(loggedIn);
@@ -161,13 +187,8 @@ describe("F-01 Authentication API (AC-01 to AC-08)", () => {
       .set("Cookie", cookie as string);
     expect(logout.status).toBe(204);
 
-    const cleared = setCookies(logout).find((value) => value.startsWith(`${SESSION_COOKIE}=`));
-    expect(cleared).toBeDefined();
-    expect(cleared as string).toMatch(/^cb_session=;/);
-
     const me = await request(app).get("/api/auth/me").set("Cookie", cookie as string);
     expect(me.status).toBe(401);
-    expect(me.body.error.code).toBe("UNAUTHENTICATED");
 
     const user = await testPrisma.user.findUniqueOrThrow({ where: { email: CUSTOMER_EMAIL } });
     expect(await testPrisma.session.count({ where: { userId: user.id } })).toBe(0);
