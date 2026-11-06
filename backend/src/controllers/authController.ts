@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { env } from "../config/env.js";
 import { AppError } from "../middleware/error.js";
 import { SESSION_COOKIE_NAME } from "../middleware/auth.js";
-import { authService } from "../services/authService.js";
+import { authService, SESSION_TTL_MS } from "../services/authService.js";
 import type { LoginBody } from "../middleware/validate.js";
 
 const cookieOptions = {
@@ -22,7 +22,7 @@ export async function login(req: Request, res: Response): Promise<void> {
 
   res.cookie(SESSION_COOKIE_NAME, result.token, {
     ...cookieOptions,
-    maxAge: env.SESSION_TTL_HOURS * 3600 * 1000,
+    maxAge: SESSION_TTL_MS,
   });
   res.status(200).json({ user: result.user });
 }

@@ -6,6 +6,8 @@ import { hashPassword, verifyPassword } from "./password.js";
 
 const SESSION_TOKEN_BYTES = 32;
 
+export const SESSION_TTL_MS = env.SESSION_TTL_HOURS * 60 * 60 * 1000;
+
 /**
  * Lazily creates and caches a dummy bcrypt hash at the configured BCRYPT_ROUNDS
  * cost so unknown-email login attempts spend the same hashing work as existing users.
@@ -47,7 +49,7 @@ export const authService = {
     }
 
     const token = randomBytes(SESSION_TOKEN_BYTES).toString("base64url");
-    const expiresAt = new Date(Date.now() + env.SESSION_TTL_HOURS * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
 
     await sessionRepository.create({
       userId: user.id,

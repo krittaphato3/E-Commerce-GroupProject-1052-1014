@@ -13,7 +13,7 @@ export const sessionRepository = {
    * If the session row exists but has expired, deletes it before returning null.
    */
   async findValid(tokenHash: string, now: Date): Promise<{ user: SessionUser } | null> {
-    const session = await prisma.session.findFirst({
+    const session = await prisma.session.findUnique({
       where: { tokenHash },
       select: {
         expiresAt: true,
