@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "CampusBites - Online Food Ordering Platform for University Canteen",
+  "engines": {
+    "node": ">=20.12"
+  },
   "workspaces": [
     "backend",
     "frontend"

@@ -6,7 +6,7 @@ CampusBites is an online food ordering platform designed for a university cantee
 
 ## Quickstart Setup Guide (Fresh Clone)
 
-Following the reproducibility specification (NFR-08), you can get the full application up, migrated, seeded, and tested in 8 commands or fewer:
+Requires **Node.js >= 20.12** and **Docker** (PostgreSQL 16). Following the reproducibility specification (NFR-08), you can get the full application up, migrated, seeded, and tested in 8 commands or fewer:
 
 ```bash
 # 1. Copy environment variables (the backend loads .env from its own folder)
