@@ -80,19 +80,20 @@ describe("ProtectedRoute", () => {
     expect(html).toContain("Protected Content");
   });
 
-  it("redirects to roleHome when user does not have allowed role", () => {
-    const { getCaptured } = renderWithAuth({
+  it("renders in-place 403 forbidden message and does not Navigate when user role is not allowed (current path != destination)", () => {
+    const { html, getCaptured } = renderWithAuth({
       user: { id: 1, email: "c@test.com", displayName: "Customer", role: "CUSTOMER" },
       loading: false,
       error: null,
       roles: ["OPERATOR"],
       initialPath: "/operator/orders",
     });
-    expect(getCaptured()?.type).toBe(Navigate);
-    expect(getCaptured()?.props.to).toBe("/menu");
+    expect(getCaptured()?.type).not.toBe(Navigate);
+    expect(html).toContain("403 Forbidden");
+    expect(html).toContain("no access");
   });
 
-  it("renders forbidden message without redirecting when authenticated user with disallowed role is on destination route", () => {
+  it("renders in-place 403 forbidden message and does not Navigate when user role is not allowed (current path == destination)", () => {
     const { html, getCaptured } = renderWithAuth({
       user: { id: 1, email: "c@test.com", displayName: "Customer", role: "CUSTOMER" },
       loading: false,
