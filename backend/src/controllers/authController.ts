@@ -39,5 +39,6 @@ export async function logout(req: Request, res: Response): Promise<void> {
 }
 
 export function me(req: Request, res: Response): void {
-  res.status(200).json({ user: req.user });
+  const { id, email, displayName, role } = req.user!;
+  res.status(200).json({ user: { id, email, displayName, role } });
 }
