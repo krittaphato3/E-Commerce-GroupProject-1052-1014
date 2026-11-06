@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { roleHome } from "../auth/roles";
 import type { Role } from "../api/auth";
@@ -14,10 +14,19 @@ interface ProtectedRouteProps {
  * authorization, and the API still rejects unauthorized requests.
  */
 export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
-  const { user, loading } = useAuth();
+  const { user, loading, error } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return <p className="text-muted">Loading…</p>;
+  }
+
+  if (error) {
+    return (
+      <div className="alert alert-danger" role="alert">
+        Failed to verify authentication status. Please refresh or try again later.
+      </div>
+    );
   }
 
   if (!user) {
@@ -25,7 +34,13 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
   }
 
   if (roles && !roles.includes(user.role)) {
-    return <Navigate to={roleHome(user.role)} replace />;
+    const destination = roleHome(user.role);
+    const currentPath = location.pathname.replace(/\/+$/, "") || "/";
+    const targetPath = destination.replace(/\/+$/, "") || "/";
+    if (currentPath === targetPath) {
+      return <Navigate to="/login" replace />;
+    }
+    return <Navigate to={destination} replace />;
   }
 
   return <>{children}</>;
