@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
 import request from "supertest";
 import type { Response as SupertestResponse } from "supertest";
 import { createHash, randomBytes } from "node:crypto";
@@ -96,6 +96,39 @@ describe("F-01 Authentication API (AC-01 to AC-08)", () => {
     expect(unknownEmail.body.error.message).toBe(wrongPassword.body.error.message);
     expect(setCookies(unknownEmail)).toHaveLength(0);
     expect(JSON.stringify(unknownEmail.body)).not.toContain("nobody@campusbites.test");
+  });
+
+  it("TEST-03 (regression): unknown-email login lazily creates and caches a dummy hash at env.BCRYPT_ROUNDS", async () => {
+    const previousRounds = process.env.BCRYPT_ROUNDS;
+    process.env.BCRYPT_ROUNDS = "6";
+    vi.resetModules();
+
+    let disconnectFreshPrisma: (() => Promise<void>) | undefined;
+    try {
+      const { prisma: freshPrisma } = await import("../src/db/prisma.js");
+      disconnectFreshPrisma = () => freshPrisma.$disconnect();
+      const passwordModule = await import("../src/services/password.js");
+      const verifySpy = vi.spyOn(passwordModule, "verifyPassword");
+      const { authService: freshAuthService } = await import("../src/services/authService.js");
+
+      await expect(
+        freshAuthService.login("nobody@campusbites.test", CUSTOMER_PASSWORD)
+      ).resolves.toBeNull();
+      await expect(
+        freshAuthService.login("nobody@campusbites.test", CUSTOMER_PASSWORD)
+      ).resolves.toBeNull();
+
+      expect(verifySpy).toHaveBeenCalledTimes(2);
+      const firstDummyHash = verifySpy.mock.calls[0]?.[1];
+      const secondDummyHash = verifySpy.mock.calls[1]?.[1];
+      expect(firstDummyHash).toMatch(/^\$2[aby]\$06\$/);
+      expect(secondDummyHash).toBe(firstDummyHash);
+    } finally {
+      process.env.BCRYPT_ROUNDS = previousRounds;
+      await disconnectFreshPrisma?.();
+      vi.restoreAllMocks();
+      vi.resetModules();
+    }
   });
 
   it("TEST-04: invalid login bodies return 400 VALIDATION_ERROR in the standard error shape", async () => {
