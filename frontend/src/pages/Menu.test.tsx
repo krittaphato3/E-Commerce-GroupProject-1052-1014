@@ -1,0 +1,185 @@
+/** @vitest-environment jsdom */
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { cleanup, render, screen, fireEvent, within } from "@testing-library/react";
+import { MemoryRouter, useLocation } from "react-router-dom";
+import { Menu } from "./Menu";
+import * as AuthContextModule from "../auth/AuthContext";
+import { fetchMenu } from "../api/menu";
+import { createOrder } from "../api/orders";
+import { ApiRequestError } from "../api/client";
+import type { User } from "../api/auth";
+
+vi.mock("../api/menu", () => ({ fetchMenu: vi.fn() }));
+vi.mock("../api/orders", () => ({ createOrder: vi.fn() }));
+
+const mockedFetchMenu = vi.mocked(fetchMenu);
+const mockedCreateOrder = vi.mocked(createOrder);
+
+const CUSTOMER: User = {
+  id: 1,
+  email: "customer1@campusbites.test",
+  displayName: "Alice Customer",
+  role: "CUSTOMER",
+};
+
+const TWO_ITEMS = {
+  items: [
+    {
+      id: 1,
+      name: "Basil Pork Rice",
+      description: "Spicy stir-fried minced pork with holy basil and jasmine rice",
+      priceSatang: 6000,
+      stockQty: 30,
+      isAvailable: true,
+      available: true,
+    },
+    {
+      id: 4,
+      name: "Thai Iced Tea",
+      description: "Traditional sweet Thai tea with milk",
+      priceSatang: 3000,
+      stockQty: 50,
+      isAvailable: true,
+      available: true,
+    },
+  ],
+};
+
+function LocationProbe() {
+  const location = useLocation();
+  return <p data-testid="location">{location.pathname}</p>;
+}
+
+function renderMenu(user: User | null = CUSTOMER) {
+  vi.spyOn(AuthContextModule, "useAuth").mockReturnValue({
+    user,
+    loading: false,
+    error: null,
+    login: vi.fn(),
+    logout: vi.fn(),
+  });
+
+  return render(
+    <MemoryRouter initialEntries={["/menu"]}>
+      <Menu />
+      <LocationProbe />
+    </MemoryRouter>
+  );
+}
+
+async function addToCart(name: string) {
+  fireEvent.click(await screen.findByRole("button", { name: `Add ${name} to cart` }));
+}
+
+describe("F-02 Menu screen (AC-12, AC-13)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  it("TEST-13: shows the loading message while the menu request is pending", () => {
+    mockedFetchMenu.mockReturnValue(new Promise(() => {}));
+
+    renderMenu();
+
+    expect(screen.getByText("Loading menu…")).toBeTruthy();
+  });
+
+  it("TEST-13: shows the empty state when the menu has no items", async () => {
+    mockedFetchMenu.mockResolvedValue({ items: [] });
+
+    renderMenu();
+
+    expect(await screen.findByText("The menu is empty.")).toBeTruthy();
+  });
+
+  it("TEST-13: shows an error message with a Retry button that loads the menu again", async () => {
+    mockedFetchMenu.mockRejectedValueOnce(new Error("network down"));
+    mockedFetchMenu.mockResolvedValueOnce(TWO_ITEMS);
+
+    renderMenu();
+
+    expect(
+      await screen.findByText("Could not load the menu. Please try again.")
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    const cards = await screen.findAllByText("Basil Pork Rice");
+    expect(cards.length).toBeGreaterThan(0);
+    expect(mockedFetchMenu).toHaveBeenCalledTimes(2);
+  });
+
+  it("TEST-12-ish (component): renders THB prices, stock hints and a disabled add button for sold-out items", async () => {
+    mockedFetchMenu.mockResolvedValue({
+      items: [
+        TWO_ITEMS.items[0],
+        {
+          id: 6,
+          name: "Chicken Sandwich",
+          description: "Grilled chicken sandwich (sold out test)",
+          priceSatang: 7000,
+          stockQty: 0,
+          isAvailable: true,
+          available: false,
+        },
+      ],
+    });
+
+    renderMenu();
+
+    expect(await screen.findByText("฿60.00")).toBeTruthy();
+    expect(screen.getByText("Sold out")).toBeTruthy();
+
+    const addSoldOut = screen.getByRole("button", {
+      name: "Add Chicken Sandwich to cart",
+    }) as HTMLButtonElement;
+    expect(addSoldOut.disabled).toBe(true);
+  });
+
+  it("TEST-30: a 409 ITEM_UNAVAILABLE keeps the cart contents and does not navigate away", async () => {
+    mockedFetchMenu.mockResolvedValue(TWO_ITEMS);
+    mockedCreateOrder.mockRejectedValue(
+      new ApiRequestError(409, "ITEM_UNAVAILABLE", "Chicken Sandwich is sold out.", {
+        menuItemId: 6,
+        requested: 1,
+        available: 0,
+      })
+    );
+
+    renderMenu();
+
+    await addToCart("Basil Pork Rice");
+    await addToCart("Thai Iced Tea");
+
+    const cartBefore = screen.getByRole("region", { name: "Cart" });
+    expect(within(cartBefore).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(cartBefore).getByText("Basil Pork Rice")).toBeTruthy();
+    expect(within(cartBefore).getByText("Thai Iced Tea")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Place order" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Chicken Sandwich is sold out.");
+
+    const cartAfter = screen.getByRole("region", { name: "Cart" });
+    expect(within(cartAfter).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(cartAfter).getByText("Basil Pork Rice")).toBeTruthy();
+    expect(within(cartAfter).getByText("Thai Iced Tea")).toBeTruthy();
+    expect(screen.getByTestId("location").textContent).toBe("/menu");
+    expect(mockedCreateOrder).toHaveBeenCalledTimes(1);
+  });
+
+  it("TEST-30 (supporting): an anonymous visitor sees a login link instead of the place-order button", async () => {
+    mockedFetchMenu.mockResolvedValue(TWO_ITEMS);
+
+    renderMenu(null);
+
+    expect(await screen.findByRole("link", { name: "Log in to order" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Place order" })).toBeNull();
+  });
+});
