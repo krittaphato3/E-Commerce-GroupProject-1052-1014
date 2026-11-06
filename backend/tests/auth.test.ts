@@ -5,6 +5,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { app, createApp } from "../src/app.js";
 import { requireAuth, requireRole } from "../src/middleware/auth.js";
 import { authService } from "../src/services/authService.js";
+import { sessionRepository } from "../src/repositories/sessionRepository.js";
 import type { PublicUser } from "../src/repositories/userRepository.js";
 import { testPrisma, clearTestDatabase } from "./helpers/testDb.js";
 import { seedDatabase } from "../prisma/seed.js";
@@ -276,6 +277,33 @@ describe("F-01 Authentication API (AC-01 to AC-08)", () => {
     expect(response.status).toBe(401);
     expect(response.body.error.code).toBe("UNAUTHENTICATED");
     expect(response.body).not.toHaveProperty("user");
+    expect(await testPrisma.session.count({ where: { tokenHash: sha256(token) } })).toBe(0);
+  });
+
+  it("TEST-07 (supporting): sessionRepository.deleteExpired removes only expired rows", async () => {
+    const user = await testPrisma.user.findUniqueOrThrow({ where: { email: CUSTOMER_EMAIL } });
+    const expiredTokenHash = sha256(randomBytes(32).toString("hex"));
+    const activeTokenHash = sha256(randomBytes(32).toString("hex"));
+
+    await testPrisma.session.createMany({
+      data: [
+        {
+          userId: user.id,
+          tokenHash: expiredTokenHash,
+          expiresAt: new Date(Date.now() - 60_000),
+        },
+        {
+          userId: user.id,
+          tokenHash: activeTokenHash,
+          expiresAt: new Date(Date.now() + 60_000),
+        },
+      ],
+    });
+
+    await sessionRepository.deleteExpired();
+
+    expect(await testPrisma.session.count({ where: { tokenHash: expiredTokenHash } })).toBe(0);
+    expect(await testPrisma.session.count({ where: { tokenHash: activeTokenHash } })).toBe(1);
   });
 
   it("TEST-08: stored passwords are bcrypt hashes and no response exposes the hash", async () => {
