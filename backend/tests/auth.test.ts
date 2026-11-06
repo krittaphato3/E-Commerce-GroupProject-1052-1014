@@ -150,8 +150,12 @@ describe("F-01 Authentication API (AC-01 to AC-08)", () => {
         body: { email: `${"a".repeat(250)}@example.com`, password: CUSTOMER_PASSWORD },
       },
       {
-        name: "over-length password",
-        body: { email: CUSTOMER_EMAIL, password: "p".repeat(129) },
+        name: "over-length password (73 ASCII bytes)",
+        body: { email: CUSTOMER_EMAIL, password: "p".repeat(73) },
+      },
+      {
+        name: "over-length multibyte password (25 chars, 73 UTF-8 bytes)",
+        body: { email: CUSTOMER_EMAIL, password: `${"ก".repeat(24)}a` },
       },
     ];
 
@@ -164,6 +168,34 @@ describe("F-01 Authentication API (AC-01 to AC-08)", () => {
     }
 
     expect(await testPrisma.session.count()).toBe(0);
+  });
+
+  it("TEST-04 (boundary): login password accepts 72 UTF-8 bytes and rejects 73 UTF-8 bytes including multibyte characters", async () => {
+    const ascii72 = "p".repeat(72);
+    const multibyte72 = "ก".repeat(24);
+    expect(Buffer.byteLength(ascii72, "utf8")).toBe(72);
+    expect(Buffer.byteLength(multibyte72, "utf8")).toBe(72);
+
+    const ascii72Res = await login(CUSTOMER_EMAIL, ascii72);
+    expect(ascii72Res.status).toBe(401);
+    expect(ascii72Res.body.error.code).toBe("INVALID_CREDENTIALS");
+
+    const multibyte72Res = await login(CUSTOMER_EMAIL, multibyte72);
+    expect(multibyte72Res.status).toBe(401);
+    expect(multibyte72Res.body.error.code).toBe("INVALID_CREDENTIALS");
+
+    const ascii73 = "p".repeat(73);
+    const multibyte73 = `${"ก".repeat(24)}a`;
+    expect(Buffer.byteLength(ascii73, "utf8")).toBe(73);
+    expect(Buffer.byteLength(multibyte73, "utf8")).toBe(73);
+
+    const ascii73Res = await login(CUSTOMER_EMAIL, ascii73);
+    expect(ascii73Res.status).toBe(400);
+    expect(ascii73Res.body.error.code).toBe("VALIDATION_ERROR");
+
+    const multibyte73Res = await login(CUSTOMER_EMAIL, multibyte73);
+    expect(multibyte73Res.status).toBe(400);
+    expect(multibyte73Res.body.error.code).toBe("VALIDATION_ERROR");
   });
 
   it("TEST-05: GET /api/auth/me returns the logged-in operator and rejects an anonymous caller", async () => {
