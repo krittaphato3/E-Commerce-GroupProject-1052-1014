@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { authRouter } from "./routes/auth.js";
 import { healthRouter } from "./routes/health.js";
 import { errorHandler } from "./middleware/error.js";
 import { env } from "./config/env.js";
@@ -20,6 +21,7 @@ export function createApp(configureRoutes?: (app: express.Express) => void) {
 
   // Routes
   app.use("/api/health", healthRouter);
+  app.use("/api/auth", authRouter);
 
   if (configureRoutes) {
     configureRoutes(app);
