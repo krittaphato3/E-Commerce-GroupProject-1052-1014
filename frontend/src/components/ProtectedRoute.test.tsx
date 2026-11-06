@@ -92,15 +92,16 @@ describe("ProtectedRoute", () => {
     expect(getCaptured()?.props.to).toBe("/menu");
   });
 
-  it("prevents redirect loop when roleHome is already the current route", () => {
-    const { getCaptured } = renderWithAuth({
+  it("renders forbidden message without redirecting when authenticated user with disallowed role is on destination route", () => {
+    const { html, getCaptured } = renderWithAuth({
       user: { id: 1, email: "c@test.com", displayName: "Customer", role: "CUSTOMER" },
       loading: false,
       error: null,
       roles: ["OPERATOR"],
       initialPath: "/menu",
     });
-    expect(getCaptured()?.type).toBe(Navigate);
-    expect(getCaptured()?.props.to).toBe("/login");
+    expect(getCaptured()?.type).not.toBe(Navigate);
+    expect(html).toContain("403 Forbidden");
+    expect(html).toContain("no access");
   });
 });
