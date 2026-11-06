@@ -98,4 +98,11 @@ npm run e2e
 - `npm run db:migrate`: Apply pending Prisma migrations to the active database.
 - `npm run db:seed`: Run idempotent seed script.
 - `npm run db:reset`: Drop, re-migrate, and re-seed database.
+
+---
+
+## Deployment Notes
+
+- **`CLIENT_ORIGIN`**: Defaults to `http://localhost:5173` for local development. When deployed to staging or production, `CLIENT_ORIGIN` in `backend/.env` must match the exact SPA origin (protocol, domain, and port) so CORS allows credentialed session cookies and requests from the frontend.
+
 - `npm run db:generate`: Regenerate the Prisma client (runs automatically after `npm install`).
