@@ -4,6 +4,8 @@ import type { Response as SupertestResponse } from "supertest";
 import { createHash, randomBytes } from "node:crypto";
 import { app, createApp } from "../src/app.js";
 import { requireAuth, requireRole } from "../src/middleware/auth.js";
+import { authService } from "../src/services/authService.js";
+import type { PublicUser } from "../src/repositories/userRepository.js";
 import { testPrisma, clearTestDatabase } from "./helpers/testDb.js";
 import { seedDatabase } from "../prisma/seed.js";
 
@@ -176,12 +178,40 @@ describe("F-01 Authentication API (AC-01 to AC-08)", () => {
       displayName: "Staff Operator 1",
       role: "OPERATOR",
     });
+    expect(Object.keys(me.body.user).sort()).toEqual(["displayName", "email", "id", "role"]);
     expect(JSON.stringify(me.body)).not.toContain("passwordHash");
 
     const anonymous = await request(app).get("/api/auth/me");
     expect(anonymous.status).toBe(401);
     expect(anonymous.body.error.code).toBe("UNAUTHENTICATED");
     expect(anonymous.body).not.toHaveProperty("user");
+  });
+
+  it("TEST-05 (regression): GET /api/auth/me returns only { id, email, displayName, role } even if upstream user object has extra keys", async () => {
+    const fullUserRow = await testPrisma.user.findUniqueOrThrow({
+      where: { email: OPERATOR_EMAIL },
+    });
+    const spy = vi
+      .spyOn(authService, "getSessionUser")
+      .mockResolvedValueOnce(fullUserRow as unknown as PublicUser);
+
+    try {
+      const response = await request(app)
+        .get("/api/auth/me")
+        .set("Cookie", `${SESSION_COOKIE}=any-token`);
+
+      expect(response.status).toBe(200);
+      expect(Object.keys(response.body.user).sort()).toEqual([
+        "displayName",
+        "email",
+        "id",
+        "role",
+      ]);
+      expect(response.body.user).not.toHaveProperty("passwordHash");
+      expect(response.body.user).not.toHaveProperty("createdAt");
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it("TEST-06: logout invalidates the seeded session cookie and deletes the session row", async () => {
