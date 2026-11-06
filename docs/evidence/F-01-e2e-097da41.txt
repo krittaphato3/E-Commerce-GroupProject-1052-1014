@@ -1,0 +1,22 @@
+# F-01 evidence — e2e at commit 097da41
+
+Commit: 097da41
+Date: 2026-11-06
+Exit status: 0
+
+--- raw output -------------------------------------------------------------
+
+
+> campusbites@1.0.0 e2e
+> npm run e2e --workspace=frontend
+
+
+> campusbites-frontend@1.0.0 e2e
+> playwright test
+
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium] › e2e/auth.spec.ts:15:1 › TEST-09: customer and operator login, logout and invalid credentials (926ms)
+
+  1 passed (2.1s)

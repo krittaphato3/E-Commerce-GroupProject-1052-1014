@@ -3,8 +3,8 @@
 | Item | Value |
 |---|---|
 | Document | `docs/srs.md` |
-| Version | 1.3 (baseline, committed before Sprint 1 implementation) |
-| Date | 2026-11-05 |
+| Version | 1.4 |
+| Date | 2026-11-06 |
 | Course / Theme | CPE 334, Semester 1/2026 — Theme 4: E-Commerce or Ordering System |
 | Student 1 | Krittaphat Panyasomphan (67070501052) |
 | Student 2 | Napat Kasemweerasan (67070501014) |
@@ -17,6 +17,7 @@
 | 1.1 | 2026-11-05 | Both | BR-13 reduced to lower bounds only (`priceSatang > 0`, `stockQty >= 0`); BR-15 now names the acting user; NFR-05 restated with zero 5xx, 20 concurrent connections, 30 s per endpoint, a 500-order seed and a stock-provisioned order-test item; Q-03 resolved (403 for another customer's order); Q-04 resolved (targets in NFR-05) | Audit corrections: align the SRS with the System SDS, the contracts and AC-46 |
 | 1.2 | 2026-11-05 | Both | BR-04 sprint cell updated to 1 (snapshot), 2 (catalog edits); BR-06 sprint cell updated to 1 (F-04); 2 (F-06, F-08); 3 (F-09, F-12) | Align BR-04 and BR-06 sprint allocations with traceability.md and features.md |
 | 1.3 | 2026-11-05 | Both | BR-10 extended: prohibit cancellation from PREPARING, READY and COMPLETED with 409 INVALID_TRANSITION; added assumption A-08 and matching exclusion in §3.2 for partial fulfillment, waste tracking and no-show terminal state | Clarify cancellation boundaries and out-of-system resolution |
+| 1.4 | 2026-11-06 | Both | Added §9.1 decision entries DEC-12 to DEC-16 for the F-01 implementation decisions (D-1 to D-5); no requirement, AC, TEST or contract wording changed | Record the decisions taken while implementing Issue #3 (F-01) |
 
 ---
 
@@ -162,6 +163,20 @@ Payment status: `UNPAID` → `PAID` (Customer pays an `ACCEPTED` order, Sprint 2
 | DEC-09 | The menu is publicly readable. | Customers can check availability before logging in. | 2026-11-03 |
 | DEC-10 | Orders cannot be edited after submission. | Keeps price and stock logic simple; the customer cancels and re-orders. | 2026-11-03 |
 | DEC-11 | Sprint 1 slice is: login, menu, customer submits order, operator accepts. | Matches the Theme 4 Sprint 1 example exactly. | 2026-11-03 |
+
+### 9.1 Sprint 1 F-01 implementation decisions (DEC-12 to DEC-16)
+
+These entries continue the §9 numbering. They record decisions taken while delivering F-01 (Issue #3) and do not change any requirement, AC, TEST or contract statement.
+
+| ID | Decision | Rationale | Affected files / requirements | Status | Date |
+|---|---|---|---|---|---|
+| DEC-12 (D-1) | F-01 is delivered backend-first, then frontend, on `feature/sprint1/auth-login-logout` as separate commits: login, logout and current user first, then the router, login page, header, route guards and TEST-09. `react-router-dom` ^6.30.6 and `@playwright/test` (Chromium) are added to the frontend workspace. | The API is proven by TEST-01 to TEST-08 before a UI depends on it, and each layer keeps its own red-then-green evidence. | `backend/src/services`, `backend/src/repositories`, `backend/src/middleware`, `backend/src/controllers`, `backend/src/routes`, `frontend/src`, `frontend/e2e/auth.spec.ts`; FR-01, FR-02, FR-03, AC-09, TEST-09 | Implemented in f222daa (backend) and 097da41 (UI) | 2026-11-06 |
+| DEC-13 (D-2) | The R-01 route registry and its meta-test (AC-43/TEST-43) are not part of this branch; they belong to the R-01/R-02 issue. This branch builds only the `requireAuth` and `requireRole` middleware that F-01 needs. `requireRole` is exported but not used by any F-01 route, and `GET /api/auth/me` is the only protected route. | F-01 needs session authentication, while a route-registry meta-test only becomes meaningful once the Sprint 1 route set exists. | `backend/src/middleware/auth.ts`, `backend/src/routes/auth.ts`; NFR-01, NFR-02, R-01, AC-43, TEST-43 (deferred, not run) | Implemented in f222daa; AC-43/TEST-43 deferred to the R-01/R-02 issue | 2026-11-06 |
+| DEC-14 (D-3) | No password literal is kept in the repository. `backend/.env.example` uses the placeholders `change-me-local`; `seed.ts` reads `SEED_CUSTOMER_PASSWORD` and `SEED_OPERATOR_PASSWORD` only, fails with a clear error when either is missing or empty, and refuses the placeholder when `NODE_ENV=production`. Tests generate random seed passwords per run in `backend/tests/setup.ts`; Playwright reads the same variables from `backend/.env`. | Implements the F-01 Definition of Done ("Seed passwords come from `.env`; no password appears in the repository or the PDF") and SDS §2.3/§7.1 exactly as written. This is not a contract change. | `backend/.env.example`, `backend/prisma/seed.ts`, `backend/tests/setup.ts`, `backend/tests/seed.test.ts`, `backend/tests/auth.test.ts`, `README.md`, `frontend/playwright.config.ts`, `frontend/e2e/auth.spec.ts`; F-01 DoD, SDS §2.3, SDS §7.1, NFR-03, NFR-08 | Implemented in e78cb7f (seed, env, tests) and 097da41 (E2E) | 2026-11-06 |
+| DEC-15 (D-4) | The seed hashes passwords with `BCRYPT_ROUNDS` (default 10, or 4 when `NODE_ENV=test` and the variable is absent) instead of a hardcoded cost of 10. | One configuration source for hashing; keeps the test seed fast without changing production strength. | `backend/prisma/seed.ts`, `backend/src/config/env.ts`, `backend/.env.example`; SDS §6, SDS §7.1 | Implemented in e78cb7f | 2026-11-06 |
+| DEC-16 (D-5) | The local `graphify-out/` folder stays untracked. `.gitignore` is not changed and the folder is never staged. | It is a local analysis artifact outside the F-01 scope, so no unrelated ignore rules are added. | Working tree only; no tracked file | Decided; applied to commits e78cb7f to 097da41 | 2026-11-06 |
+
+Note on issue numbering: `docs/sprints/sprint-1/features.md` §4 labels F-01 as ISSUE-2 and R-01/R-02 as ISSUE-3, while GitHub numbers Issue #2 as the scaffold (R-03) and Issue #3 as F-01. The work follows the GitHub numbering and the contract's AC/TEST IDs; the §4 table is left unchanged.
 
 ## 10. Questions and resolutions
 

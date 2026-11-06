@@ -1,0 +1,214 @@
+# F-01 RED evidence — full suite at commit 8398fe2 (first red commit)
+
+Commit: 8398fe2
+Command: cd backend && npx vitest run
+Date: 2026-11-06
+
+Result: 8 failed | 18 passed (26 tests), 2 failed files.
+TEST-06 in this run failed at its login step; superseded by 05a4f08, where TEST-06 seeds the session directly.
+
+--- raw output -------------------------------------------------------------
+
+
+ RUN  v3.2.7 /Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/backend
+
+ ❯ tests/auth.test.ts (8 tests | 8 failed) 190ms
+   × F-01 Authentication API (AC-01 to AC-08) > TEST-01: valid credentials return the user, set the session cookie and create one 8-hour session 82ms
+     → expected 404 to be 200 // Object.is equality
+   × F-01 Authentication API (AC-01 to AC-08) > TEST-02: a wrong password returns 401 INVALID_CREDENTIALS, sets no cookie and creates no session 24ms
+     → expected 404 to be 401 // Object.is equality
+   × F-01 Authentication API (AC-01 to AC-08) > TEST-03: an unknown email returns the same 401 response as a wrong password 13ms
+     → expected 404 to be 401 // Object.is equality
+   × F-01 Authentication API (AC-01 to AC-08) > TEST-04: invalid login bodies return 400 VALIDATION_ERROR in the standard error shape 13ms
+     → empty body: expected 404 to be 400 // Object.is equality
+   × F-01 Authentication API (AC-01 to AC-08) > TEST-05: GET /api/auth/me returns the logged-in operator and rejects an anonymous caller 12ms
+     → expected 404 to be 200 // Object.is equality
+   × F-01 Authentication API (AC-01 to AC-08) > TEST-06: logout invalidates the saved session cookie and deletes the session row 12ms
+     → expected 404 to be 200 // Object.is equality
+   × F-01 Authentication API (AC-01 to AC-08) > TEST-07: a session whose expiresAt is in the past is rejected with 401 18ms
+     → expected 404 to be 401 // Object.is equality
+   × F-01 Authentication API (AC-01 to AC-08) > TEST-08: stored passwords are bcrypt hashes and no response exposes the hash 14ms
+     → expected 404 to be 200 // Object.is equality
+ ✓ tests/constraints.test.ts (7 tests) 133ms
+ ✓ tests/seed.test.ts (1 test) 47ms
+ ✓ tests/error.test.ts (5 tests) 18ms
+ ✓ tests/health.test.ts (1 test) 9ms
+ ✓ tests/env.test.ts (4 tests) 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/services/password.test.ts [ src/services/password.test.ts ]
+Error: Cannot find module './password.js' imported from '/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/backend/src/services/password.test.ts'
+ ❯ src/services/password.test.ts:2:1
+      1| import { describe, it, expect } from "vitest";
+      2| import { hashPassword, verifyPassword } from "./password.js";
+       | ^
+      3| 
+      4| describe("TEST-08: Password hashing helper (AC-08, NFR-03)", () => {
+
+Caused by: Error: Failed to load url ./password.js (resolved id: ./password.js) in /Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/backend/src/services/password.test.ts. Does the file exist?
+ ❯ loadAndTransform ../node_modules/vite/dist/node/chunks/dep-CkSfqg8D.js:36043:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-01: valid credentials return the user, set the session cookie and create one 8-hour session
+AssertionError: expected 404 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 404[39m
+
+ ❯ tests/auth.test.ts:51:29
+     49|     const response = await loginAs(CUSTOMER_EMAIL, CUSTOMER_PASSWORD);
+     50| 
+     51|     expect(response.status).toBe(200);
+       |                             ^
+     52|     expect(response.body.user).toMatchObject({
+     53|       email: CUSTOMER_EMAIL,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-02: a wrong password returns 401 INVALID_CREDENTIALS, sets no cookie and creates no session
+AssertionError: expected 404 to be 401 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 401[39m
+[31m+ 404[39m
+
+ ❯ tests/auth.test.ts:81:29
+     79|     const response = await loginAs(CUSTOMER_EMAIL, `${CUSTOMER_PASSWOR…
+     80| 
+     81|     expect(response.status).toBe(401);
+       |                             ^
+     82|     expect(response.body.error.code).toBe("INVALID_CREDENTIALS");
+     83|     expect(response.body.error.message).toBe("Invalid email or passwor…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-03: an unknown email returns the same 401 response as a wrong password
+AssertionError: expected 404 to be 401 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 401[39m
+[31m+ 404[39m
+
+ ❯ tests/auth.test.ts:94:33
+     92|     const unknownEmail = await loginAs("nobody@campusbites.test", CUST…
+     93| 
+     94|     expect(unknownEmail.status).toBe(401);
+       |                                 ^
+     95|     expect(unknownEmail.body.error.code).toBe(wrongPassword.body.error…
+     96|     expect(unknownEmail.body.error.message).toBe(wrongPassword.body.er…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-04: invalid login bodies return 400 VALIDATION_ERROR in the standard error shape
+AssertionError: empty body: expected 404 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 404[39m
+
+ ❯ tests/auth.test.ts:124:46
+    122|       const response = await request(app).post("/api/auth/login").send…
+    123| 
+    124|       expect(response.status, testCase.name).toBe(400);
+       |                                              ^
+    125|       expect(response.body.error.code, testCase.name).toBe("VALIDATION…
+    126|       expect(typeof response.body.error.message, testCase.name).toBe("…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-05: GET /api/auth/me returns the logged-in operator and rejects an anonymous caller
+AssertionError: expected 404 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 404[39m
+
+ ❯ tests/auth.test.ts:134:29
+    132|   it("TEST-05: GET /api/auth/me returns the logged-in operator and rej…
+    133|     const loggedIn = await loginAs(OPERATOR_EMAIL, OPERATOR_PASSWORD);
+    134|     expect(loggedIn.status).toBe(200);
+       |                             ^
+    135|     const cookie = sessionCookie(loggedIn);
+    136|     expect(cookie).toBeDefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-06: logout invalidates the saved session cookie and deletes the session row
+AssertionError: expected 404 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 404[39m
+
+ ❯ tests/auth.test.ts:155:29
+    153|   it("TEST-06: logout invalidates the saved session cookie and deletes…
+    154|     const loggedIn = await loginAs(CUSTOMER_EMAIL, CUSTOMER_PASSWORD);
+    155|     expect(loggedIn.status).toBe(200);
+       |                             ^
+    156|     const cookie = sessionCookie(loggedIn);
+    157|     expect(cookie).toBeDefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-07: a session whose expiresAt is in the past is rejected with 401
+AssertionError: expected 404 to be 401 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 401[39m
+[31m+ 404[39m
+
+ ❯ tests/auth.test.ts:191:29
+    189|       .set("Cookie", `${SESSION_COOKIE}=${token}`);
+    190| 
+    191|     expect(response.status).toBe(401);
+       |                             ^
+    192|     expect(response.body.error.code).toBe("UNAUTHENTICATED");
+    193|     expect(response.body).not.toHaveProperty("user");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-08: stored passwords are bcrypt hashes and no response exposes the hash
+AssertionError: expected 404 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 404[39m
+
+ ❯ tests/auth.test.ts:202:29
+    200| 
+    201|     const loggedIn = await loginAs(CUSTOMER_EMAIL, CUSTOMER_PASSWORD);
+    202|     expect(loggedIn.status).toBe(200);
+       |                             ^
+    203|     expect(JSON.stringify(loggedIn.body)).not.toContain("passwordHash"…
+    204|     expect(JSON.stringify(loggedIn.body)).not.toContain(user.passwordH…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  2 failed | 5 passed (7)
+      Tests  8 failed | 18 passed (26)
+   Start at  18:36:21
+   Duration  1.34s (transform 49ms, setup 33ms, collect 316ms, tests 399ms, environment 0ms, prepare 153ms)
+

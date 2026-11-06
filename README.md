@@ -53,6 +53,24 @@ Playwright (TEST-09) reads the same two variables from `backend/.env`, so log in
 
 ---
 
+## End-to-end Test (F-01)
+
+Install the Playwright browser once, then run the TEST-09 journey:
+
+```bash
+# One-time browser install
+npm run e2e:install --workspace=frontend
+
+# Run TEST-09 (starts its own servers on dedicated ports)
+npm run e2e
+```
+
+- Credentials come only from environment variables: `SEED_CUSTOMER_PASSWORD` and `SEED_OPERATOR_PASSWORD` are read from `backend/.env`. Optional `E2E_CUSTOMER_EMAIL` and `E2E_OPERATOR_EMAIL` override the seeded emails (defaults: `customer1@campusbites.test`, `operator1@campusbites.test`).
+- The seeded accounts must exist in the development database (`npm run db:seed`) with the same passwords.
+- Playwright starts the API on port 3100 and Vite on port 5174 so a running `npm run dev` server is not disturbed. Override with `E2E_API_PORT` and `E2E_FRONTEND_PORT`, or point `E2E_BASE_URL` at an already-running frontend.
+
+---
+
 ## Repository Structure
 
 ```text
@@ -76,6 +94,7 @@ Playwright (TEST-09) reads the same two variables from `backend/.env`, so log in
 - `npm run build`: Compile TypeScript and build client and server.
 - `npm run typecheck`: Run TypeScript compiler checks with zero emit across all workspaces.
 - `npm test`: Execute Vitest test suites.
+- `npm run e2e`: Run the Playwright end-to-end tests (F-01 TEST-09).
 - `npm run db:migrate`: Apply pending Prisma migrations to the active database.
 - `npm run db:seed`: Run idempotent seed script.
 - `npm run db:reset`: Drop, re-migrate, and re-seed database.

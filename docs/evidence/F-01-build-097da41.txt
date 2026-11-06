@@ -1,0 +1,29 @@
+# F-01 evidence — build at commit 097da41
+
+Commit: 097da41
+Date: 2026-11-06
+Exit status: 0
+
+--- raw output -------------------------------------------------------------
+
+
+> campusbites@1.0.0 build
+> npm run build --workspaces
+
+
+> campusbites-backend@1.0.0 build
+> tsc -p tsconfig.json
+
+
+> campusbites-frontend@1.0.0 build
+> tsc && vite build
+
+vite v6.4.5 building for production...
+transforming...
+✓ 41 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:  0.27 kB
+dist/assets/index-BL5QWnkG.css  231.14 kB │ gzip: 30.69 kB
+dist/assets/index-BpvaUlbW.js   171.04 kB │ gzip: 55.80 kB
+✓ built in 354ms
