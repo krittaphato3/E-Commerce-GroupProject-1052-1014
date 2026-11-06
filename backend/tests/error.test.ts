@@ -100,4 +100,44 @@ describe("Central Error Handler (R-02, AC-44, NFR-07)", () => {
       },
     });
   });
+
+  it("TEST-44: POST /api/auth/login with body '{bad json' returns 400 VALIDATION_ERROR in standard error shape", async () => {
+    const app = createApp();
+
+    const response = await request(app)
+      .post("/api/auth/login")
+      .set("Content-Type", "application/json")
+      .send("{bad json");
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      error: {
+        code: "VALIDATION_ERROR",
+        message: expect.stringContaining("Malformed JSON"),
+      },
+    });
+  });
+
+  it("TEST-44: failing route throwing new Error('db password leak') returns 500 INTERNAL_ERROR without 'db password leak', 'stack', 'SELECT' or 'Prisma'", async () => {
+    const app = createApp((server) => {
+      server.get("/api/test-db-leak", () => {
+        throw new Error("db password leak");
+      });
+    });
+
+    const response = await request(app).get("/api/test-db-leak");
+
+    expect(response.status).toBe(500);
+    expect(response.body).toEqual({
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "Something went wrong.",
+      },
+    });
+    const bodyStr = JSON.stringify(response.body);
+    expect(bodyStr).not.toContain("db password leak");
+    expect(bodyStr).not.toContain("stack");
+    expect(bodyStr).not.toContain("SELECT");
+    expect(bodyStr).not.toContain("Prisma");
+  });
 });

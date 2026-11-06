@@ -1,13 +1,22 @@
 import { describe, it, expect } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import App from "./App";
+import { MemoryRouter } from "react-router-dom";
+import { AppShell } from "./App";
+import { AuthProvider } from "./auth/AuthContext";
 
-describe("Frontend scaffold", () => {
-  it("renders the CampusBites shell and the initial health-check state", () => {
-    const html = renderToStaticMarkup(<App />);
+describe("Frontend app shell", () => {
+  it("renders the CampusBites header and the login form", () => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter initialEntries={["/login"]}>
+        <AuthProvider>
+          <AppShell />
+        </AuthProvider>
+      </MemoryRouter>
+    );
 
     expect(html).toContain("CampusBites");
-    expect(html).toContain("Online Food Ordering Platform");
-    expect(html).toContain("Checking API health...");
+    expect(html).toContain("Log in");
+    expect(html).toContain("Email");
+    expect(html).toContain("Password");
   });
 });

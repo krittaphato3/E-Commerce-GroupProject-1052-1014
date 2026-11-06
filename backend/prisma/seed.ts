@@ -1,10 +1,31 @@
 import { PrismaClient, Role, OrderStatus, PaymentStatus } from "@prisma/client";
-import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
+import { env } from "../src/config/env.js";
+import { hashPassword } from "../src/services/password.js";
 
 dotenv.config();
 
 const prisma = new PrismaClient();
+
+const SEED_PASSWORD_PLACEHOLDER = "change-me-local";
+
+function readSeedPassword(name: "SEED_CUSTOMER_PASSWORD" | "SEED_OPERATOR_PASSWORD"): string {
+  const value = process.env[name]?.trim();
+
+  if (!value) {
+    throw new Error(
+      `${name} is required to seed the database. Add it to backend/.env (see backend/.env.example).`
+    );
+  }
+
+  if (process.env.NODE_ENV === "production" && value === SEED_PASSWORD_PLACEHOLDER) {
+    throw new Error(
+      `${name} still has the placeholder value. Set a real seed password before seeding production.`
+    );
+  }
+
+  return value;
+}
 
 export const SEED_USERS = [
   {
@@ -82,11 +103,11 @@ export const SEED_MENU_ITEMS = [
 ];
 
 export async function seedDatabase(client: PrismaClient = prisma) {
-  const customerPassword = process.env.SEED_CUSTOMER_PASSWORD || "customer123!";
-  const operatorPassword = process.env.SEED_OPERATOR_PASSWORD || "operator123!";
+  const customerPassword = readSeedPassword("SEED_CUSTOMER_PASSWORD");
+  const operatorPassword = readSeedPassword("SEED_OPERATOR_PASSWORD");
 
-  const customerHash = await bcrypt.hash(customerPassword, 10);
-  const operatorHash = await bcrypt.hash(operatorPassword, 10);
+  const customerHash = await hashPassword(customerPassword, env.BCRYPT_ROUNDS);
+  const operatorHash = await hashPassword(operatorPassword, env.BCRYPT_ROUNDS);
 
   // 1. Seed Users (idempotent upsert)
   for (const user of SEED_USERS) {

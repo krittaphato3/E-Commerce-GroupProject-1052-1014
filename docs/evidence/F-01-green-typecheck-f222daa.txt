@@ -1,0 +1,21 @@
+# F-01 GREEN evidence — typecheck at commit f222daa
+
+Commit: f222daa
+Command: npm run typecheck (root; backend + frontend workspaces)
+Date: 2026-11-06
+Exit status: 0
+
+--- raw output -------------------------------------------------------------
+
+
+> campusbites@1.0.0 typecheck
+> npm run typecheck --workspaces
+
+
+> campusbites-backend@1.0.0 typecheck
+> tsc --noEmit
+
+
+> campusbites-frontend@1.0.0 typecheck
+> tsc --noEmit
+

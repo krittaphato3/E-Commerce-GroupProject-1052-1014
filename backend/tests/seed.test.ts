@@ -49,6 +49,9 @@ describe("TEST-45: Seed idempotency & repeatability (AC-45, NFR-08)", () => {
     });
     expect(customer1).not.toBeNull();
     expect(customer1?.role).toBe("CUSTOMER");
-    expect(customer1?.passwordHash).not.toBe("customer123!"); // Must be bcrypt hash
+    const seedCustomerPassword = process.env.SEED_CUSTOMER_PASSWORD;
+    expect(seedCustomerPassword).toBeTruthy();
+    expect(customer1?.passwordHash).not.toBe(seedCustomerPassword); // Must be a bcrypt hash
+    expect(customer1?.passwordHash.startsWith("$2")).toBe(true);
   });
 });

@@ -1,19 +1,7 @@
-import { PrismaClient } from "@prisma/client";
-import dotenv from "dotenv";
+import type { PrismaClient } from "@prisma/client";
+import { prisma } from "../../src/db/prisma.js";
 
-dotenv.config();
-
-const testDbUrl =
-  process.env.TEST_DATABASE_URL ||
-  "postgresql://postgres:postgres@localhost:5432/campusbites_test?schema=public";
-
-export const testPrisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: testDbUrl,
-    },
-  },
-});
+export const testPrisma = prisma;
 
 export async function clearTestDatabase(client: PrismaClient = testPrisma) {
   // Truncate all tables in reverse dependency order

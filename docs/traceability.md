@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/traceability.md` |
-| Version | 1.6 |
+| Version | 1.8 |
 | Date | 2026-11-06 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md` |
 
@@ -17,6 +17,8 @@
 | 1.4 | 2026-11-05 | BR-10 AC cell updated to note verifying AC definition in Sprint 2 contract (F-06) | Align BR-10 traceability note with Sprint 2 contract |
 | 1.5 | 2026-11-05 | Record test results for TEST-45 and TEST-46 | Verification of Issue 2 (R-03, NFR-08, BR-13, AC-45, AC-46) |
 | 1.6 | 2026-11-06 | NFR-08 quickstart repaired: `.env` co-located with the backend workspace, `prisma generate` runs on install, Express 5 async error propagation, FK indexes added. Re-verified fresh-clone quickstart before keeping NFR-08 PASS | Review fix for PR #9 |
+| 1.7 | 2026-11-06 | Record F-01 results: FR-01 to FR-03 and NFR-03/NFR-04 PASS at f222daa (backend) and 097da41 (TEST-09); NFR-07 INCOMPLETE because TEST-44 has no recorded result | Verification of Issue #3 (F-01, AC-01 to AC-09) |
+| 1.8 | 2026-11-06 | Record PR #10 Tier 1 review fixes for F-01 (`bb0acb4`, `f45ba47`, `2022899`, `6e68bee`, `83f0337`, and retroactive `TEST-09` red run at `60b5e57` in `9ec70cb`) and mark NFR-07 PASS with `TEST-44` added in `9de7923` | PR #10 review fixes for Issue #3 (F-01) |
 
 ### How to use this file
 - Sprint 1 test IDs follow the rule **TEST-nn verifies AC-nn** (for example TEST-24 verifies AC-24).
@@ -28,9 +30,9 @@
 
 | Requirement | Feature | Sprint | AC / verification target | Planned test | Actual test (file::name) | Result | Version |
 |---|---|---|---|---|---|---|---|
-| FR-01 | F-01 | 1 | AC-01, AC-02, AC-03, AC-04, AC-09 | TEST-01, 02, 03, 04, 09 | | NOT RUN | |
-| FR-02 | F-01 | 1 | AC-06, AC-09 | TEST-06, 09 | | NOT RUN | |
-| FR-03 | F-01 | 1 | AC-05 | TEST-05 | | NOT RUN | |
+| FR-01 | F-01 | 1 | AC-01, AC-02, AC-03, AC-04, AC-09 | TEST-01, 02, 03, 04, 09 | backend/tests/auth.test.ts::TEST-01, ::TEST-02, ::TEST-03, ::TEST-04; frontend/e2e/auth.spec.ts::TEST-09 | PASS | 8398fe2 (red), f222daa (green), bb0acb4 (TEST-03 rounds fix), 83f0337 (TEST-04 72-byte cap), 097da41 (E2E green), 9ec70cb (retroactive red, created after 097da41) |
+| FR-02 | F-01 | 1 | AC-06, AC-09 | TEST-06, 09 | backend/tests/auth.test.ts::TEST-06 (seeded session plus supporting login-to-logout test); frontend/e2e/auth.spec.ts::TEST-09 | PASS | 8398fe2 (red; TEST-06 reworked in 05a4f08), f222daa (green), 097da41 (E2E green), 9ec70cb (retroactive red, created after 097da41) |
+| FR-03 | F-01 | 1 | AC-05 | TEST-05 | backend/tests/auth.test.ts::TEST-05 | PASS | 8398fe2 (red), f222daa (green), 2022899 (explicit user field projection) |
 | FR-04 | F-02 | 1 | AC-10, AC-11, AC-12, AC-13 | TEST-10, 11, 12, 13 | | NOT RUN | |
 | FR-05 | F-03 | 1 | AC-14, AC-15, AC-16, AC-18, AC-19, AC-20, AC-21, AC-22, AC-23, AC-26, AC-29, AC-30 | TEST-14, 15, 16, 18–23, 26, 29, 30 | | NOT RUN | |
 | FR-06 | F-03 | 1 | AC-14, AC-17, AC-25, AC-27 | TEST-14, 17, 25, 27 | | NOT RUN | |
@@ -72,11 +74,11 @@
 |---|---|---|---|---|---|---|---|
 | NFR-01 | R-01 | 1, extended 2 and 3 | 401 without session on every protected route (AC-43) | TEST-43 | | NOT RUN | |
 | NFR-02 | R-01 | 1, extended 2 and 3 | 403 for wrong role or non-owner on every protected route (AC-43, AC-27, AC-37, AC-38) | TEST-43, 27, 37, 38 | | NOT RUN | |
-| NFR-03 | F-01 | 1 | bcrypt hash stored; hash never returned (AC-08) | TEST-08 | | NOT RUN | |
-| NFR-04 | F-01 | 1 | 8-hour expiry (AC-07); logout invalidates at once (AC-06) | TEST-06, 07 | | NOT RUN | |
+| NFR-03 | F-01 | 1 | bcrypt hash stored; hash never returned (AC-08) | TEST-08 | backend/tests/auth.test.ts::TEST-08; backend/src/services/password.test.ts::TEST-08 | PASS | 8398fe2 (red), f222daa (green), 2022899 (explicit `/me` field projection) |
+| NFR-04 | F-01 | 1 | 8-hour expiry (AC-07); logout invalidates at once (AC-06) | TEST-06, 07 | backend/tests/auth.test.ts::TEST-06, ::TEST-07 | PASS | 8398fe2 (red; TEST-06 reworked in 05a4f08), f222daa (green), 6e68bee (expired session deletion on lookup & startup) |
 | NFR-05 | R-04 | 3 | p95 ≤ 500 ms and zero 5xx responses for `GET /api/menu` and `POST /api/orders`, measured at 20 concurrent connections for 30 s per endpoint, database seeded with 500 orders plus an order-test item with enough stock for the whole run (NFR-05) | LOAD-01: autocannon script, raw output and tested commit saved (Sprint 3) | | NOT RUN | |
 | NFR-06 | R-05 | 2 | Order survives restart and redeploy (post-deployment check) | CHECK-01 (Sprint 2) | | NOT RUN | |
-| NFR-07 | R-02 | 1 | Standard error shape; no stack trace (AC-04, AC-44) | TEST-04, 44 | | NOT RUN | |
+| NFR-07 | R-02 | 1 | Standard error shape; no stack trace (AC-04, AC-44) | TEST-04, 44 | backend/tests/auth.test.ts::TEST-04; backend/tests/error.test.ts::TEST-44 | PASS | f222daa, 83f0337 (TEST-04); 9de7923 (TEST-44) |
 | NFR-08 | R-03 | 1 | Fresh clone in 8 commands or fewer; seed repeatable (AC-45) | TEST-45 | backend/tests/seed.test.ts::TEST-45 | PASS | feature/sprint1/scaffold-db-seed |
 | NFR-09 | F-02, F-03, R-04 | 1 partial, 3 complete | Loading, empty and error states (AC-13, AC-30, AC-31 in S1) | TEST-13, 30, 31, then TBD | | NOT RUN | |
 | NFR-10 | R-05 | 2 | At least 85% service-layer line coverage (coverage report) | COV-01 (Sprint 2) | | NOT RUN | |
