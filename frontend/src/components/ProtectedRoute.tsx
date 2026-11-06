@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import { roleHome } from "../auth/roles";
 import type { Role } from "../api/auth";
 
 interface ProtectedRouteProps {
@@ -15,7 +14,6 @@ interface ProtectedRouteProps {
  */
 export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
   const { user, loading, error } = useAuth();
-  const location = useLocation();
 
   if (loading) {
     return <p className="text-muted">Loading…</p>;
@@ -34,17 +32,11 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
   }
 
   if (roles && !roles.includes(user.role)) {
-    const destination = roleHome(user.role);
-    const currentPath = location.pathname.replace(/\/+$/, "") || "/";
-    const targetPath = destination.replace(/\/+$/, "") || "/";
-    if (currentPath === targetPath) {
-      return (
-        <div className="alert alert-warning" role="alert">
-          403 Forbidden: You have no access to this page.
-        </div>
-      );
-    }
-    return <Navigate to={destination} replace />;
+    return (
+      <div className="alert alert-warning" role="alert">
+        403 Forbidden: You have no access to this page.
+      </div>
+    );
   }
 
   return <>{children}</>;
