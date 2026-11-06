@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
 import request from "supertest";
 import type { Response as SupertestResponse } from "supertest";
 import { createHash, randomBytes } from "node:crypto";
-import { app } from "../src/app.js";
+import { app, createApp } from "../src/app.js";
+import { requireAuth, requireRole } from "../src/middleware/auth.js";
 import { testPrisma, clearTestDatabase } from "./helpers/testDb.js";
 import { seedDatabase } from "../prisma/seed.js";
 
@@ -263,5 +264,37 @@ describe("F-01 Authentication API (AC-01 to AC-08)", () => {
     expect(me.status).toBe(200);
     expect(JSON.stringify(me.body)).not.toContain("passwordHash");
     expect(JSON.stringify(me.body)).not.toContain(user.passwordHash);
+  });
+
+  it("requireRole('OPERATOR') returns 401 without a cookie, 403 FORBIDDEN for CUSTOMER and 200 for OPERATOR", async () => {
+    const guardedApp = createApp((server) => {
+      server.get("/api/test-operator-only", requireAuth, requireRole("OPERATOR"), (_req, res) => {
+        res.status(200).json({ allowed: true });
+      });
+    });
+
+    const anonymous = await request(guardedApp).get("/api/test-operator-only");
+    expect(anonymous.status).toBe(401);
+    expect(anonymous.body.error.code).toBe("UNAUTHENTICATED");
+
+    const customerLogin = await loginAs(CUSTOMER_EMAIL, CUSTOMER_PASSWORD);
+    const customerCookie = sessionCookie(customerLogin);
+    expect(customerCookie).toBeDefined();
+
+    const customerRes = await request(guardedApp)
+      .get("/api/test-operator-only")
+      .set("Cookie", customerCookie as string);
+    expect(customerRes.status).toBe(403);
+    expect(customerRes.body.error.code).toBe("FORBIDDEN");
+
+    const operatorLogin = await loginAs(OPERATOR_EMAIL, OPERATOR_PASSWORD);
+    const operatorCookie = sessionCookie(operatorLogin);
+    expect(operatorCookie).toBeDefined();
+
+    const operatorRes = await request(guardedApp)
+      .get("/api/test-operator-only")
+      .set("Cookie", operatorCookie as string);
+    expect(operatorRes.status).toBe(200);
+    expect(operatorRes.body).toEqual({ allowed: true });
   });
 });
