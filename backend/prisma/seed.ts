@@ -1,6 +1,7 @@
 import { PrismaClient, Role, OrderStatus, PaymentStatus } from "@prisma/client";
-import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
+import { env } from "../src/config/env.js";
+import { hashPassword } from "../src/services/password.js";
 
 dotenv.config();
 
@@ -24,20 +25,6 @@ function readSeedPassword(name: "SEED_CUSTOMER_PASSWORD" | "SEED_OPERATOR_PASSWO
   }
 
   return value;
-}
-
-function resolveBcryptRounds(): number {
-  const raw = process.env.BCRYPT_ROUNDS?.trim();
-  if (!raw) {
-    return process.env.NODE_ENV === "test" ? 4 : 10;
-  }
-
-  const rounds = Number(raw);
-  if (!Number.isInteger(rounds) || rounds < 4 || rounds > 15) {
-    throw new Error("BCRYPT_ROUNDS must be an integer between 4 and 15");
-  }
-
-  return rounds;
 }
 
 export const SEED_USERS = [
@@ -118,10 +105,9 @@ export const SEED_MENU_ITEMS = [
 export async function seedDatabase(client: PrismaClient = prisma) {
   const customerPassword = readSeedPassword("SEED_CUSTOMER_PASSWORD");
   const operatorPassword = readSeedPassword("SEED_OPERATOR_PASSWORD");
-  const bcryptRounds = resolveBcryptRounds();
 
-  const customerHash = await bcrypt.hash(customerPassword, bcryptRounds);
-  const operatorHash = await bcrypt.hash(operatorPassword, bcryptRounds);
+  const customerHash = await hashPassword(customerPassword, env.BCRYPT_ROUNDS);
+  const operatorHash = await hashPassword(operatorPassword, env.BCRYPT_ROUNDS);
 
   // 1. Seed Users (idempotent upsert)
   for (const user of SEED_USERS) {
