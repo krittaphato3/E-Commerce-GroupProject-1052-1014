@@ -6,8 +6,8 @@
 | Sprint | 1 (due with Deliverable 1, 8 Nov 2026) |
 | Staging branch | `sprint-1-staging` |
 | Release tag (planned) | `sprint-1-v1.0` |
-| Version | 1.3 |
-| Date | 2026-11-05 |
+| Version | 1.4 |
+| Date | 2026-11-06 |
 | Related | `docs/srs.md`, `docs/features.md` (whole-product inventory), `docs/traceability.md`, `docs/sprints/plan.md`, `docs/system-sds.md` |
 
 ## Revision history (contract set)
@@ -17,6 +17,7 @@
 | 1.1 | 2026-11-05 | AC-25/TEST-25 and AC-34/TEST-34 assert the history `createdAt`; F-02 and F-03 contract index and headers state BR-02 ownership; F-01 `Max-Age` derived from `SESSION_TTL_HOURS`; heading levels normalised (no H2 → H4 jumps) | Audit corrections: cover BR-15's timestamp clause and remove traceability and formatting defects |
 | 1.2 | 2026-11-05 | F-01, F-02, F-03 and F-04 each gained a "Failure and boundary cases" subsection summarising the failure and boundary behavior already defined by their AC and STS rows | Deliverable 1 §3.5 lists failure/boundary cases as part of the feature design |
 | 1.3 | 2026-11-05 | F-01 Failure and boundary cases: clarified wrong-password vs unknown-email cookie behavior; clarified logout session invalidation and 204 return | Precision fix aligning failure and boundary statements with AC-02, AC-03, and AC-06 |
+| 1.4 | 2026-11-06 | F-01 Validation: login `password` limit changed from 128 characters to 72 bytes (`Buffer.byteLength`) | Match bcrypt's 72-byte input limit so passwords beyond 72 UTF-8 bytes are not silently truncated (DEC-18) |
 
 Each contract below keeps its own revision history. Log every change there with a reason; do not rewrite earlier entries.
 
@@ -117,7 +118,7 @@ For each feature, make these commits in order and keep the hashes:
 | Requirements | FR-01, FR-02, FR-03, NFR-03, NFR-04 (also supports NFR-01, NFR-07) |
 | Sprint | 1 |
 | Depends on | R-03 (schema and seed) |
-| Contract version | 1.3 (2026-11-05) |
+| Contract version | 1.4 (2026-11-06) |
 | Issue / branch | ISSUE-2 / `feature/F-01-authentication` |
 
 ### Revision history
@@ -127,6 +128,7 @@ For each feature, make these commits in order and keep the hashes:
 | 1.1 | 2026-11-05 | API spec notes that `Max-Age` is derived from `SESSION_TTL_HOURS` (default 8 h) | Reconcile the cookie lifetime with the configurable session TTL |
 | 1.2 | 2026-11-05 | Added a Failure and boundary cases subsection citing AC-02 to AC-09 | Document failure and boundary behavior already defined by the AC and STS |
 | 1.3 | 2026-11-05 | Clarified failure and boundary cases: both wrong password and unknown email return 401 with identical message, wrong password sets no cookie; logout invalidates cookie and returns 204 | Match AC-02, AC-03, and AC-06 assertions exactly without claiming no-cookie for unknown email or 204 without session |
+| 1.4 | 2026-11-06 | Validation: login `password` maximum changed from 128 characters to 72 bytes (`Buffer.byteLength`) | bcrypt only hashes the first 72 UTF-8 bytes (DEC-18) |
 
 ### 1. Feature design
 
@@ -141,7 +143,7 @@ For each feature, make these commits in order and keep the hashes:
 
 **Business and security rules.** NFR-03 (bcrypt hash, never returned), NFR-04 (8-hour expiry, logout invalidates immediately), FR-01 (same error for unknown email and wrong password). The role always comes from the database.
 
-**Validation.** `email`: string, valid email format, max 254. `password`: string, 1 to 128 characters. Unknown fields are rejected.
+**Validation.** `email`: string, valid email format, max 254. `password`: string, 1 to 72 bytes. Unknown fields are rejected.
 
 **Dependencies.** `User` and `Session` tables, seeded accounts.
 
