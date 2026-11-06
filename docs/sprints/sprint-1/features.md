@@ -18,6 +18,7 @@
 | 1.2 | 2026-11-05 | F-01, F-02, F-03 and F-04 each gained a "Failure and boundary cases" subsection summarising the failure and boundary behavior already defined by their AC and STS rows | Deliverable 1 §3.5 lists failure/boundary cases as part of the feature design |
 | 1.3 | 2026-11-05 | F-01 Failure and boundary cases: clarified wrong-password vs unknown-email cookie behavior; clarified logout session invalidation and 204 return | Precision fix aligning failure and boundary statements with AC-02, AC-03, and AC-06 |
 | 1.4 | 2026-11-06 | F-01 Validation: login `password` limit changed from 128 characters to 72 bytes (`Buffer.byteLength`) | Match bcrypt's 72-byte input limit so passwords beyond 72 UTF-8 bytes are not silently truncated (DEC-18) |
+| 1.5 | 2026-11-06 | F-02 API: `GET /api/menu` also returns `isAvailable` alongside the computed `available` flag | ISSUE-4 technical specification lists `isAvailable` in the payload; the field is the stored flag, so the client never has to infer it |
 
 Each contract below keeps its own revision history. Log every change there with a reason; do not rewrite earlier entries.
 
@@ -244,7 +245,7 @@ In addition to the Product Definition of Done (section 2 of this document):
 | Requirements | FR-04, BR-02 (defines the availability rule; F-03 enforces it, AC-11/AC-21/AC-22), NFR-09 (partial) |
 | Sprint | 1 |
 | Depends on | R-03 (schema and seed) |
-| Contract version | 1.2 (2026-11-05) |
+| Contract version | 1.3 (2026-11-06) |
 | Issue / branch | ISSUE-4 / `feature/F-02-menu-browsing` |
 
 ### Revision history
@@ -253,6 +254,7 @@ In addition to the Product Definition of Done (section 2 of this document):
 | 1.0 | 2026-11-03 | Initial contract | Before implementation |
 | 1.1 | 2026-11-05 | Contract index and header state that F-02 defines BR-02 and F-03 enforces it (AC-11/AC-21/AC-22) | Remove the BR-02 ownership ambiguity |
 | 1.2 | 2026-11-05 | Added a Failure and boundary cases subsection citing AC-11 to AC-13 | Document failure and boundary behavior already defined by the AC and STS |
+| 1.3 | 2026-11-06 | API response also includes `isAvailable` next to the computed `available` flag | ISSUE-4 technical specification requires the stored flag in the payload; AC-10 still guarantees every listed field and no `createdAt` |
 
 ### 1. Feature design
 
@@ -276,7 +278,7 @@ In addition to the Product Definition of Done (section 2 of this document):
 #### `GET /api/menu`
 | Item | Spec |
 |---|---|
-| 200 | `{ "items": [ { "id": 1, "name": "Basil Pork Rice", "description": "...", "priceSatang": 6000, "stockQty": 30, "available": true } ] }` ordered by `id` ascending |
+| 200 | `{ "items": [ { "id": 1, "name": "Basil Pork Rice", "description": "...", "priceSatang": 6000, "stockQty": 30, "isAvailable": true, "available": true } ] }` ordered by `id` ascending. `available = isAvailable AND stockQty > 0` |
 | Notes | No `createdAt`, no internal fields. Works with or without a session |
 | Errors | 500 `INTERNAL_ERROR` generic on failure |
 

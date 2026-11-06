@@ -1,0 +1,22 @@
+CampusBites — F-02/F-03 Playwright journeys (TEST-09 regression, TEST-12, TEST-29)
+Tested commit: 0f3c649
+Date: 2026-11-06T15:53:39Z
+Command: npm run e2e
+Exit code: 0
+
+
+> campusbites@1.0.0 e2e
+> npm run e2e --workspace=frontend
+
+
+> campusbites-frontend@1.0.0 e2e
+> playwright test
+
+
+Running 3 tests using 1 worker
+
+  ok 1 [chromium] › e2e\auth.spec.ts:15:1 › TEST-09: customer and operator login, logout and invalid credentials (848ms)
+  ok 2 [chromium] › e2e\menu.spec.ts:4:1 › TEST-12: anonymous menu shows formatted prices and sold-out items (187ms)
+  ok 3 [chromium] › e2e\order.spec.ts:14:1 › TEST-29: a customer places an order and sees the saved total (814ms)
+
+  3 passed (7.1s)
