@@ -9,7 +9,7 @@ export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
   return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
-export function assertTransition(from: OrderStatus, to: OrderStatus): void {
+export function assertTransition(from: OrderStatus, to: OrderStatus): void | Promise<void> {
   if (!canTransition(from, to)) {
     throw new AppError(
       409,

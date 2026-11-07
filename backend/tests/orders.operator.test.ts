@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
 import request from "supertest";
 import type { Response as SupertestResponse } from "supertest";
 import { app } from "../src/app.js";
 import { testPrisma, clearTestDatabase } from "./helpers/testDb.js";
 import { seedDatabase } from "../prisma/seed.js";
+import * as orderStateMachine from "../src/services/orderStateMachine.js";
 
 const CUSTOMER1_EMAIL = "customer1@campusbites.test";
 const CUSTOMER2_EMAIL = "customer2@campusbites.test";
@@ -245,31 +246,85 @@ describe("F-04 Operator Order Management (AC-32 to AC-40)", () => {
     expect(bodyStr).not.toContain("passwordHash");
   });
 
-  it("TEST-40: two operators accepting the same PENDING order concurrently produce one 200, one 409, and one accept history row across 10 runs", async () => {
+  it("TEST-40: two operators accepting the same PENDING order concurrently produce one 200, one 409, and one accept history row across concurrent runs with synchronization barrier", async () => {
     const customerCookie = await loginCookie(CUSTOMER1_EMAIL, CUSTOMER_PASSWORD);
     const operator1Cookie = await loginCookie(OPERATOR1_EMAIL, OPERATOR_PASSWORD);
     const operator2Cookie = await loginCookie(OPERATOR2_EMAIL, OPERATOR_PASSWORD);
 
-    for (let attempt = 0; attempt < 10; attempt += 1) {
-      const order = await createOrder(customerCookie, "Basil Pork Rice", 1);
+    function createBarrier(expectedCount = 2, timeoutMs = 4000) {
+      let count = 0;
+      let release!: () => void;
+      let rejectTimeout!: (err: Error) => void;
 
-      const [res1, res2] = await Promise.all([
-        request(app).post(`/api/orders/${order.id}/accept`).set("Cookie", operator1Cookie),
-        request(app).post(`/api/orders/${order.id}/accept`).set("Cookie", operator2Cookie),
-      ]);
-
-      const statuses = [res1.status, res2.status].sort((a, b) => a - b);
-      expect(statuses, `attempt ${attempt + 1}`).toEqual([200, 409]);
-
-      const rejected = res1.status === 409 ? res1 : res2;
-      expect(rejected.body.error.code).toBe("INVALID_TRANSITION");
-
-      const dbOrder = await testPrisma.order.findUniqueOrThrow({
-        where: { id: order.id },
-        include: { history: true },
+      const promise = new Promise<void>((resolve, reject) => {
+        release = resolve;
+        rejectTimeout = reject;
       });
-      expect(dbOrder.status).toBe("ACCEPTED");
-      expect(dbOrder.history).toHaveLength(2);
+
+      const timer = setTimeout(() => {
+        rejectTimeout(
+          new Error(`Barrier timed out after ${timeoutMs}ms waiting for ${expectedCount} callers (reached ${count})`)
+        );
+      }, timeoutMs);
+
+      return async function wait() {
+        count += 1;
+        if (count >= expectedCount) {
+          clearTimeout(timer);
+          release();
+        }
+        await promise;
+      };
+    }
+
+    const originalAssertTransition = orderStateMachine.assertTransition;
+    const ITERATIONS = 3;
+
+    for (let attempt = 0; attempt < ITERATIONS; attempt += 1) {
+      const order = await createOrder(customerCookie, "Basil Pork Rice", 1);
+      const barrier = createBarrier(2, 4000);
+
+      const spy = vi
+        .spyOn(orderStateMachine, "assertTransition")
+        .mockImplementation(async (from, to) => {
+          originalAssertTransition(from, to);
+          await barrier();
+        });
+
+      try {
+        const [res1, res2] = await Promise.all([
+          request(app).post(`/api/orders/${order.id}/accept`).set("Cookie", operator1Cookie),
+          request(app).post(`/api/orders/${order.id}/accept`).set("Cookie", operator2Cookie),
+        ]);
+
+        const statuses = [res1.status, res2.status].sort((a, b) => a - b);
+        expect(statuses, `attempt ${attempt + 1}`).toEqual([200, 409]);
+
+        const rejected = res1.status === 409 ? res1 : res2;
+        expect(rejected.body.error.code).toBe("INVALID_TRANSITION");
+
+        const dbOrder = await testPrisma.order.findUniqueOrThrow({
+          where: { id: order.id },
+          include: { history: { orderBy: { id: "asc" } } },
+        });
+        expect(dbOrder.status).toBe("ACCEPTED");
+        expect(dbOrder.history).toHaveLength(2);
+
+        const [createRow, acceptRow] = dbOrder.history;
+        expect(createRow.fromStatus).toBeNull();
+        expect(createRow.toStatus).toBe("PENDING");
+
+        expect(acceptRow.fromStatus).toBe("PENDING");
+        expect(acceptRow.toStatus).toBe("ACCEPTED");
+        expect(acceptRow.actorRole).toBe("OPERATOR");
+
+        const acceptHistoryRows = dbOrder.history.filter(
+          (h) => h.fromStatus === "PENDING" && h.toStatus === "ACCEPTED"
+        );
+        expect(acceptHistoryRows).toHaveLength(1);
+      } finally {
+        spy.mockRestore();
+      }
     }
   });
 });

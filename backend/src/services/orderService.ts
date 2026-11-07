@@ -264,7 +264,7 @@ export const orderService = {
         throw new AppError(404, "NOT_FOUND", "Order not found");
       }
 
-      assertTransition(existing.status, "ACCEPTED");
+      await assertTransition(existing.status, "ACCEPTED");
 
       const updated = await tx.order.updateMany({
         where: { id: orderId, status: "PENDING" },
