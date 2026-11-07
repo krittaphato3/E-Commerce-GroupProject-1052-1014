@@ -1,0 +1,128 @@
+{
+  "E-01": {
+    "feature": "F-01",
+    "role": "Anonymous visitor (signed out)",
+    "start": "Application running against the seeded database; no session cookie.",
+    "steps": "Open the application root; the router sends an unauthenticated visitor to /login.",
+    "expected": "Login form with email, password and one Log in action; protected routes are unreachable.",
+    "actual": "Empty form shown, with no credentials prefilled and no error alert.",
+    "result": "PASS"
+  },
+  "E-02": {
+    "feature": "F-01",
+    "role": "Customer (Alice) attempting a wrong password",
+    "start": "Seeded customer account exists; signed out.",
+    "steps": "Enter customer1@campusbites.test with a wrong password and submit.",
+    "expected": "401 with the generic message \"Invalid email or password.\"; no session is created and the form stays.",
+    "actual": "Generic alert shown; no redirect and no detail that would reveal whether the account exists.",
+    "result": "PASS"
+  },
+  "E-03": {
+    "feature": "F-02",
+    "role": "Customer (Alice)",
+    "start": "Signed in; the seeded catalogue contains available, low-stock and sold-out items.",
+    "steps": "Open the menu after login.",
+    "expected": "THB prices; sold-out items cannot be added; the low-stock hint is visible; the cart starts empty.",
+    "actual": "Prices in THB; Chicken Sandwich and Pad Thai show Sold out with disabled Add; Mango Sticky Rice shows \"1 left\"; the cart is empty.",
+    "result": "PASS"
+  },
+  "E-04": {
+    "feature": "F-02",
+    "role": "Anonymous visitor at phone width",
+    "start": "Signed out; viewport 430 x 932 px.",
+    "steps": "Open the menu at 430 px width.",
+    "expected": "The same catalogue information, sold-out states and prices stay visible and usable at phone width.",
+    "actual": "Sold-out badges, the low-stock hint, disabled Add buttons and the anonymous \"Log in to order\" action all remain visible without clipped controls.",
+    "result": "PASS"
+  },
+  "E-05": {
+    "feature": "F-03",
+    "role": "Customer (Alice)",
+    "start": "Signed in; menu loaded; both chosen items are in stock.",
+    "steps": "Add Basil Pork Rice (THB 60.00) twice and Thai Iced Tea (THB 30.00) once.",
+    "expected": "Two cart lines with line totals, an estimated total of THB 150.00, an empty pickup note and an enabled Place order action.",
+    "actual": "Two lines, correct line totals, estimated total ฿150.00 and an empty pickup note.",
+    "result": "PASS"
+  },
+  "E-06": {
+    "feature": "F-03",
+    "role": "Customer (Alice)",
+    "start": "The cart already contains Mango Sticky Rice; the item becomes sold out before submission (the test prepares this state).",
+    "steps": "Submit the order.",
+    "expected": "409 ITEM_UNAVAILABLE with an inline alert; both cart lines and the total stay on screen; no navigation.",
+    "actual": "The alert \"Mango Sticky Rice is sold out.\" appears; both lines and the total remain and the URL does not change.",
+    "result": "PASS"
+  },
+  "E-07": {
+    "feature": "F-03",
+    "role": "Customer (Alice)",
+    "start": "Valid two-line cart; signed in.",
+    "steps": "Place the order; the SPA follows the 201 response to the order detail.",
+    "expected": "Order number, PENDING and UNPAID badges, the server total, line items, pickup note and a first history entry by CUSTOMER.",
+    "actual": "CB-000003 shows Pending and Unpaid, both lines with unit prices, ฿150.00 and the first history entry \"Order placed\" by CUSTOMER.",
+    "result": "PASS"
+  },
+  "E-08": {
+    "feature": "F-03",
+    "role": "Customer (Alice)",
+    "start": "Three orders exist for Alice: CB-000001 accepted, CB-000002 and CB-000003 pending.",
+    "steps": "Open My orders.",
+    "expected": "Only the caller's orders, newest first, with number, placed time, status and total.",
+    "actual": "CB-000003, CB-000002 and CB-000001 are listed newest first with their statuses and totals; no other customer's orders appear.",
+    "result": "PASS"
+  },
+  "E-09": {
+    "feature": "F-04",
+    "role": "Operator (Staff Operator 1)",
+    "start": "Two PENDING orders exist, CB-000001 and CB-000002, placed one second apart.",
+    "steps": "Log in as operator and open Incoming orders; the Pending filter is the default.",
+    "expected": "Pending orders oldest first, with distinct placed times and an Accept action on each row.",
+    "actual": "CB-000001 appears above CB-000002 at 9:21:05 PM and 9:21:06 PM; both are PENDING and both have Accept.",
+    "result": "PASS"
+  },
+  "E-10": {
+    "feature": "F-04",
+    "role": "Operator (Staff Operator 1)",
+    "start": "The same dashboard; CB-000001 is still PENDING.",
+    "steps": "Inspect the CB-000001 row immediately before the acceptance click.",
+    "expected": "The row shows PENDING and a green Accept button, so the status and the action are visible together.",
+    "actual": "Row CB-000001 is PENDING with its Accept button visible; no status change has happened yet.",
+    "result": "PASS"
+  },
+  "E-11": {
+    "feature": "F-04",
+    "role": "Operator (Staff Operator 1)",
+    "start": "The Accept action on CB-000001 has just completed.",
+    "steps": "Switch the filter to All and wait for the refreshed list.",
+    "expected": "CB-000001 is ACCEPTED with no action button; CB-000002 is still PENDING with Accept; the All filter is active.",
+    "actual": "All is selected; CB-000001 is Accepted with no action; CB-000002 remains Pending with Accept.",
+    "result": "PASS"
+  },
+  "E-12": {
+    "feature": "F-04",
+    "role": "Customer (Alice)",
+    "start": "CB-000001 has been accepted by the operator.",
+    "steps": "Open the order detail as Alice.",
+    "expected": "ACCEPTED status and a two-entry history: placed by CUSTOMER, then Pending to Accepted by OPERATOR, each with a timestamp.",
+    "actual": "Accepted badge with the history rows \"Order placed\" and \"Pending to Accepted\" and their timestamps.",
+    "result": "PASS"
+  },
+  "E-13": {
+    "feature": "R-01",
+    "role": "Customer (Alice)",
+    "start": "Signed in as a customer with no operator role.",
+    "steps": "Navigate directly to /operator/orders.",
+    "expected": "An in-place 403 Forbidden alert; no operator table and no order data.",
+    "actual": "\"403 Forbidden: You have no access to this page.\" is shown instead of the table; the API also returns 403 without order data (TEST-37, TEST-38, TEST-43).",
+    "result": "PASS"
+  },
+  "E-14": {
+    "feature": "F-01",
+    "role": "Customer (Alice)",
+    "start": "Signed in with an active session.",
+    "steps": "Click Logout.",
+    "expected": "The session is cleared and the empty login form is shown; the old cookie is rejected on the next request.",
+    "actual": "The login form is shown again; TEST-06 asserts that the old session receives 401 on the next request.",
+    "result": "PASS"
+  }
+}

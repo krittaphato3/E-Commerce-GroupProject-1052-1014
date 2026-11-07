@@ -5,560 +5,127 @@ Run from anywhere inside the repository:
 
     python docs/deliverable-1/build_docx.py
 
-Reads the Markdown sources in docs/ and the evidence artefacts in
-docs/evidence/, then writes docs/deliverable-1/Deliverable-1.docx.
-Requires Python 3.10+ and python-docx (``pip install python-docx``).
+Reads the Markdown sources in docs/, the screenshot manifest and captions in
+docs/evidence/, and writes docs/deliverable-1/Deliverable-1.docx.
+
+Page numbers in the Contents and in the Part A-F navigation table come from
+docs/deliverable-1/.build-pages.json, which docs/deliverable-1/check_docx.py
+writes after rendering the document to PDF. Build once, render and check, then
+build again to fill the numbers. Requires python-docx and, for checking, a
+LibreOffice installation plus PyMuPDF.
 """
 
 from __future__ import annotations
 
 import json
 import re
-import subprocess
 from datetime import date
 from pathlib import Path
 
 from docx import Document
 from docx.enum.section import WD_ORIENT, WD_SECTION
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.image.image import Image as DocxImage
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT, WD_TAB_LEADER
 from docx.shared import Cm, Pt, RGBColor
 
-ROOT = Path(__file__).resolve().parents[2]
-EVIDENCE = ROOT / "docs" / "evidence"
-OUTPUT = ROOT / "docs" / "deliverable-1" / "Deliverable-1.docx"
+from docx_base import (
+    BLUE,
+    EVIDENCE,
+    GREY,
+    NAVY,
+    OUTPUT,
+    ROOT,
+    Renderer,
+    add_bottom_rule,
+    add_header_and_footer,
+    add_left_border,
+    add_paragraph_shading,
+    configure_styles,
+    git_hash,
+    prevent_row_split,
+    render_inline,
+    set_table_margins,
+    shade_cell,
+    split_row,
+    usable_cm,
+)
 
-NAVY = RGBColor(0x1F, 0x38, 0x64)
-BLUE = RGBColor(0x0D, 0x6E, 0xFD)
-GREY = RGBColor(0x5A, 0x5A, 0x5A)
-BODY_FONT = "Calibri"
-MONO_FONT = "Consolas"
+STUDENT_1 = "Krittaphat Panyasomphan (67070501052)"
+STUDENT_2 = "Napat Kasemweerasan (67070501014)"
+THEME = "E-Commerce / CampusBites"
+REPO_URL = "https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014"
+REPO_LABEL = "github.com/krittaphato3/E-Commerce-GroupProject-1052-1014"
+RELEASE_TAG = "sprint-1-v1.0"
+TESTED_COMMIT = "c8fd8fc"
+PAGE_FILE = ROOT / "docs" / "deliverable-1" / ".build-pages.json"
 
+PART_TITLES = {
+    "A": "Part A — Software Requirements Specification",
+    "B": "Part B — Features and Requirements Traceability",
+    "C": "Part C — System-Level Software Design Specification",
+    "D": "Part D — Three-Sprint Plan",
+    "E": "Part E — Sprint 1 Engineering Contracts",
+    "F": "Part F — Execution Evidence",
+}
+APPENDIX_LOGS = "Appendix A — Test Execution Logs"
+TEST_EXCERPTS_PATH = "docs/evidence/test-excerpts.md"
 
-# --------------------------------------------------------------------------- #
-# File-level study sources
-# --------------------------------------------------------------------------- #
-PARTS = [
-    ("Part 1 — Software Requirements Specification", "docs/srs.md"),
-    ("Part 2 — System-Level Software Design Specification", "docs/system-sds.md"),
-    ("Part 3 — Three-Sprint Plan", "docs/sprints/plan.md"),
-    ("Part 4 — Sprint 1 Feature Contracts", "docs/sprints/sprint-1/features.md"),
+TOC_ENTRIES = [
+    (PART_TITLES["A"], 0),
+    (PART_TITLES["B"], 0),
+    ("B.1 Feature inventory and coverage", 1),
+    ("B.2 Requirements traceability matrix", 1),
+    (PART_TITLES["C"], 0),
+    (PART_TITLES["D"], 0),
+    (PART_TITLES["E"], 0),
+    (PART_TITLES["F"], 0),
+    ("F.1 Verification summary", 1),
+    ("F.2 Screenshot evidence", 1),
+    ("F.3 Build and test results", 1),
+    ("F.4 Red-then-green (TDD) evidence", 1),
+    ("F.5 Test excerpts", 1),
+    ("F.6 Git workflow, review and release status", 1),
+    ("F.7 Contributions and AI-use declaration", 1),
+    ("F.8 Setup summary", 1),
+    ("F.9 Known limitations", 1),
+    (APPENDIX_LOGS, 0),
 ]
-TRACEABILITY = ("Part 5 — Requirements Traceability Matrix", "docs/traceability.md")
-APPENDIX_FEATURES = ("Appendix A — Feature Inventory", "docs/features.md")
-APPENDIX_EXCERPTS = ("Appendix B — Test Excerpts", "docs/evidence/test-excerpts.md")
 
 
 # --------------------------------------------------------------------------- #
-# Small helpers
+# Page map
 # --------------------------------------------------------------------------- #
-def git_hash() -> str:
-    try:
-        return subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, text=True
-        ).strip()
-    except Exception:
-        return "unknown"
+def load_pages() -> dict[str, int]:
+    if not PAGE_FILE.exists():
+        return {}
+    raw = json.loads(PAGE_FILE.read_text(encoding="utf-8"))
+    return {key: int(value) for key, value in raw.items()}
 
 
-def usable_cm(section) -> float:
-    # Subtraction of Length objects yields plain EMU integers, so convert explicitly.
-    length_emu = int(section.page_width) - int(section.left_margin) - int(section.right_margin)
-    return length_emu / 360000.0
+def page_of(pages: dict[str, int], title: str) -> str:
+    value = pages.get(title)
+    return str(value) if value else "00"
 
 
-PPR_ORDER = [qn(tag) for tag in (
-    "w:pStyle", "w:keepNext", "w:keepLines", "w:pageBreakBefore", "w:framePr",
-    "w:widowControl", "w:numPr", "w:suppressLineNumbers", "w:pBdr", "w:shd",
-    "w:tabs", "w:suppressAutoHyphens", "w:kinsoku", "w:wordWrap", "w:overflowPunct",
-    "w:topLinePunct", "w:autoSpaceDE", "w:autoSpaceDN", "w:bidi", "w:adjustRightInd",
-    "w:snapToGrid", "w:spacing", "w:ind", "w:contextualSpacing", "w:mirrorIndents",
-    "w:suppressOverlap", "w:jc", "w:textDirection", "w:textAlignment",
-    "w:textboxTightWrap", "w:outlineLvl", "w:divId", "w:cnfStyle", "w:rPr",
-    "w:sectPr", "w:pPrChange",
-)]
-TCPR_ORDER = [qn(tag) for tag in (
-    "w:cnfStyle", "w:tcW", "w:gridSpan", "w:hMerge", "w:vMerge", "w:tcBorders",
-    "w:shd", "w:noWrap", "w:tcMar", "w:textDirection", "w:tcFitText", "w:vAlign",
-    "w:hideMark", "w:headers", "w:cellIns", "w:cellDel", "w:cellMerge", "w:tcPrChange",
-)]
-TBLPR_ORDER = [qn(tag) for tag in (
-    "w:tblStyle", "w:tblpPr", "w:tblOverlap", "w:bidiVisual", "w:tblStyleRowBandSize",
-    "w:tblStyleColBandSize", "w:tblW", "w:jc", "w:tblCellSpacing", "w:tblInd",
-    "w:tblBorders", "w:shd", "w:tblLayout", "w:tblCellMar", "w:tblLook",
-    "w:tblCaption", "w:tblDescription",
-)]
-TRPR_ORDER = [qn(tag) for tag in (
-    "w:cnfStyle", "w:divId", "w:gridBefore", "w:gridAfter", "w:wBefore", "w:wAfter",
-    "w:cantSplit", "w:trHeight", "w:tblHeader", "w:tblCellSpacing", "w:jc",
-    "w:hidden", "w:ins", "w:del", "w:trPrChange",
-)]
+def page_range(pages: dict[str, int], start: str, end: str | None = None) -> str:
+    first = pages.get(start)
+    if not first:
+        return "—"
+    if end:
+        last = pages.get(end)
+        if last and last > first:
+            return f"{first}–{last - 1}"
+        return str(first)
+    total = pages.get("__total__", first)
+    return f"{first}–{total}" if total > first else str(first)
 
 
-def insert_in_order(parent, element, order: list[str]) -> None:
-    """Insert element so the OOXML child order stays schema-valid for Word."""
-    try:
-        position = order.index(element.tag)
-    except ValueError:
-        parent.append(element)
-        return
-    for child in list(parent):
-        if child.tag in order and order.index(child.tag) > position:
-            child.addprevious(element)
-            return
-    parent.append(element)
-
-
-def shade_cell(cell, fill: str) -> None:
-    tc_pr = cell._tc.get_or_add_tcPr()
-    shd = OxmlElement("w:shd")
-    shd.set(qn("w:val"), "clear")
-    shd.set(qn("w:color"), "auto")
-    shd.set(qn("w:fill"), fill)
-    insert_in_order(tc_pr, shd, TCPR_ORDER)
-
-
-def set_table_margins(table, top: int = 30, left: int = 70, bottom: int = 30, right: int = 70) -> None:
-    tbl_pr = table._tbl.tblPr
-    mar = OxmlElement("w:tblCellMar")
-    for tag, value in (("top", top), ("left", left), ("bottom", bottom), ("right", right)):
-        el = OxmlElement(f"w:{tag}")
-        el.set(qn("w:w"), str(value))
-        el.set(qn("w:type"), "dxa")
-        mar.append(el)
-    insert_in_order(tbl_pr, mar, TBLPR_ORDER)
-
-
-def repeat_header(row) -> None:
-    tr_pr = row._tr.get_or_add_trPr()
-    header = OxmlElement("w:tblHeader")
-    header.set(qn("w:val"), "true")
-    insert_in_order(tr_pr, header, TRPR_ORDER)
-
-
-def add_paragraph_shading(paragraph, fill: str) -> None:
-    p_pr = paragraph._p.get_or_add_pPr()
-    shd = OxmlElement("w:shd")
-    shd.set(qn("w:val"), "clear")
-    shd.set(qn("w:color"), "auto")
-    shd.set(qn("w:fill"), fill)
-    insert_in_order(p_pr, shd, PPR_ORDER)
-
-
-def add_left_border(paragraph, color: str = "BDBDBD") -> None:
-    p_pr = paragraph._p.get_or_add_pPr()
-    p_bdr = OxmlElement("w:pBdr")
-    left = OxmlElement("w:left")
-    left.set(qn("w:val"), "single")
-    left.set(qn("w:sz"), "12")
-    left.set(qn("w:space"), "6")
-    left.set(qn("w:color"), color)
-    p_bdr.append(left)
-    insert_in_order(p_pr, p_bdr, PPR_ORDER)
-
-
-def add_bottom_rule(paragraph, color: str = "0D6EFD", size: str = "12") -> None:
-    p_pr = paragraph._p.get_or_add_pPr()
-    p_bdr = OxmlElement("w:pBdr")
-    bottom = OxmlElement("w:bottom")
-    bottom.set(qn("w:val"), "single")
-    bottom.set(qn("w:sz"), size)
-    bottom.set(qn("w:space"), "6")
-    bottom.set(qn("w:color"), color)
-    p_bdr.append(bottom)
-    insert_in_order(p_pr, p_bdr, PPR_ORDER)
-
-
-def add_field(paragraph, instruction: str, placeholder: str = "") -> None:
-    run = paragraph.add_run()
-    begin = OxmlElement("w:fldChar")
-    begin.set(qn("w:fldCharType"), "begin")
-    instr = OxmlElement("w:instrText")
-    instr.set(qn("xml:space"), "preserve")
-    instr.text = instruction
-    sep = OxmlElement("w:fldChar")
-    sep.set(qn("w:fldCharType"), "separate")
-    text = OxmlElement("w:t")
-    text.text = placeholder
-    end = OxmlElement("w:fldChar")
-    end.set(qn("w:fldCharType"), "end")
-    for element in (begin, instr, sep, text, end):
-        run._r.append(element)
-
-
-INLINE_RE = re.compile(r"(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|\[[^\]]+\]\([^)]+\))")
-ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
-CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]")
-
-
-def sanitize(text: str) -> str:
-    """Strip ANSI escapes and control bytes that Word XML cannot store."""
-    return CONTROL_RE.sub("", ANSI_RE.sub("", text))
-
-
-def unescape(text: str) -> str:
-    return (
-        text.replace("\\|", "|")
-        .replace("\\*", "*")
-        .replace("\\_", "_")
-        .replace("\\`", "`")
-        .replace("&nbsp;", " ")
-        .replace("&amp;", "&")
-        .replace("&lt;", "<")
-        .replace("&gt;", ">")
-    )
-
-
-def render_inline(paragraph, text: str, size: float | None = None, bold: bool = False, italic: bool = False):
-    text = sanitize(unescape(text))
-
-    def add_run(value: str, is_code: bool = False, is_bold: bool = False, is_italic: bool = False) -> None:
-        run = paragraph.add_run(value)
-        if is_code:
-            run.font.name = MONO_FONT
-        if size:
-            run.font.size = Pt(max(size - 1.0, 5.5) if is_code else size)
-        if bold or is_bold:
-            run.bold = True
-        if italic or is_italic:
-            run.italic = True
-
-    for token in INLINE_RE.split(text):
-        if not token:
-            continue
-        if token.startswith("**") and token.endswith("**") and len(token) > 4:
-            # Bold may wrap inline code, e.g. **Workflow (`POST /api/orders`).**
-            for part in re.split(r"(`[^`]+`)", token[2:-2]):
-                if not part:
-                    continue
-                if part.startswith("`") and part.endswith("`") and len(part) > 2:
-                    add_run(part[1:-1], is_code=True, is_bold=True)
-                else:
-                    add_run(part, is_bold=True)
-        elif token.startswith("`") and token.endswith("`") and len(token) > 2:
-            add_run(token[1:-1], is_code=True)
-        elif token.startswith("*") and token.endswith("*") and len(token) > 2:
-            add_run(token[1:-1], is_italic=True)
-        elif token.startswith("[") and "](" in token and token.endswith(")"):
-            label, url = token[1:-1].split("](", 1)
-            if label:
-                render_inline(paragraph, label, size=size, bold=bold, italic=italic)
-            tail = paragraph.add_run(f" ({url})")
-            tail.font.size = Pt(7.5)
-            tail.font.color.rgb = GREY
-            if bold:
-                tail.bold = True
-        else:
-            add_run(token)
-
-
-def compute_widths(rows: list[list[str]], total_cm: float) -> list[float]:
-    ncols = len(rows[0])
-    maxlen = []
-    for index in range(ncols):
-        maxlen.append(max(len(row[index]) if index < len(row) else 0 for row in rows))
-    weights = [max(value, 4) ** 0.55 for value in maxlen]
-    total_weight = sum(weights)
-    widths = [total_cm * weight / total_weight for weight in weights]
-    minimum = 1.25
-    widths = [max(width, minimum) for width in widths]
-    scale = total_cm / sum(widths)
-    return [width * scale for width in widths]
-
-
-def split_row(line: str) -> list[str]:
-    text = line.strip()
-    if text.startswith("|"):
-        text = text[1:]
-    if text.endswith("|"):
-        text = text[:-1]
-    text = text.replace("\\|", "\u0000")
-    return [cell.replace("\u0000", "|").strip() for cell in text.split("|")]
-
-
-def is_separator(line: str) -> bool:
-    cells = split_row(line)
-    return bool(cells) and all(re.fullmatch(r":?-{2,}:?", cell) for cell in cells)
+def shot_heading(shot: dict, meta: dict) -> str:
+    return f"{shot['id']} · {shot['flow']} ({shot['ac']})"
 
 
 # --------------------------------------------------------------------------- #
-# Markdown renderer
+# Front matter
 # --------------------------------------------------------------------------- #
-class Renderer:
-    def __init__(self, document: Document, width_cm: float):
-        self.doc = document
-        self.width_cm = width_cm
-
-    # -- primitives -------------------------------------------------------- #
-    def spacer(self, points: float = 4) -> None:
-        paragraph = self.doc.add_paragraph()
-        fmt = paragraph.paragraph_format
-        fmt.space_before = Pt(0)
-        fmt.space_after = Pt(0)
-        fmt.line_spacing = 1.0
-        paragraph.add_run("").font.size = Pt(points)
-
-    def heading(self, text: str, level: int) -> None:
-        paragraph = self.doc.add_paragraph(style=f"Heading {min(level, 5)}")
-        render_inline(paragraph, text)
-
-    def paragraph(self, text: str) -> None:
-        paragraph = self.doc.add_paragraph()
-        render_inline(paragraph, text)
-
-    def list_item(self, text: str, level: int, ordered: bool, number: str | None) -> None:
-        paragraph = self.doc.add_paragraph()
-        fmt = paragraph.paragraph_format
-        indent = Cm(0.55 + 0.55 * level)
-        fmt.left_indent = indent
-        fmt.first_line_indent = Cm(-0.45)
-        fmt.space_after = Pt(2)
-        fmt.tab_stops.add_tab_stop(indent)
-        prefix = f"{number}." if ordered and number else "•"
-        paragraph.add_run(prefix + "\t")
-        render_inline(paragraph, text)
-
-    def page_break(self) -> None:
-        self.doc.add_page_break()
-
-    def code_block(self, text: str, language: str = "") -> None:
-        paragraph = self.doc.add_paragraph()
-        fmt = paragraph.paragraph_format
-        fmt.space_before = Pt(2)
-        fmt.space_after = Pt(6)
-        fmt.line_spacing = 1.0
-        fmt.left_indent = Cm(0.2)
-        add_paragraph_shading(paragraph, "F3F4F6")
-        add_left_border(paragraph)
-        run = paragraph.add_run(sanitize(text))
-        run.font.name = MONO_FONT
-        run.font.size = Pt(7.5)
-        if language == "mermaid":
-            caption = self.doc.add_paragraph()
-            run_caption = caption.add_run(
-                "Diagram source is stored as Mermaid text; paste it into mermaid.live to render it."
-            )
-            run_caption.italic = True
-            run_caption.font.size = Pt(7.5)
-            run_caption.font.color.rgb = GREY
-            caption.paragraph_format.space_after = Pt(8)
-
-    def log_block(self, text: str) -> None:
-        lines = text.replace("\r\n", "\n").replace("\r", "").split("\n")
-        chunk_size = 45
-        for start in range(0, len(lines), chunk_size):
-            chunk = lines[start : start + chunk_size]
-            if not chunk:
-                continue
-            paragraph = self.doc.add_paragraph()
-            fmt = paragraph.paragraph_format
-            fmt.space_before = Pt(0)
-            fmt.space_after = Pt(0)
-            fmt.line_spacing = 1.0
-            fmt.left_indent = Cm(0.15)
-            add_paragraph_shading(paragraph, "F7F7F7")
-            run = paragraph.add_run(sanitize("\n".join(chunk)))
-            run.font.name = MONO_FONT
-            run.font.size = Pt(6.8)
-
-    def table(self, rows: list[list[str]]) -> None:
-        if not rows:
-            return
-        ncols = max(len(row) for row in rows)
-        rows = [row + [""] * (ncols - len(row)) for row in rows]
-        table = self.doc.add_table(rows=len(rows), cols=ncols)
-        table.style = "Table Grid"
-        table.autofit = False
-        table.allow_autofit = False
-        widths = compute_widths(rows, self.width_cm)
-        if ncols >= 7:
-            font_size = 7.2
-        elif ncols >= 5:
-            font_size = 8.0
-        else:
-            font_size = 8.8
-        for c_index, width in enumerate(widths):
-            table.columns[c_index].width = Cm(width)
-        for r_index, row in enumerate(rows):
-            for c_index, value in enumerate(row):
-                cell = table.cell(r_index, c_index)
-                cell.width = Cm(widths[c_index])
-                paragraph = cell.paragraphs[0]
-                fmt = paragraph.paragraph_format
-                fmt.space_before = Pt(0)
-                fmt.space_after = Pt(0)
-                fmt.line_spacing = 1.0
-                render_inline(paragraph, value, size=font_size, bold=(r_index == 0))
-                if r_index == 0:
-                    shade_cell(cell, "D9E2F3")
-                elif r_index % 2 == 0:
-                    shade_cell(cell, "F5F7FA")
-        repeat_header(table.rows[0])
-        set_table_margins(table)
-        self.spacer(3)
-
-    def picture(self, path: Path, max_height_cm: float = 9.6) -> None:
-        image = DocxImage.from_file(str(path))
-        aspect = image.px_height / image.px_width if image.px_width else 0.5625
-        width = self.width_cm - 1.6
-        height = width * aspect
-        if height > max_height_cm:
-            height = max_height_cm
-            width = height / aspect
-        self.doc.add_picture(str(path), width=Cm(width))
-        self.doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
-
-    # -- markdown ---------------------------------------------------------- #
-    def render(self, text: str) -> None:
-        lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
-        index = 0
-        kind = None
-        buffer: list[str] = []
-        list_meta = None
-
-        def flush() -> None:
-            nonlocal kind, buffer, list_meta
-            if buffer:
-                body = " ".join(part.strip() for part in buffer).strip()
-                if kind == "list" and list_meta:
-                    ordered, number, level = list_meta
-                    self.list_item(body, level, ordered, number)
-                elif body:
-                    self.paragraph(body)
-            kind = None
-            buffer = []
-            list_meta = None
-
-        while index < len(lines):
-            raw = lines[index].rstrip()
-            stripped = raw.strip()
-
-            if not stripped:
-                flush()
-                index += 1
-                continue
-
-            # fenced code
-            if stripped.startswith("```"):
-                flush()
-                language = stripped[3:].strip()
-                index += 1
-                block: list[str] = []
-                while index < len(lines) and not lines[index].strip().startswith("```"):
-                    block.append(lines[index].rstrip())
-                    index += 1
-                index += 1
-                self.code_block("\n".join(block), language)
-                continue
-
-            # table
-            if stripped.startswith("|") and index + 1 < len(lines) and is_separator(lines[index + 1]):
-                flush()
-                rows: list[list[str]] = []
-                while index < len(lines) and lines[index].strip().startswith("|"):
-                    rows.append(split_row(lines[index]))
-                    index += 1
-                if len(rows) >= 2:
-                    rows = [rows[0]] + rows[2:]
-                self.table(rows)
-                continue
-
-            # horizontal rule: start a new page only when it precedes a section
-            if re.fullmatch(r"-{3,}", stripped):
-                flush()
-                look = index + 1
-                while look < len(lines) and not lines[look].strip():
-                    look += 1
-                if look < len(lines) and lines[look].startswith("## "):
-                    self.page_break()
-                index += 1
-                continue
-
-            # headings
-            match = re.match(r"^(#{1,6})\s+(.*)$", raw)
-            if match:
-                flush()
-                level = len(match.group(1))
-                if level > 1:
-                    self.heading(match.group(2).strip(), level)
-                index += 1
-                continue
-
-            # list items
-            bullet = re.match(r"^(\s*)([-*+])\s+(.*)$", raw)
-            ordered = re.match(r"^(\s*)(\d+)\.\s+(.*)$", raw)
-            if bullet or ordered:
-                flush()
-                if bullet:
-                    indent, body = bullet.group(1), bullet.group(3)
-                    list_meta = (False, None, len(indent) // 2)
-                else:
-                    indent, number, body = ordered.group(1), ordered.group(2), ordered.group(3)
-                    list_meta = (True, number, len(indent) // 2)
-                kind = "list"
-                buffer = [body]
-                index += 1
-                continue
-
-            # plain text (or a continuation line)
-            if kind is None:
-                kind = "para"
-            buffer.append(stripped)
-            index += 1
-
-        flush()
-
-
-# --------------------------------------------------------------------------- #
-# Document assembly
-# --------------------------------------------------------------------------- #
-def configure_styles(document: Document) -> None:
-    normal = document.styles["Normal"]
-    normal.font.name = BODY_FONT
-    normal.font.size = Pt(10)
-    normal.font.color.rgb = RGBColor(0x1A, 0x1A, 0x1A)
-    normal.paragraph_format.space_after = Pt(5)
-    normal.paragraph_format.line_spacing = 1.12
-
-    headings = {
-        "Heading 1": (19, NAVY, 0, 10),
-        "Heading 2": (13.5, RGBColor(0x2E, 0x53, 0x95), 12, 5),
-        "Heading 3": (11.5, NAVY, 10, 4),
-        "Heading 4": (10.5, RGBColor(0x40, 0x40, 0x40), 8, 3),
-    }
-    for name, (size, colour, before, after) in headings.items():
-        style = document.styles[name]
-        style.font.name = BODY_FONT
-        style.font.size = Pt(size)
-        style.font.bold = True
-        style.font.color.rgb = colour
-        style.paragraph_format.space_before = Pt(before)
-        style.paragraph_format.space_after = Pt(after)
-        style.paragraph_format.keep_with_next = True
-
-
-def add_header_and_footer(section, commit: str) -> None:
-    header = section.header.paragraphs[0]
-    header.text = ""
-    header.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    run = header.add_run("Omazon — Deliverable 1 (Sprint 1)")
-    run.font.size = Pt(8)
-    run.font.color.rgb = GREY
-
-    footer = section.footer.paragraphs[0]
-    footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = footer.add_run("Page ")
-    run.font.size = Pt(8)
-    run.font.color.rgb = GREY
-    add_field(footer, " PAGE ", "1")
-    run = footer.add_run(" of ")
-    run.font.size = Pt(8)
-    run.font.color.rgb = GREY
-    add_field(footer, " NUMPAGES ", "1")
-
-
 def add_cover(document: Document, renderer: Renderer, commit: str) -> None:
     for _ in range(3):
         document.add_paragraph()
@@ -576,11 +143,19 @@ def add_cover(document: Document, renderer: Renderer, commit: str) -> None:
     run = subtitle.add_run("Online Food Ordering Platform for a University Canteen")
     run.font.size = Pt(13)
     run.font.color.rgb = GREY
-    subtitle.paragraph_format.space_after = Pt(18)
+    subtitle.paragraph_format.space_after = Pt(4)
+
+    theme = document.add_paragraph()
+    theme.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = theme.add_run(f"Theme: {THEME}")
+    run.bold = True
+    run.font.size = Pt(10.5)
+    run.font.color.rgb = NAVY
+    theme.paragraph_format.space_after = Pt(16)
 
     rule = document.add_paragraph()
     add_bottom_rule(rule, "0D6EFD", "18")
-    rule.paragraph_format.space_after = Pt(22)
+    rule.paragraph_format.space_after = Pt(20)
 
     heading = document.add_paragraph()
     heading.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -588,155 +163,416 @@ def add_cover(document: Document, renderer: Renderer, commit: str) -> None:
     run.bold = True
     run.font.size = Pt(20)
     run.font.color.rgb = NAVY
-    heading.paragraph_format.space_after = Pt(10)
+    heading.paragraph_format.space_after = Pt(8)
 
     meta = document.add_paragraph()
     meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = meta.add_run("Software Engineering · Year 3, Trimester 1 · Group 1052-1014")
-    run.font.size = Pt(11)
-    meta.paragraph_format.space_after = Pt(2)
+    run = meta.add_run("CPE 334 Software Engineering · Semester 1/2026 · Group 1052-1014")
+    run.font.size = Pt(10.5)
+    meta.paragraph_format.space_after = Pt(18)
+
+    students = document.add_paragraph()
+    students.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = students.add_run(f"{STUDENT_1}\n{STUDENT_2}")
+    run.font.size = Pt(12)
+    run.bold = True
+    students.paragraph_format.space_after = Pt(2)
 
     repo = document.add_paragraph()
     repo.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = repo.add_run("github.com/krittaphato3/E-Commerce-GroupProject-1052-1014")
+    run = repo.add_run(REPO_LABEL)
     run.font.size = Pt(9.5)
     run.font.color.rgb = GREY
-    repo.paragraph_format.space_after = Pt(2)
+    repo.paragraph_format.space_after = Pt(20)
 
-    stamp = document.add_paragraph()
-    stamp.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = stamp.add_run(f"sprint-1-staging · assembled {date.today().isoformat()} · source {commit}")
-    run.font.size = Pt(9.5)
-    run.font.color.rgb = GREY
-    stamp.paragraph_format.space_after = Pt(30)
-
-    document.add_paragraph("Document control").runs[0].bold = True
+    document.add_paragraph("Release identification").runs[0].bold = True
     renderer.table(
         [
             ["Field", "Value"],
-            ["Document", "Omazon — Deliverable 1: Sprint 1 Engineering Documentation"],
-            ["Version", "1.0 (assembled from the version-controlled Markdown sources)"],
-            ["Date", date.today().strftime("%d %B %Y")],
-            ["Repository", "github.com/krittaphato3/E-Commerce-GroupProject-1052-1014"],
-            ["Branches", f"sprint-1-staging; evidence and documentation branch at {commit}"],
-            ["Format", "DOCX. To obtain a PDF: File → Save As → PDF."],
-            ["Prepared by", "Group 1052-1014 — napatsun (Sun) and krittaphato3"],
+            ["Release tag", f"{RELEASE_TAG} — NOT YET CREATED; see Part F.6"],
+            ["Code under test", f"{TESTED_COMMIT} — latest recorded unit/integration run: backend 84, frontend 36, all passing"],
+            ["Evidence commit", f"{commit} — screenshots and E2E run; this document is built from that evidence"],
+            ["Repository", REPO_URL],
+            ["Branches", "sprint-1-staging (integration); main release pending"],
+            ["Assembled", date.today().strftime("%d %B %Y")],
         ]
     )
     note = document.add_paragraph()
     run = note.add_run(
-        "Generated by docs/deliverable-1/build_docx.py from the Markdown sources and evidence files "
-        "listed in each part. Edit those sources, not this file."
+        "Generated from the version-controlled Markdown sources and evidence artefacts. "
+        "Edit those sources, not this file."
     )
     run.italic = True
-    run.font.size = Pt(8.5)
+    run.font.size = Pt(8)
     run.font.color.rgb = GREY
 
 
-def add_contents(document: Document) -> None:
+def add_contents(document: Document, width_cm: float, pages: dict[str, int]) -> None:
     paragraph = document.add_paragraph()
     run = paragraph.add_run("Contents")
     run.bold = True
     run.font.size = Pt(20)
     run.font.color.rgb = NAVY
-    paragraph.paragraph_format.space_after = Pt(4)
+    paragraph.paragraph_format.space_after = Pt(2)
 
     hint = document.add_paragraph()
-    run = hint.add_run(
-        "The list below is built from the document headings. If it appears empty, right-click it and "
-        "choose Update Field, or press Ctrl+A then F9."
+    run = hint.add_run("Page numbers refer to the pages of this document.")
+    run.italic = True
+    run.font.size = Pt(8.5)
+    run.font.color.rgb = GREY
+    hint.paragraph_format.space_after = Pt(14)
+
+    for title, indent in TOC_ENTRIES:
+        entry = document.add_paragraph()
+        fmt = entry.paragraph_format
+        fmt.space_after = Pt(4)
+        fmt.left_indent = Cm(0.6 * indent)
+        fmt.tab_stops.add_tab_stop(
+            Cm(width_cm - 0.6 * indent), WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS
+        )
+        run = entry.add_run(title)
+        run.font.size = Pt(10) if indent == 0 else Pt(9.5)
+        run.bold = indent == 0
+        entry.add_run("\t")
+        number = entry.add_run(page_of(pages, title))
+        number.bold = indent == 0
+
+
+def add_navigation(document: Document, renderer: Renderer, pages: dict[str, int]) -> None:
+    paragraph = document.add_paragraph()
+    run = paragraph.add_run("How to navigate this document")
+    run.bold = True
+    run.font.size = Pt(18)
+    run.font.color.rgb = NAVY
+    paragraph.paragraph_format.space_after = Pt(6)
+
+    renderer.paragraph(
+        "Parts A–E reproduce the complete engineering documents. Part F is the execution "
+        "evidence: the screenshots, the runs and their counts, the red-then-green record and "
+        "the workflow evidence. Each row below names the page range, the identifiers a reader "
+        "needs, and where the proof is recorded."
+    )
+
+    part_e_range = page_range(pages, PART_TITLES["E"], PART_TITLES["F"])
+    part_f_page = pages.get(PART_TITLES["F"], "—")
+    renderer.table(
+        [
+            ["Part", "Contents", "Pages", "Key IDs", "Proof in Part F"],
+            [
+                "A — SRS",
+                "Problem and scope, actors, exclusions, functional and business rules, NFRs, assumptions, decisions",
+                page_range(pages, PART_TITLES["A"], PART_TITLES["B"]),
+                "FR-01–FR-17; BR-01–BR-15; NFR-01–NFR-11; DEC-01–DEC-27",
+                "Requirements are tested in F.3.3 and shown in F.2",
+            ],
+            [
+                "B — Features and traceability",
+                "Feature inventory, coverage, full matrix, gaps and approved changes",
+                page_range(pages, PART_TITLES["B"], PART_TITLES["C"]),
+                "F-01–F-13; R-01–R-05; CHG-01–CHG-02",
+                "Planned and actual tests: F.3.3",
+            ],
+            [
+                "C — System design",
+                "Architecture, data model, UI and API conventions, role matrix, authentication, config, GCP plan",
+                page_range(pages, PART_TITLES["C"], PART_TITLES["D"]),
+                "R-01–R-03; NFR-06–NFR-08",
+                "Design claims are evidenced by F.2 and F.3",
+            ],
+            [
+                "D — Plan",
+                "Goals, feature IDs, dependencies, Sprint 1 scope and completion outcome",
+                page_range(pages, PART_TITLES["D"], PART_TITLES["E"]),
+                "F-01–F-04; R-01–R-03",
+                "Sprint 1 outcome and counts: F.1",
+            ],
+            [
+                "E — Contracts",
+                "Feature SDS, API and data specifications, AC, STS and Definition of Done for Sprint 1",
+                part_e_range,
+                "AC-01–AC-46; TEST-01–TEST-46",
+                "Each AC is mapped to its actual test in F.3.3",
+            ],
+            [
+                "F — Execution evidence",
+                "Screenshots with role and steps, build and test results, excerpts, TDD, Git workflow, contributions, setup",
+                page_range(pages, PART_TITLES["F"], APPENDIX_LOGS),
+                "E-01–E-14; L-01–L-14",
+                "This part; raw logs in Appendix A",
+            ],
+        ]
+    )
+    example = document.add_paragraph()
+    run = example.add_run(
+        f"Example: Part E, pages {part_e_range}: F-03, AC-11, TEST-11; "
+        f"execution evidence in Part F, page {part_f_page}."
     )
     run.italic = True
     run.font.size = Pt(8.5)
     run.font.color.rgb = GREY
-    hint.paragraph_format.space_after = Pt(12)
+    example.paragraph_format.space_after = Pt(6)
+    renderer.paragraph(
+        f"Appendix A reproduces the raw terminal logs and starts on page {page_of(pages, APPENDIX_LOGS)}."
+    )
 
-    toc = document.add_paragraph()
-    add_field(toc, 'TOC \\o "1-2" \\h \\z \\u', "Contents will appear here after Word updates the field.")
 
-
-def add_part(document: Document, renderer: Renderer, title: str, relative_path: str) -> None:
+# --------------------------------------------------------------------------- #
+# Parts
+# --------------------------------------------------------------------------- #
+def part_heading(document: Document, title: str) -> None:
     document.add_paragraph(style="Heading 1").add_run(title)
+
+
+def source_line(document: Document, text: str) -> None:
     source = document.add_paragraph()
-    run = source.add_run(f"Source: {relative_path}")
+    run = source.add_run(text)
     run.italic = True
     run.font.size = Pt(8.5)
     run.font.color.rgb = GREY
     source.paragraph_format.space_after = Pt(8)
-    renderer.render((ROOT / relative_path).read_text(encoding="utf-8"))
 
 
-def add_evidence_part(document: Document, renderer: Renderer, manifest: dict) -> None:
-    document.add_paragraph(style="Heading 1").add_run("Part 6 — Sprint 1 Evidence Pack")
-    source = document.add_paragraph()
-    run = source.add_run(
-        "Sources: docs/evidence/ (screenshots and terminal logs), docs/evidence/manifest.json, "
-        "docs/evidence/github-workflow.md and docs/traceability.md"
+def add_part(document: Document, renderer: Renderer, title: str, relative_path: str, demote: int = 0) -> None:
+    part_heading(document, title)
+    source_line(document, f"Source: {relative_path}")
+    renderer.render((ROOT / relative_path).read_text(encoding="utf-8"), demote=demote)
+
+
+def add_subsection(document: Document, renderer: Renderer, title: str, relative_path: str) -> None:
+    document.add_paragraph(style="Heading 2").add_run(title)
+    source_line(document, f"Source: {relative_path}")
+    renderer.render((ROOT / relative_path).read_text(encoding="utf-8"), demote=1)
+
+
+# --------------------------------------------------------------------------- #
+# Part F helpers
+# --------------------------------------------------------------------------- #
+def compact_table(document: Document, rows: list[tuple[str, str]], width_cm: float, key_width: float = 3.5) -> None:
+    table = document.add_table(rows=len(rows), cols=2)
+    table.style = "Table Grid"
+    table.autofit = False
+    table.allow_autofit = False
+    table.columns[0].width = Cm(key_width)
+    table.columns[1].width = Cm(width_cm - key_width)
+    for index, (key, value) in enumerate(rows):
+        key_cell = table.cell(index, 0)
+        value_cell = table.cell(index, 1)
+        key_cell.width = Cm(key_width)
+        value_cell.width = Cm(width_cm - key_width)
+        for cell in (key_cell, value_cell):
+            fmt = cell.paragraphs[0].paragraph_format
+            fmt.space_before = Pt(0)
+            fmt.space_after = Pt(0)
+            fmt.line_spacing = 1.0
+        render_inline(key_cell.paragraphs[0], key, size=8.2, bold=True)
+        render_inline(value_cell.paragraphs[0], value, size=8.2)
+        shade_cell(key_cell, "EDF2F9")
+    for row in table.rows:
+        prevent_row_split(row)
+    set_table_margins(table)
+
+
+def add_placeholder(document: Document, title: str, lines: list[str]) -> None:
+    paragraph = document.add_paragraph()
+    paragraph.paragraph_format.space_before = Pt(8)
+    paragraph.paragraph_format.space_after = Pt(10)
+    add_paragraph_shading(paragraph, "FFF4E5")
+    add_left_border(paragraph, "E67E22")
+    run = paragraph.add_run(title)
+    run.bold = True
+    run.font.size = Pt(9.5)
+    run.font.color.rgb = RGBColor(0x8A, 0x4B, 0x08)
+    for line in lines:
+        paragraph.add_run().add_break()
+        bullet = paragraph.add_run("• " + line)
+        bullet.font.size = Pt(8.5)
+
+
+def add_screenshot(document: Document, renderer: Renderer, shot: dict, meta: dict) -> None:
+    document.add_paragraph(style="Heading 3").add_run(shot_heading(shot, meta))
+    compact_table(
+        document,
+        [
+            ("Feature / AC", f"{meta['feature']} · {shot['ac']}"),
+            ("Role", meta["role"]),
+            ("Starting conditions", meta["start"]),
+            ("Steps", meta["steps"]),
+            ("Expected", meta["expected"]),
+            ("Actual", meta["actual"]),
+            ("Result", meta["result"]),
+        ],
+        renderer.width_cm,
     )
-    run.italic = True
-    run.font.size = Pt(8.5)
-    run.font.color.rgb = GREY
-    source.paragraph_format.space_after = Pt(8)
+    renderer.picture(EVIDENCE / shot["file"], max_height_cm=12.5)
+    note = document.add_paragraph()
+    note.paragraph_format.space_after = Pt(4)
+    render_inline(note, f"Caption: {shot['caption']}", size=8.2, italic=True)
+    limits = document.add_paragraph()
+    limits.paragraph_format.space_after = Pt(4)
+    render_inline(limits, f"Capture note: {shot['note']}", size=8)
 
-    intro = (
+
+def extract_actual(cell: str, test_id: str) -> str:
+    for part in cell.split(";"):
+        files = re.findall(r"[\w./-]+\.(?:tsx|ts)\b", part)
+        if re.search(rf"::{re.escape(test_id)}\b", part) and files:
+            return f"{files[-1]}::{test_id}"
+    return ""
+
+
+def planned_tests(cell: str) -> set[int]:
+    """Expand shorthand such as 'TEST-01, 02, 03' and 'TEST-18–23'."""
+    numbers: set[int] = set()
+    for chunk in re.split(r"[,;]", cell):
+        chunk = chunk.strip()
+        if not chunk or "TBD" in chunk or re.search(r"(LOAD|CHECK|COV)-", chunk):
+            continue
+        if "TEST-" not in chunk and not re.fullmatch(r"\d{1,2}(?:\s*[–-]\s*\d{1,2})?", chunk):
+            continue
+        for match in re.finditer(r"(?:TEST-)?(\d{1,2})(?:\s*[–-]\s*(\d{1,2}))?", chunk):
+            start = int(match.group(1))
+            end = int(match.group(2)) if match.group(2) else start
+            if 1 <= start <= 46:
+                numbers.update(range(start, min(end, 46) + 1))
+    return numbers
+
+
+def build_ac_rows(trace_text: str) -> tuple[list[list[str]], list[int]]:
+    records: list[list[str]] = []
+    for line in trace_text.splitlines():
+        if not line.strip().startswith("|"):
+            continue
+        cells = split_row(line)
+        if len(cells) < 8:
+            continue
+        if re.fullmatch(r"(FR|BR|NFR)-\d+", cells[0].strip()):
+            records.append(cells)
+
+    rows: list[list[str]] = []
+    missing: list[int] = []
+    for number in range(1, 47):
+        test_id = f"TEST-{number:02d}"
+        matches = [cells for cells in records if number in planned_tests(cells[4])]
+        actual = ""
+        for cells in matches:
+            candidate = extract_actual(cells[5], test_id)
+            if candidate and (not actual or cells[6].strip() == "PASS"):
+                actual = candidate
+        results = [cells[6].strip() for cells in matches]
+        if "PASS" in results:
+            result = "PASS"
+        elif results:
+            result = results[0]
+        else:
+            missing.append(number)
+            result = "SEE PART B"
+        automated = "Yes"
+        if "/e2e/" in actual:
+            automated = "Yes (E2E)"
+        if number == 45:
+            automated = "Yes + manual"
+        rows.append([f"AC-{number:02d}", test_id, actual or "See Part B", automated, result])
+    return rows, missing
+
+
+def add_evidence_part(
+    document: Document,
+    renderer: Renderer,
+    manifest: dict,
+    captions: dict,
+    pages: dict[str, int],
+    commit: str,
+) -> None:
+    part_heading(document, PART_TITLES["F"])
+    source_line(
+        document,
+        "Sources: docs/evidence/*.png, manifest.json, captions.json, github-workflow.md, "
+        "test-excerpts.md and docs/traceability.md",
+    )
+    renderer.paragraph(
         "This part records how the Sprint 1 requirements were shown to work. Every screenshot was "
-        "taken from the running application against the seeded database; every terminal log names the "
-        "commit it was produced from. Nothing here is a description of intended behaviour: the "
-        "traceability matrix in Part 5 links each requirement to the test that proves it, and the raw "
-        "output behind the green runs is reproduced in Appendix C."
+        "taken from the running application against the seeded database, and every terminal log names "
+        "the commit it was produced from. The screenshots are presented in the order of the required "
+        "customer and operator journey, followed by the rejection and access-control states. The "
+        "traceability matrix in Part B links each requirement to the test that proves it, and the raw "
+        "output behind the recorded runs is reproduced in Appendix A."
     )
-    renderer.paragraph(intro)
 
     total_tests = 46
     log_files = sorted(EVIDENCE.glob("*.txt"))
     embedded_logs = [log for log in manifest["logs"] if log.get("embed")]
-    renderer.heading("6.1 Verification summary", 2)
+
+    renderer.heading("F.1 Verification summary", 2)
     renderer.table(
         [
             ["Item", "Value"],
-            ["Sprint 1 acceptance criteria", f"{total_tests} (AC-01 to AC-46), one test per AC"],
-            ["Tests recorded in the traceability matrix", f"{total_tests} (TEST-01 to TEST-46)"],
-            ["Latest full unit and integration run", "c8fd8fc — backend 84 passed (15 files), frontend 36 passed (8 files)"],
-            ["Latest full end-to-end run", "c8fd8fc — 6 Playwright journeys passed"],
-            ["Screenshots in this pack", f"{len(manifest['screenshots'])} covering the required flows, rejection states and access control"],
-            ["Terminal logs in the pack", f"{len(log_files)} files in docs/evidence; {len(embedded_logs)} reproduced in Appendix C"],
-            ["Code coverage / load testing", "Not in Sprint 1 scope (NFR-10 is Sprint 2, NFR-05 is Sprint 3)"],
+            ["Sprint 1 acceptance criteria", f"{total_tests} (AC-01 to AC-46); one planned test per AC"],
+            [
+                "Unit and integration (latest recorded)",
+                f"{TESTED_COMMIT} — backend 84 passed (15 files); frontend 36 passed (8 files); 0 failed, 0 skipped",
+            ],
+            [
+                "End-to-end (latest run)",
+                f"{commit} — 6 Playwright journeys passed on 2026-11-07; 0 failed",
+            ],
+            ["Type check and build", f"Green at {TESTED_COMMIT} (build and type-check logs kept in docs/evidence/)"],
+            ["Screenshots", f"{len(manifest['screenshots'])} (E-01 to E-14), captured from the running application"],
+            [
+                "Terminal logs",
+                f"{len(log_files)} files in docs/evidence; {len(embedded_logs)} reproduced in Appendix A",
+            ],
+            ["Rejection and access control", "E-06 rejects an unavailable item; E-13 blocks a customer from an operator screen; API-level proof in F.3.3"],
+            ["Coverage and load testing", "NFR-10 coverage is Sprint 2; the NFR-05 benchmark is Sprint 3 and has not been run (F.9)"],
         ]
     )
 
-    renderer.heading("6.2 Screenshot evidence index", 2)
+    renderer.heading("F.2 Screenshot evidence", 2)
     renderer.paragraph(
-        "The seven flows required for the demo, followed by the rejection and access-control states "
-        "that the contracts also require. Each entry maps to the acceptance criteria it demonstrates."
+        "Each entry below gives the feature and acceptance criteria, the role, the starting "
+        "conditions, the steps taken, and the expected result beside what the capture actually "
+        "shows. The result column states the outcome; it is not inferred from the picture alone."
     )
     renderer.table(
-        [["ID", "Flow", "AC", "File"]]
-        + [[shot["id"], shot["flow"], shot["ac"], shot["file"]] for shot in manifest["screenshots"]]
-    )
-
-    renderer.heading("6.3 Screenshot gallery", 2)
-    renderer.paragraph(
-        "Captions describe what is visible in each frame, including the limits of the capture."
+        [["ID", "Feature", "Flow", "Role", "AC", "Page"]]
+        + [
+            [
+                shot["id"],
+                captions.get(shot["id"], {}).get("feature", "—"),
+                shot["flow"],
+                captions.get(shot["id"], {}).get("role", "—"),
+                shot["ac"],
+                str(pages.get(shot_heading(shot, captions.get(shot["id"], {})), "—")),
+            ]
+            for shot in manifest["screenshots"]
+        ]
     )
     for shot in manifest["screenshots"]:
-        caption = document.add_paragraph()
-        caption.paragraph_format.space_before = Pt(10)
-        caption.paragraph_format.keep_with_next = True
-        run = caption.add_run(f"{shot['id']} · {shot['flow']} ({shot['ac']})")
-        run.bold = True
-        run.font.size = Pt(9)
-        renderer.picture(EVIDENCE / shot["file"])
-        body = document.add_paragraph()
-        body.paragraph_format.space_after = Pt(2)
-        render_inline(body, shot["caption"], size=8.5, italic=True)
-        note = document.add_paragraph()
-        note.paragraph_format.space_after = Pt(8)
-        render_inline(note, f"Note: {shot['note']}", size=8)
+        meta = captions.get(shot["id"])
+        if not meta:
+            continue
+        document.add_page_break()
+        add_screenshot(document, renderer, shot, meta)
 
-    renderer.heading("6.4 Test execution summary", 2)
+    renderer.heading("F.3 Build and test results", 2)
+    renderer.heading("F.3.1 Commands and environments", 3)
+    renderer.table(
+        [
+            ["Command", "Purpose", "Environment"],
+            ["npm install", "Install both workspaces and generate the Prisma client", "Node.js >= 20.12"],
+            ["npm run db:migrate", "Apply Prisma migrations and raw SQL CHECK constraints", "PostgreSQL 16 (Docker Compose)"],
+            ["npm run db:seed", "Load the idempotent synthetic users and menu", "campusbites"],
+            ["npm test", "Backend Vitest + Supertest, then frontend Vitest", "campusbites_test; no mocked SQL"],
+            ["npm run typecheck", "tsc --noEmit across both workspaces", "Local"],
+            ["npm run build", "Backend tsc emit and Vite production bundle", "Local"],
+            ["npm run e2e", "Playwright journeys on ports 3100 and 5174", "campusbites_test; globalSetup resets and seeds"],
+            ["CAPTURE_EVIDENCE=1 npm run e2e", "The same journeys with screenshot capture into docs/evidence/", "campusbites_test"],
+        ]
+    )
+
+    renderer.heading("F.3.2 Recorded runs", 3)
     renderer.paragraph(
-        "Each run was executed from the repository root; logs are stored under docs/evidence/. The "
-        "backend suites run against PostgreSQL (campusbites_test) with no mocked SQL."
+        "Counts are copied from the retained logs, not restated from memory. The full block for each "
+        "embedded run is in Appendix A."
     )
     renderer.table(
         [
@@ -749,10 +585,28 @@ def add_evidence_part(document: Document, renderer: Renderer, manifest: dict) ->
             ["F-04", "End-to-end", "37cf31f", "npm run e2e", "5 journeys passed"],
             ["R-01", "Unit + integration", "c8fd8fc", "npm test", "backend 84 passed; frontend 36 passed"],
             ["R-01", "End-to-end", "c8fd8fc", "npm run e2e", "6 journeys passed"],
+            ["Evidence capture", "End-to-end + screenshots", commit, "CAPTURE_EVIDENCE=1 npm run e2e", "6 journeys passed (2026-11-07)"],
         ]
     )
 
-    renderer.heading("6.5 Red then green (TDD) evidence", 2)
+    renderer.heading("F.3.3 Acceptance criterion to actual test", 3)
+    renderer.paragraph(
+        "TEST-nn verifies AC-nn. The planned test column comes from the Sprint 1 contracts, and the "
+        "actual file and test name are taken from the traceability matrix. All 46 criteria have an "
+        "automated test; TEST-45 additionally requires the manual fresh-clone quickstart check. A test "
+        "is marked PASS only where the matrix records an executed pass at the named commit."
+    )
+    trace_text = (ROOT / "docs/traceability.md").read_text(encoding="utf-8")
+    ac_rows, missing = build_ac_rows(trace_text)
+    renderer.table([["AC", "Planned", "Actual test (file::name)", "Automated", "Result"]] + ac_rows)
+    if missing:
+        renderer.paragraph(
+            "These criteria had no planned test in the matrix and need review before submission: "
+            + ", ".join(f"AC-{number:02d}" for number in missing)
+            + "."
+        )
+
+    renderer.heading("F.4 Red-then-green (TDD) evidence", 2)
     renderer.paragraph(
         "For every feature the failing tests were written first and their output kept. The commit IDs "
         "below match the file names in docs/evidence/."
@@ -767,61 +621,199 @@ def add_evidence_part(document: Document, renderer: Renderer, manifest: dict) ->
         ]
     )
 
-    renderer.heading("6.6 Workflow evidence", 2)
+    renderer.heading("F.5 Test excerpts", 2)
+    renderer.paragraph(
+        "Two short excerpts are reproduced below: one domain rule (the last unit under concurrency) "
+        "and one access restriction (a customer requesting another customer's order). Each keeps the "
+        "setup, the assertion and the executed result."
+    )
+    renderer.render((ROOT / TEST_EXCERPTS_PATH).read_text(encoding="utf-8"), demote=1)
+
+    renderer.heading("F.6 Git workflow, review and release status", 2)
     renderer.paragraph(
         "Feature branches were cut from sprint-1-staging and merged only after a review by the other "
-        "member. No author approved their own pull request. Full detail: docs/evidence/github-workflow.md."
+        "member. No author approved their own pull request. GitHub issue numbers are sequential in "
+        "this repository; the contract's ISSUE-n labels refer to the same slices of work."
     )
     renderer.table(
         [
-            ["PR", "Scope", "Author", "Reviewer", "Merged by", "Date"],
-            ["#8", "Specification baseline", "napatsun", "krittaphato3 (approved)", "krittaphato3", "2026-11-05"],
-            ["#9", "R-03 scaffold, schema, seed", "krittaphato3", "napatsun (changes, then approved)", "napatsun", "2026-11-06"],
-            ["#10", "F-01 authentication", "napatsun", "krittaphato3 (approved)", "krittaphato3", "2026-11-06"],
-            ["#11", "F-02 menu, F-03 orders", "krittaphato3", "napatsun (approved)", "napatsun", "2026-11-07"],
-            ["#12", "F-04 operator acceptance", "napatsun", "krittaphato3 (approved)", "krittaphato3", "2026-11-07"],
-            ["#13", "R-01 access control, E2E", "napatsun", "krittaphato3 (approved)", "krittaphato3", "2026-11-07"],
+            ["PR", "Issue", "Branch", "Author", "Reviewer", "Merged into sprint-1-staging", "Date"],
+            ["#8", "#1", "feature/specification-docs", "napatsun", "krittaphato3 (approved)", "krittaphato3", "2026-11-05"],
+            ["#9", "#2", "feature/sprint1/scaffold-db-seed", "krittaphato3", "napatsun (changes, then approved)", "napatsun", "2026-11-06"],
+            ["#10", "#3", "feature/sprint1/auth-login-logout", "napatsun", "krittaphato3 (approved)", "krittaphato3", "2026-11-06"],
+            ["#11", "#4, #5", "feature/sprint1/menu-and-place-order", "krittaphato3", "napatsun (approved)", "napatsun", "2026-11-07"],
+            ["#12", "#5", "feature/sprint1/operator-accept-order", "napatsun", "krittaphato3 (approved)", "krittaphato3", "2026-11-07"],
+            ["#13", "#6", "feature/sprint1/access-and-e2e-tests", "napatsun", "krittaphato3 (approved)", "krittaphato3", "2026-11-07"],
+        ]
+    )
+
+    renderer.heading("F.6.1 Substantive review findings", 3)
+    renderer.table(
+        [
+            ["Reviewer", "PR", "Finding", "Outcome"],
+            [
+                "napatsun",
+                "#9",
+                "Fresh clone failed at quickstart steps 4–5: P1012 because the root .env was not loaded, and the Prisma client was not initialized. This conflicts with NFR-08.",
+                "Fixed in ab28061 (backend/.env.example, postinstall prisma generate, dotenv); re-reviewed and approved.",
+            ],
+            [
+                "krittaphato3",
+                "#10",
+                "DUMMY_PASSWORD_HASH was hardcoded at bcrypt cost 10, so the timing defence breaks as soon as BCRYPT_ROUNDS is raised.",
+                "Follow-up fixes bb0acb4, f45ba47, 2022899, 6e68bee and 83f0337; approved.",
+            ],
+            [
+                "napatsun",
+                "#11",
+                "Five non-blocking findings: show the API message, fix the My orders link against operator access, add Location on 201, cover the menu 500 path, and cap quantity by stock.",
+                "Handled in the merge and the following PRs; tracked in the traceability revisions.",
+            ],
         ]
     )
     renderer.paragraph(
-        "Contribution split: napatsun implemented F-01, F-04, R-01 and the specification baseline and "
-        "reviewed PR #9 and PR #11; krittaphato3 implemented R-03, F-02 and F-03 and reviewed PR #8, "
-        "#10, #12 and #13. Both members therefore authored and reviewed at least two slices, as the "
-        "sprint contract requires."
+        "The full review threads are in the repository. The findings above are the specific defects "
+        "or risks that changed the implementation, not approval-only comments."
     )
 
-    renderer.heading("6.7 Known gaps and outstanding items", 2)
+    renderer.heading("F.6.2 Contract-before-implementation sequence", 3)
+    commit_log = (EVIDENCE / "sprint-1-commit-log.txt").read_text(encoding="utf-8", errors="replace")
+    log_lines = commit_log.replace("\r\n", "\n").split("\n")
     renderer.paragraph(
-        "Disclosed rather than hidden, as the Definition of Done requires. None of these invalidates a "
-        "passing Sprint 1 test; each is allocated work or a submission step."
+        "The first entries of the staging history show the specification and contract commits before "
+        "the feature implementations, as the Definition of Done requires."
     )
-    for gap in manifest["gaps"]:
-        renderer.list_item(gap, 0, False, None)
+    renderer.log_block("\n".join(log_lines[:26]))
 
-    renderer.paragraph(
-        "Two traceability rows remain INCOMPLETE by design: NFR-09 is verified for the Sprint 1 screens "
-        "but its final usability pass belongs to Sprint 3, and BR-13 is fully verified at the database "
-        "level only until the Sprint 2 catalog API adds its own validation."
+    renderer.heading("F.6.3 Release and final board status", 3)
+    add_placeholder(
+        document,
+        "TO BE COMPLETED AFTER THE RELEASE MERGE — release and board status",
+        [
+            "Current state on 7 November 2026: Issues #1–#6 are closed and PR #8–#13 are merged into sprint-1-staging; Issue #7 and PR #14 (this document) are open; no release PR into main exists; the tag sprint-1-v1.0 has not been created.",
+            "Fill in: the release PR number, its merge commit on main and the tag sprint-1-v1.0 with its date.",
+            "Fill in: the final sprint board state (all Sprint 1 cards Done) and a link or screenshot of the board.",
+            "Then replace the tested commit on the cover with the release commit, so the submitted document names an immutable revision.",
+        ],
     )
+
+    renderer.heading("F.7 Contributions and AI-use declaration", 2)
+    renderer.paragraph(
+        "The contribution split below is the same record as the PR authors, reviewers and merge actors. "
+        "Both members authored at least two slices and reviewed the other member's pull requests."
+    )
+    renderer.table(
+        [
+            ["Member", "Implemented", "Reviewed", "Merged"],
+            [
+                "Krittaphat Panyasomphan (krittaphato3), 67070501052",
+                "R-03 scaffold, schema and seed (PR #9); F-02 menu and F-03 order submission (PR #11)",
+                "PR #8, #10, #12, #13",
+                "PR #8, #10, #12, #13",
+            ],
+            [
+                "Napat Kasemweerasan (napatsun), 67070501014",
+                "F-01 authentication (PR #10); F-04 operator acceptance (PR #12); R-01 route registry and TEST-43 (PR #13); specification baseline (PR #8)",
+                "PR #9, #11",
+                "PR #9, #11",
+            ],
+        ]
+    )
+    add_placeholder(
+        document,
+        "TO BE COMPLETED BY BOTH MEMBERS — AI-use declaration",
+        [
+            "Name every AI assistant or coding tool used, or state that none was used.",
+            "Describe what AI helped with (drafting, test scaffolding, review, documentation) and which parts each member wrote or rewrote themselves.",
+            "State how AI-assisted changes were verified: which tests were run, at which commit, and what was reviewed manually.",
+            "Confirm that no AI output was reported as passing without an executed test, and that all cited screenshots were produced from the running product.",
+        ],
+    )
+
+    renderer.heading("F.8 Setup summary", 2)
+    renderer.paragraph(
+        "A fresh clone needs Node.js 20.12 or newer and Docker. No real credentials are stored in the "
+        "repository; the seeded accounts use local values set in backend/.env."
+    )
+    renderer.table(
+        [
+            ["Dependency / component", "Version or source", "Purpose"],
+            ["Node.js", ">= 20.12 (package.json engines)", "API and frontend build"],
+            ["PostgreSQL", "16 via docker-compose.yml", "campusbites and campusbites_test"],
+            ["Backend", "Express 5, Prisma 6, zod, bcryptjs", "API, persistence, validation, sessions"],
+            ["Frontend", "React 18, Vite 6, Bootstrap 5", "Single-page application"],
+            ["Tests", "Vitest, Supertest, Testing Library, Playwright", "Unit, integration, UI and E2E"],
+            ["Document build", "Python 3.10+, python-docx", "This Word document"],
+        ]
+    )
+    renderer.table(
+        [
+            ["Environment variable", "Purpose"],
+            ["PORT", "API port (default 3000)"],
+            ["NODE_ENV", "Runtime mode; production refuses placeholder seed passwords"],
+            ["CLIENT_ORIGIN", "Exact SPA origin allowed to send credentialed requests"],
+            ["DATABASE_URL", "Development database connection"],
+            ["TEST_DATABASE_URL", "Test database; the name must end in _test"],
+            ["SESSION_TTL_HOURS", "Session lifetime and cookie Max-Age (default 8)"],
+            ["COOKIE_SECURE", "Set true when serving over HTTPS"],
+            ["BCRYPT_ROUNDS", "bcrypt cost factor (default 10)"],
+            ["SEED_CUSTOMER_PASSWORD", "Local password for the seeded customer accounts"],
+            ["SEED_OPERATOR_PASSWORD", "Local password for the seeded operator accounts"],
+        ]
+    )
+    renderer.paragraph(
+        "Copy backend/.env.example to backend/.env and set the two seed passwords locally. The file is "
+        "not committed; .env.example contains placeholders only."
+    )
+    renderer.code_block(
+        "cp backend/.env.example backend/.env\n"
+        "docker compose up -d\n"
+        "npm install\n"
+        "npm run db:migrate\n"
+        "npm run db:seed\n"
+        "npm test\n"
+        "npm run dev:backend\n"
+        "npm run dev:frontend\n"
+        "\n"
+        "# End-to-end journeys (one-time browser install first)\n"
+        "npm run e2e:install --workspace=frontend\n"
+        "npm run e2e",
+        "bash",
+    )
+
+    renderer.heading("F.9 Known limitations", 2)
+    renderer.paragraph(
+        "Disclosed rather than hidden, as the Definition of Done requires. None of these turns a "
+        "recorded pass into a fail; each is allocated work, a later sprint, or a submission step."
+    )
+    for item in [
+        "The release tag sprint-1-v1.0 and the merge to main are not done yet; F.6.3 is the slot for that evidence. The document currently names the tested commit c8fd8fc.",
+        "The NFR-05 load benchmark (autocannon, 20 connections, 30 s per endpoint) is allocated to Sprint 3 and has not been run; the traceability row stays NOT RUN.",
+        "The unit and integration suites have not been re-run since c8fd8fc. The Playwright journeys were re-run for this evidence pack at 9d8e7cb and all six passed.",
+        "NFR-09 is verified for the Sprint 1 screens but its final usability pass belongs to Sprint 3; the matrix row stays INCOMPLETE.",
+        "BR-13 is verified at the database level only until the Sprint 2 catalog API adds its own validation.",
+        "No separate order-confirmation screen exists: the SPA navigates straight to the order detail after a 201, so E-07 is the confirmation evidence.",
+        "The login screenshot covers invalid credentials, not the 400 field-validation path; TEST-04 covers that response shape.",
+        "The R-01 route registry does not extract routers nested inside routers, and a router mounted under two prefixes keeps only the last mount; both are Sprint 2 backlog items.",
+        "NFR-10 coverage (at least 85% of the service layer) is a Sprint 2 measurement and has no recorded result yet.",
+        "The contribution confirmation and the AI-use declaration in F.7 are team-authored statements and remain to be completed by both members.",
+    ]:
+        renderer.list_item(item, 0, False, None)
 
 
 def add_log_appendix(document: Document, renderer: Renderer, manifest: dict) -> None:
-    document.add_paragraph(style="Heading 1").add_run("Appendix C — Test Execution Logs")
-    source = document.add_paragraph()
-    run = source.add_run(
-        "Verbatim terminal output. Each block names the feature, the state (red or green), the tested "
-        "commit and the command that produced it. Red logs are indexed in docs/evidence/README.md and "
-        "kept out of this appendix to avoid duplicating hundreds of lines of expected failures."
+    document.add_paragraph(style="Heading 1").add_run(APPENDIX_LOGS)
+    source_line(
+        document,
+        "Verbatim terminal output from docs/evidence/. Each block names the feature, the state, the tested commit and the command.",
     )
-    run.italic = True
-    run.font.size = Pt(8.5)
-    run.font.color.rgb = GREY
-    source.paragraph_format.space_after = Pt(12)
-
+    first_log = True
     for log in manifest["logs"]:
         if not log.get("embed"):
             continue
-        document.add_page_break()
+        if not first_log:
+            document.add_page_break()
+        first_log = False
         document.add_paragraph(style="Heading 2").add_run(
             f"{log['id']} — {log['feature']} · {log['state']} · {log['commit']}"
         )
@@ -839,25 +831,21 @@ def add_log_appendix(document: Document, renderer: Renderer, manifest: dict) -> 
             renderer.paragraph(f"Missing evidence file: {log['file']}")
 
 
+# --------------------------------------------------------------------------- #
+# Document assembly
+# --------------------------------------------------------------------------- #
 def build() -> Path:
     commit = git_hash()
+    pages = load_pages()
     manifest = json.loads((EVIDENCE / "manifest.json").read_text(encoding="utf-8"))
+    captions = json.loads((EVIDENCE / "captions.json").read_text(encoding="utf-8"))
 
     document = Document()
     configure_styles(document)
     document.core_properties.title = "Omazon — Deliverable 1 (Sprint 1)"
-    document.core_properties.subject = "Sprint 1 engineering documentation and evidence"
+    document.core_properties.subject = "Sprint 1 engineering documentation and execution evidence"
     document.core_properties.author = "Group 1052-1014"
     document.core_properties.comments = "Generated from docs/ Markdown sources by build_docx.py"
-
-    settings = document.settings.element
-    update = OxmlElement("w:updateFields")
-    update.set(qn("w:val"), "true")
-    compat = settings.find(qn("w:compat"))
-    if compat is not None:
-        compat.addprevious(update)
-    else:
-        settings.append(update)
 
     cover_section = document.sections[0]
     cover_section.page_width = Cm(21.0)
@@ -873,15 +861,22 @@ def build() -> Path:
     add_cover(document, renderer, commit)
 
     document.add_page_break()
-    add_contents(document)
+    add_contents(document, usable_cm(cover_section), pages)
+    document.add_page_break()
+    add_navigation(document, Renderer(document, usable_cm(cover_section)), pages)
     document.add_page_break()
 
-    add_part(document, Renderer(document, usable_cm(cover_section)), *PARTS[0])
-    for title, path in PARTS[1:]:
-        document.add_page_break()
-        add_part(document, Renderer(document, usable_cm(document.sections[-1])), title, path)
+    add_part(document, Renderer(document, usable_cm(cover_section)), PART_TITLES["A"], "docs/srs.md")
 
-    # Traceability is the widest table set, so it gets its own landscape section.
+    document.add_page_break()
+    part_heading(document, PART_TITLES["B"])
+    source_line(document, "Sources: docs/features.md; docs/traceability.md")
+    document.add_paragraph(style="Heading 2").add_run("B.1 Feature inventory and coverage")
+    source_line(document, "Source: docs/features.md")
+    Renderer(document, usable_cm(cover_section)).render(
+        (ROOT / "docs/features.md").read_text(encoding="utf-8"), demote=1
+    )
+
     landscape = document.add_section(WD_SECTION.NEW_PAGE)
     landscape.orientation = WD_ORIENT.LANDSCAPE
     landscape.page_width = Cm(29.7)
@@ -890,7 +885,12 @@ def build() -> Path:
     landscape.right_margin = Cm(1.7)
     landscape.top_margin = Cm(1.7)
     landscape.bottom_margin = Cm(1.5)
-    add_part(document, Renderer(document, usable_cm(landscape)), *TRACEABILITY)
+    landscape.different_first_page_header_footer = False
+    document.add_paragraph(style="Heading 2").add_run("B.2 Requirements traceability matrix")
+    source_line(document, "Source: docs/traceability.md")
+    Renderer(document, usable_cm(landscape)).render(
+        (ROOT / "docs/traceability.md").read_text(encoding="utf-8"), demote=1
+    )
 
     portrait = document.add_section(WD_SECTION.NEW_PAGE)
     portrait.orientation = WD_ORIENT.PORTRAIT
@@ -900,13 +900,27 @@ def build() -> Path:
     portrait.right_margin = Cm(2.0)
     portrait.top_margin = Cm(1.9)
     portrait.bottom_margin = Cm(1.7)
-    add_evidence_part(document, Renderer(document, usable_cm(portrait)), manifest)
+    portrait.different_first_page_header_footer = False
+    add_part(document, Renderer(document, usable_cm(portrait)), PART_TITLES["C"], "docs/system-sds.md")
+    document.add_page_break()
+    add_part(document, Renderer(document, usable_cm(portrait)), PART_TITLES["D"], "docs/sprints/plan.md")
+    document.add_page_break()
+    add_part(
+        document,
+        Renderer(document, usable_cm(portrait)),
+        PART_TITLES["E"],
+        "docs/sprints/sprint-1/features.md",
+    )
 
     document.add_page_break()
-    add_part(document, Renderer(document, usable_cm(portrait)), *APPENDIX_FEATURES)
-
-    document.add_page_break()
-    add_part(document, Renderer(document, usable_cm(portrait)), *APPENDIX_EXCERPTS)
+    add_evidence_part(
+        document,
+        Renderer(document, usable_cm(portrait)),
+        manifest,
+        captions,
+        pages,
+        commit,
+    )
 
     logs_section = document.add_section(WD_SECTION.NEW_PAGE)
     logs_section.orientation = WD_ORIENT.LANDSCAPE
@@ -916,6 +930,7 @@ def build() -> Path:
     logs_section.right_margin = Cm(1.6)
     logs_section.top_margin = Cm(1.6)
     logs_section.bottom_margin = Cm(1.4)
+    logs_section.different_first_page_header_footer = False
     add_log_appendix(document, Renderer(document, usable_cm(logs_section)), manifest)
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
