@@ -61,6 +61,7 @@ describe("F-03 Order submission (AC-14 to AC-25)", () => {
     expect(created.status).toBe(201);
     const order = created.body.order;
 
+    expect(created.headers["location"]).toBe(`/api/orders/${order.id}`);
     expect(order.status).toBe("PENDING");
     expect(order.paymentStatus).toBe("UNPAID");
     expect(order.orderNumber).toMatch(/^CB-\d{6}$/);

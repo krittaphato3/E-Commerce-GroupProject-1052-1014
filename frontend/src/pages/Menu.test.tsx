@@ -182,4 +182,42 @@ describe("F-02 Menu screen (AC-12, AC-13)", () => {
     expect(await screen.findByRole("link", { name: "Log in to order" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Place order" })).toBeNull();
   });
+
+  it("Follow-up 5: caps the card stepper, Add button, and cart quantity at item.stockQty when stockQty is below 10", async () => {
+    mockedFetchMenu.mockResolvedValue({
+      items: [
+        {
+          id: 5,
+          name: "Mango Sticky Rice",
+          description: "Sweet mango with sticky rice",
+          priceSatang: 8000,
+          stockQty: 2,
+          isAvailable: true,
+          available: true,
+        },
+      ],
+    });
+
+    renderMenu();
+
+    const card = (await screen.findByText("Mango Sticky Rice")).closest("article")!;
+    const increaseBtn = within(card).getByRole("button", {
+      name: "Increase menu quantity for Mango Sticky Rice",
+    }) as HTMLButtonElement;
+
+    // Step 1: 1 -> 2
+    fireEvent.click(increaseBtn);
+    expect(within(card).getByText("2")).toBeTruthy();
+    // At stockQty 2, + button on card should be disabled
+    expect(increaseBtn.disabled).toBe(true);
+
+    // Add 2 to cart
+    fireEvent.click(within(card).getByRole("button", { name: "Add Mango Sticky Rice to cart" }));
+
+    const cart = screen.getByRole("region", { name: "Cart" });
+    const cartIncreaseBtn = within(cart).getByRole("button", {
+      name: "Increase quantity in cart for Mango Sticky Rice",
+    }) as HTMLButtonElement;
+    expect(cartIncreaseBtn.disabled).toBe(true);
+  });
 });
