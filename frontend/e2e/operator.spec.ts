@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { captureEvidence } from "./evidence";
 
 const customerEmail = process.env.E2E_CUSTOMER_EMAIL ?? "customer1@campusbites.test";
 const operatorEmail = process.env.E2E_OPERATOR_EMAIL ?? "operator1@campusbites.test";
@@ -46,11 +47,13 @@ test("TEST-41: an operator accepts a pending order and the customer sees Accepte
   const orderRow = page.locator("tr").filter({ hasText: orderNumber });
   await expect(orderRow).toBeVisible();
   await expect(orderRow.getByText("Pending", { exact: true })).toBeVisible();
+  await captureEvidence(page, "F-01-operator-orders.png");
 
   await orderRow.getByRole("button", { name: "Accept" }).click();
 
   await expect(orderRow.getByText("Accepted", { exact: true })).toBeVisible();
   await expect(orderRow.getByRole("button", { name: "Accept" })).toHaveCount(0);
+  await captureEvidence(page, "F-04-operator-accepted.png");
 
   // Operator logs out
   await page.getByRole("button", { name: "Logout" }).click();
@@ -71,6 +74,7 @@ test("TEST-41: an operator accepts a pending order and the customer sees Accepte
   await customerOrderRow.getByRole("link", { name: orderNumber }).click();
   await expect(page.getByText("Accepted", { exact: true })).toBeVisible();
   await expect(page.getByText("Pending → Accepted")).toBeVisible();
+  await captureEvidence(page, "F-04-customer-accepted.png");
 });
 
 /** TEST-42: customer opening /operator/orders sees in-place 403 Forbidden without operator table (AC-42). */
@@ -90,4 +94,5 @@ test("TEST-42: a customer navigating to /operator/orders sees in-place 403 Forbi
   // In-place 403 alert is displayed per DEC-17 / d7ec1c2
   await expect(page.getByRole("alert")).toContainText("403 Forbidden: You have no access to this page.");
   await expect(page.getByRole("table")).toHaveCount(0);
+  await captureEvidence(page, "F-04-customer-forbidden-403.png");
 });

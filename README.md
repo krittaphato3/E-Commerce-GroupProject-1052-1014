@@ -67,6 +67,8 @@ npm run e2e
 
 - Credentials come only from environment variables: `SEED_CUSTOMER_PASSWORD` and `SEED_OPERATOR_PASSWORD` are read from `backend/.env`. Optional `E2E_CUSTOMER_EMAIL` and `E2E_OPERATOR_EMAIL` override the seeded emails (defaults: `customer1@campusbites.test`, `operator1@campusbites.test`).
 - The seeded accounts must exist in the development database (`npm run db:seed`) with the same passwords.
+- Playwright runs against `TEST_DATABASE_URL` (the `*_test` database), never the development database. Its `globalSetup` truncates and re-seeds it with the `backend/.env` passwords before the first test, so the seed stock is identical on every run.
+- **`npm test` and `npm run e2e` must never run concurrently**: both use the `*_test` database. Running them one after the other is safe, because `globalSetup` resets the database at the start of every E2E run.
 - Playwright starts the API on port 3100 and Vite on port 5174 so a running `npm run dev` server is not disturbed. Override with `E2E_API_PORT` and `E2E_FRONTEND_PORT`, or point `E2E_BASE_URL` at an already-running frontend.
 
 ---
