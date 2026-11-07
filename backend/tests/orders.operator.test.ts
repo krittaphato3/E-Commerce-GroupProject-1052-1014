@@ -246,7 +246,7 @@ describe("F-04 Operator Order Management (AC-32 to AC-40)", () => {
     expect(bodyStr).not.toContain("passwordHash");
   });
 
-  it("TEST-40: two operators accepting the same PENDING order concurrently produce one 200, one 409, and one accept history row across concurrent runs with synchronization barrier", async () => {
+  it("TEST-40: two operators accepting the same PENDING order concurrently produce one 200, one 409, and one accept history row across 10 runs with synchronization barrier", async () => {
     const customerCookie = await loginCookie(CUSTOMER1_EMAIL, CUSTOMER_PASSWORD);
     const operator1Cookie = await loginCookie(OPERATOR1_EMAIL, OPERATOR_PASSWORD);
     const operator2Cookie = await loginCookie(OPERATOR2_EMAIL, OPERATOR_PASSWORD);
@@ -278,7 +278,7 @@ describe("F-04 Operator Order Management (AC-32 to AC-40)", () => {
     }
 
     const originalAssertTransition = orderStateMachine.assertTransition;
-    const ITERATIONS = 3;
+    const ITERATIONS = 10;
 
     for (let attempt = 0; attempt < ITERATIONS; attempt += 1) {
       const order = await createOrder(customerCookie, "Basil Pork Rice", 1);
