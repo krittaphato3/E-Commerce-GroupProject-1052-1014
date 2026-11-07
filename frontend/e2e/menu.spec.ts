@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { captureEvidence } from "./evidence";
 
 /**
  * TEST-12: the public menu shows THB prices and sold-out items (AC-12).
@@ -24,4 +25,9 @@ test("TEST-12: anonymous menu shows formatted prices and sold-out items", async 
   await expect(padThaiCard.getByText("Sold out", { exact: true })).toBeVisible();
 
   await expect(page.getByRole("link", { name: "Log in to order" })).toBeVisible();
+
+  // Narrow viewport, so the pack also shows the sold-out badge on a phone screen.
+  await page.setViewportSize({ width: 430, height: 932 });
+  await expect(sandwichCard.getByText("Sold out", { exact: true })).toBeVisible();
+  await captureEvidence(page, "F-02-menu-sold-out-mobile.png");
 });

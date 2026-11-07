@@ -15,25 +15,26 @@ The seven flows required by the Sprint 1 deliverable, captured from the running 
 
 | # | Required flow | AC | File | What the screenshot shows |
 |---|---|---|---|---|
-| 1 | Login page and validation | AC-02, AC-04, AC-09 | `F-01-login-failure.png` | Login form with the generic "Invalid email or password." alert. The message does not reveal whether the email exists |
+| 1 | Login page | AC-01, AC-09 | `F-01-login-page.png` | The empty login form: email, password and a single Log in action |
+| 1 | Login validation | AC-02, AC-04 | `F-01-login-failure.png` | A failed login showing the generic "Invalid email or password." alert |
 | 2 | Menu browsing, available and sold out | AC-10, AC-12 | `F-01-customer-menu.png` | Desktop menu with THB prices, a "1 left" stock hint, "Sold out" badges on Chicken Sandwich and Pad Thai, and the cart panel |
-| 2 | Menu browsing (mobile width) | AC-10, AC-12 | `F-02-menu-sold-out-badge.png` | Narrow-viewport menu showing the sold-out badge and the low-stock hint |
-| 2 | Menu browsing (mobile, continued) | AC-10, AC-12 | `F-02-menu-sold-out.png` | Same narrow viewport scrolled past the sold-out cards; shows the empty cart state |
-| 3 | Cart before confirmation | AC-14, AC-15 | `F-03-cart-filled.png` | Cart with two lines, per-line totals, estimated total `฿150.00` and a pickup note |
-| 3 | Order confirmation | AC-14, AC-29 | `F-03-order-detail.png` | The order detail shown immediately after placing: `CB-000002`, `Pending`, `Unpaid`, line items, total, pickup note, first history entry |
-| 4 | Customer order detail (`PENDING`) | AC-14, AC-25, AC-29 | `F-03-order-detail.png` | Same screen: status badge, server-calculated total and the `Order placed` history row with actor `CUSTOMER` and timestamp |
-| 5 | Operator orders dashboard (oldest first) | AC-32, AC-33 | `F-01-operator-orders.png` | Operator "Incoming orders" table with the status filter and order `CB-000001` awaiting action |
-| 6 | Operator order acceptance action | AC-34, AC-41 | `F-04-operator-accepted.png` | Operator list after acceptance: `CB-000001` is `Accepted` and its action button is gone |
-| 7 | Customer sees `ACCEPTED` | AC-41 | `F-04-customer-accepted.png` | Customer order `CB-000001` with `Accepted` badge and a two-row history: `Order placed` then `Pending → Accepted` by `OPERATOR` |
+| 2 | Menu browsing at phone width | AC-10, AC-12 | `F-02-menu-sold-out-mobile.png` | The same catalogue at 430 px: sold-out badges, the low-stock hint and disabled Add buttons stay visible |
+| 3 | Cart before confirmation | AC-14, AC-15 | `F-03-cart-filled.png` | Cart with two lines, per-line totals, estimated total `฿150.00` and an empty pickup note |
+| 3 | Order confirmation | AC-14, AC-29 | `F-03-order-detail.png` | The screen shown straight after placing: order number, `Pending` and `Unpaid` badges, line items, total, pickup note |
+| 4 | Customer order detail (`PENDING`) | AC-14, AC-25, AC-29 | `F-03-order-detail.png` | Same screen: server-calculated total and the first `Order placed` history row with actor `CUSTOMER` and a timestamp |
+| 5 | Operator orders dashboard (oldest first) | AC-32, AC-33 | `F-01-operator-orders.png` | Operator "Incoming orders" with the Pending filter: two orders with distinct placed times, `CB-000001` above `CB-000002`, each with an Accept button |
+| 6 | Operator order acceptance action | AC-34, AC-41 | `F-04-operator-accept-action.png` | Row `CB-000001` while still `PENDING`, with the green Accept button before it is clicked |
+| 6 | Operator order accepted | AC-34, AC-41 | `F-04-operator-accepted.png` | The All view after the click: `CB-000001` is `ACCEPTED` with no action, `CB-000002` is still `PENDING` |
+| 7 | Customer sees `ACCEPTED` | AC-41 | `F-04-customer-accepted.png` | Customer order `CB-000001` with `Accepted` and a two-row history: `Order placed`, then `Pending → Accepted` by `OPERATOR` |
 
 ## 2. Screenshot evidence — rejection and access control
 
 | Behaviour | AC | File | What the screenshot shows |
 |---|---|---|---|
 | Unavailable item rejected without losing the cart | AC-21, AC-30 | `F-03-order-unavailable-409.png` | Inline alert "Mango Sticky Rice is sold out." while both cart lines and the total stay on screen; no navigation |
-| Customer blocked from an operator screen | AC-42 | `F-04-customer-forbidden-403.png` | In-place 403 Forbidden alert instead of the operator order table |
-| Logout returns to the login form | AC-06, AC-09 | `F-01-after-logout-login.png` | Post-logout state; the old session cookie is rejected (401 asserted by TEST-06) |
+| Customer blocked from an operator screen | AC-42 | `F-04-customer-forbidden-403.png` | In-place "403 Forbidden: You have no access to this page." instead of the operator order table |
 | My orders list | AC-28, AC-31 | `F-03-my-orders.png` | Customer order table with number, placed time, status and total, newest first |
+| Logout returns to the login form | AC-06, AC-09 | `F-01-after-logout-login.png` | Post-logout state; the old session cookie is rejected (401 asserted by TEST-06) |
 
 ## 3. Terminal evidence — red, then green
 
@@ -65,20 +66,27 @@ npm run build
 | `github-workflow.md` | Issue → PR chains, authors, reviewers and merge points for Sprint 1 |
 | `sprint-1-commit-log.txt` | Commit history of `sprint-1-staging`, showing contracts before implementation |
 
-## 5. Event screenshots and their capture
+## 5. How the screenshots were produced
 
-All screenshots were produced by running the application (backend on `localhost:3000`, Vite on `localhost:5173`) against the seeded development database, signed in as the seeded customer or operator. Playwright can refresh part of the set through `frontend/e2e/evidence.ts`; the rest need a manual capture of the same flow.
+All screenshots come from Playwright driving the real application, not from a mock:
+
+```bash
+CAPTURE_EVIDENCE=1 npm run e2e
+```
+
+- `frontend/e2e/evidence.ts` writes the files only when `CAPTURE_EVIDENCE=1`, so a normal `npm run e2e` leaves the committed set untouched.
+- `playwright.config.ts` starts the API on port 3100 and Vite on port 5174; `globalSetup` resets and re-seeds the **test** database first, so every run starts from the same catalogue and order numbering.
+- Screenshots are full page and captured with `animations: "disabled"`, because Bootstrap buttons transition their colour over ~150 ms; without that, the first painted frame shows the previous filter state.
+- The acceptance action (E-10) is a row-level capture, so the Accept button and the `PENDING` status it acts on appear together.
 
 ## 6. Outstanding items and known gaps
 
 These are disclosed rather than hidden; they belong to the team/Lab 5 and Sprint 2–3 work:
 
 - **NFR-05 load benchmark (autocannon) has not been run.** It is allocated to Sprint 3 in `docs/srs.md` and `docs/traceability.md`, so the row is `NOT RUN` by design.
-- **The full suite has not been re-run since `c8fd8fc`.** Later commits are documentation, the route-registry refactor, a test-database guard sync test and CI changes; a fresh green run should replace this log before submission.
+- **The unit and integration suites have not been re-run since `c8fd8fc`.** The Playwright journeys were re-run when this screenshot set was captured and all six passed; the `npm test` log is still the earlier one.
 - **No separate order-confirmation screen.** The application navigates straight to the order detail after a successful POST, so `F-03-order-detail.png` is the confirmation evidence.
-- **The operator acceptance is captured after the action** (the order shows `Accepted`), so the Accept button itself is not visible in the screenshot; TEST-41 exercises the click end to end.
-- **"Oldest first" is asserted, not visually demonstrated.** `F-01-operator-orders.png` shows a single order; ordering is proven by TEST-32.
-- **Login validation screenshot covers invalid credentials**, not the 400 field-validation state; that path is covered by TEST-04.
+- **The login screenshot covers invalid credentials**, not the 400 field-validation state; that path is covered by TEST-04.
 - **Release tag `sprint-1-v1.0`** from the contract has not been created yet.
 - **Contribution table and AI-use declaration** are team-authored statements and are not generated here.
 - **Deliverable format is DOCX**, not PDF, as agreed for this submission; export to PDF from Word if the course requires PDF.

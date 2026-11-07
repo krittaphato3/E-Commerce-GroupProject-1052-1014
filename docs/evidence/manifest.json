@@ -1,42 +1,42 @@
 {
-  "version": 1,
+  "version": 2,
   "generated": "2026-11-07",
   "screenshots": [
     {
       "id": "E-01",
-      "flow": "Login page and validation",
-      "ac": "AC-02, AC-04, AC-09",
-      "commit": "2026-11-06",
-      "file": "F-01-login-failure.png",
-      "caption": "Login page with the generic \"Invalid email or password.\" alert. The message is identical for a wrong password and an unknown email, so it does not reveal whether an account exists.",
-      "note": "TEST-02 / TEST-03 assert the same behaviour against the API."
+      "flow": "Login page",
+      "ac": "AC-01, AC-09",
+      "commit": "2026-11-07",
+      "file": "F-01-login-page.png",
+      "caption": "The login screen before any credentials are entered: email, password and the single Log in action.",
+      "note": "The entry point for every journey in this pack."
     },
     {
       "id": "E-02",
+      "flow": "Login validation",
+      "ac": "AC-02, AC-04, AC-09",
+      "commit": "2026-11-07",
+      "file": "F-01-login-failure.png",
+      "caption": "Login with a wrong password: the generic \"Invalid email or password.\" alert. The wording is identical for an unknown email, so it does not reveal whether an account exists.",
+      "note": "TEST-02 and TEST-03 assert the same response against the API; TEST-04 covers the 400 field-validation shape."
+    },
+    {
+      "id": "E-03",
       "flow": "Menu browsing, available and sold out",
       "ac": "AC-10, AC-12",
       "commit": "2026-11-07",
       "file": "F-01-customer-menu.png",
-      "caption": "Customer menu at desktop width: THB prices, a \"1 left\" stock hint on Mango Sticky Rice, \"Sold out\" badges on Chicken Sandwich and Pad Thai, and the cart panel.",
-      "note": "Prices come from GET /api/menu; the availability flag is computed by the shared isOrderable rule (TEST-10, TEST-11)."
-    },
-    {
-      "id": "E-03",
-      "flow": "Menu browsing at mobile width",
-      "ac": "AC-10, AC-12",
-      "commit": "2026-11-07",
-      "file": "F-02-menu-sold-out-badge.png",
-      "caption": "Narrow viewport: the sold-out badge and the low-stock hint remain visible and the Add button keeps its disabled styling.",
-      "note": "Responsive layout evidence; desktop behaviour is E-02."
+      "caption": "Customer menu at desktop width: THB prices, a \"1 left\" stock hint on Mango Sticky Rice, \"Sold out\" badges on Chicken Sandwich and Pad Thai, and the empty cart panel.",
+      "note": "Availability is computed by the shared isOrderable rule (TEST-10, TEST-11)."
     },
     {
       "id": "E-04",
-      "flow": "Menu browsing at mobile width, continued",
+      "flow": "Menu browsing at phone width",
       "ac": "AC-10, AC-12",
       "commit": "2026-11-07",
-      "file": "F-02-menu-sold-out.png",
-      "caption": "The same viewport scrolled past the sold-out cards, showing the cart panel's empty state.",
-      "note": "Supplementary; the desktop screenshot E-02 shows the complete menu in one frame."
+      "file": "F-02-menu-sold-out-mobile.png",
+      "caption": "The same catalogue at 430 px width: the sold-out badges, the low-stock hint, the disabled Add buttons and the anonymous \"Log in to order\" action all stay visible.",
+      "note": "Responsive evidence; the desktop view is E-03."
     },
     {
       "id": "E-05",
@@ -44,8 +44,8 @@
       "ac": "AC-14, AC-15",
       "commit": "2026-11-07",
       "file": "F-03-cart-filled.png",
-      "caption": "Cart with Basil Pork Rice x2 and Thai Iced Tea x1, per-line totals, estimated total THB 150.00 and a pickup note.",
-      "note": "The total is presented as an estimate; the authoritative total is recalculated by the server (TEST-15)."
+      "caption": "Cart with Basil Pork Rice x2 and Thai Iced Tea x1, per-line totals, estimated total THB 150.00 and an empty pickup note.",
+      "note": "The cart total is an estimate; the authoritative total is recalculated by the server (TEST-15)."
     },
     {
       "id": "E-06",
@@ -53,17 +53,17 @@
       "ac": "AC-21, AC-30",
       "commit": "2026-11-07",
       "file": "F-03-order-unavailable-409.png",
-      "caption": "409 ITEM_UNAVAILABLE path: an inline alert reads \"Mango Sticky Rice is sold out.\" while both cart lines, the total and the place-order button remain on screen.",
-      "note": "The cart is preserved and no navigation occurs; TEST-30 asserts the same in a component test."
+      "caption": "The stale-cart case: an inline alert reads \"Mango Sticky Rice is sold out.\" while both cart lines and the total stay on screen and no navigation occurs.",
+      "note": "The cart survives the 409; TEST-30 asserts the same behaviour in a component test."
     },
     {
       "id": "E-07",
-      "flow": "Customer order detail (PENDING)",
+      "flow": "Order confirmation and customer order detail (PENDING)",
       "ac": "AC-14, AC-25, AC-29",
       "commit": "2026-11-07",
       "file": "F-03-order-detail.png",
-      "caption": "Order CB-000002 immediately after submission: Pending and Unpaid badges, line items with unit prices and line totals, total THB 150.00, pickup note and the first history entry \"Order placed\" with actor CUSTOMER and a timestamp.",
-      "note": "This screen is also the order confirmation, because the SPA navigates straight to the detail after a 201."
+      "caption": "Immediately after a successful POST: order CB-000003 with Pending and Unpaid badges, both lines with unit prices and totals, THB 150.00, the pickup note, and the first history entry \"Order placed\" by CUSTOMER with a timestamp.",
+      "note": "This screen is also the confirmation step: the SPA navigates straight to the detail after a 201."
     },
     {
       "id": "E-08",
@@ -71,52 +71,61 @@
       "ac": "AC-28, AC-31",
       "commit": "2026-11-07",
       "file": "F-03-my-orders.png",
-      "caption": "My orders table with order number, placed time, status and total, newest first.",
-      "note": "TEST-28 asserts that only the caller's orders are returned."
+      "caption": "My orders: CB-000003 and CB-000002 Pending, CB-000001 Accepted, newest first, each with its placed time and total.",
+      "note": "TEST-28 asserts that only the caller's orders are returned, newest first."
     },
     {
       "id": "E-09",
-      "flow": "Operator orders dashboard",
+      "flow": "Operator orders dashboard, oldest first",
       "ac": "AC-32, AC-33",
       "commit": "2026-11-07",
       "file": "F-01-operator-orders.png",
-      "caption": "Operator \"Incoming orders\": status filter tabs, order CB-000001 for Alice Customer with item count, total, status and placed time.",
-      "note": "Ordering is oldest-first; TEST-32 asserts the sort order with more than one order."
+      "caption": "Operator \"Incoming orders\" with the Pending filter active: two PENDING orders with distinct placed times, CB-000001 above CB-000002, each with an Accept button.",
+      "note": "TEST-32 asserts the oldest-first ordering; this capture shows two orders with different timestamps."
     },
     {
       "id": "E-10",
-      "flow": "Operator acceptance action, result",
+      "flow": "Operator order acceptance action",
       "ac": "AC-34, AC-41",
       "commit": "2026-11-07",
-      "file": "F-04-operator-accepted.png",
-      "caption": "Operator list after accepting: CB-000001 is ACCEPTED and no action button remains for it.",
-      "note": "The click itself is exercised by the Playwright journey TEST-41; the screenshot is taken after the transition."
+      "file": "F-04-operator-accept-action.png",
+      "caption": "The acceptance action itself: row CB-000001 while still PENDING, with its green Accept button before the click.",
+      "note": "Captured from the row element so the button and the status it acts on are unambiguous."
     },
     {
       "id": "E-11",
+      "flow": "Operator order accepted",
+      "ac": "AC-34, AC-41",
+      "commit": "2026-11-07",
+      "file": "F-04-operator-accepted.png",
+      "caption": "After accepting, on the unfiltered All view: CB-000001 is ACCEPTED with no action button, while CB-000002 remains PENDING with its Accept button.",
+      "note": "The All filter avoids showing an ACCEPTED row under the PENDING filter after the in-place row update."
+    },
+    {
+      "id": "E-12",
       "flow": "Customer sees ACCEPTED with history",
       "ac": "AC-41, AC-25",
       "commit": "2026-11-07",
       "file": "F-04-customer-accepted.png",
-      "caption": "Customer view of CB-000001 after acceptance: Accepted badge plus a two-row history, \"Order placed\" (CUSTOMER) then \"Pending to Accepted\" (OPERATOR), each with a timestamp.",
-      "note": "Same order as E-09/E-10, seen by the customer."
+      "caption": "The same order as the customer sees it: CB-000001 Accepted, with a two-row history, \"Order placed\" by CUSTOMER then \"Pending to Accepted\" by OPERATOR, each with a timestamp.",
+      "note": "TEST-41 drives this journey end to end."
     },
     {
-      "id": "E-12",
+      "id": "E-13",
       "flow": "Customer blocked from an operator screen",
       "ac": "AC-42",
       "commit": "2026-11-07",
       "file": "F-04-customer-forbidden-403.png",
-      "caption": "A customer opening the operator orders route sees an in-place 403 Forbidden alert instead of the order table.",
-      "note": "TEST-42 asserts the in-place alert; TEST-37/TEST-38 assert the API returns 403 with no order data."
+      "caption": "A customer opening the operator orders route sees the in-place \"403 Forbidden: You have no access to this page.\" alert instead of the order table.",
+      "note": "TEST-42 asserts the in-place alert; TEST-37 and TEST-38 assert the API returns 403 with no order data."
     },
     {
-      "id": "E-13",
+      "id": "E-14",
       "flow": "Logout returns to the login form",
       "ac": "AC-06, AC-09",
-      "commit": "2026-11-06",
+      "commit": "2026-11-07",
       "file": "F-01-after-logout-login.png",
-      "caption": "After logout the session cookie is cleared and the browser is back at the login form.",
+      "caption": "After logout the session cookie is cleared and the browser is back at the empty login form.",
       "note": "TEST-06 asserts that the old session is rejected with 401 on the next request."
     }
   ],
@@ -264,10 +273,8 @@
   ],
   "gaps": [
     "NFR-05 load benchmark (autocannon, 20 connections, 30 s per endpoint) is allocated to Sprint 3 and has not been run; the matrix row stays NOT RUN.",
-    "The latest full suite log is from c8fd8fc. Commits after it are documentation, the route-registry refactor, a test-database guard sync test and CI changes; re-run the suite before submission and replace the log.",
+    "The unit and integration suites have not been re-written since c8fd8fc (the latest recorded `npm test` run). The Playwright journeys were re-run when these screenshots were captured, and all six passed.",
     "No distinct order-confirmation screen exists: the SPA navigates straight to the order detail after a 201, so E-07 is the confirmation evidence.",
-    "The operator acceptance screenshot is captured after the transition; TEST-41 exercises the click.",
-    "The operator dashboard shows one order, so oldest-first is asserted by TEST-32 rather than demonstrated visually.",
     "The login screenshot covers invalid credentials, not the 400 field-validation state asserted by TEST-04.",
     "The release tag sprint-1-v1.0 has not been created.",
     "The contribution table and AI-use declaration are team-authored statements and are not included in the generated document."
