@@ -72,10 +72,13 @@ export function fetchMyOrders(): Promise<{ orders: OrderSummary[] }> {
   return apiRequest<{ orders: OrderSummary[] }>("/api/orders/mine");
 }
 
-export function fetchOperatorOrders(_status?: OrderStatus): Promise<{ orders: OperatorOrderSummary[] }> {
-  return Promise.reject(new Error("Not implemented"));
+export function fetchOperatorOrders(
+  status?: OrderStatus
+): Promise<{ orders: OperatorOrderSummary[] }> {
+  const query = status ? `?status=${encodeURIComponent(status)}` : "";
+  return apiRequest<{ orders: OperatorOrderSummary[] }>(`/api/orders${query}`);
 }
 
-export function acceptOrder(_id: number): Promise<{ order: Order }> {
-  return Promise.reject(new Error("Not implemented"));
+export function acceptOrder(id: number): Promise<{ order: Order }> {
+  return apiRequest<{ order: Order }>(`/api/orders/${id}/accept`, { method: "POST" });
 }

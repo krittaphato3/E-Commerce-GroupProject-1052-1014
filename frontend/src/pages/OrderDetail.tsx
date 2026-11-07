@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { ApiRequestError } from "../api/client";
 import { fetchOrder, type Order } from "../api/orders";
+import { useAuth } from "../auth/AuthContext";
 import { formatDateTime, formatThb, paymentStatusLabel, statusLabel } from "../lib/format";
 
 export function OrderDetail() {
+  const { user } = useAuth();
   const { id } = useParams<{ id: string }>();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,8 +31,14 @@ export function OrderDetail() {
       .then((result) => {
         if (!cancelled) setOrder(result.order);
       })
-      .catch(() => {
-        if (!cancelled) setError("Could not load this order. Please try again.");
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(
+            err instanceof ApiRequestError && err.status < 500
+              ? err.message
+              : "Could not load this order. Please try again."
+          );
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -69,10 +78,22 @@ export function OrderDetail() {
         </h1>
         <span className="badge bg-primary">{statusLabel(order.status)}</span>
         <span className="badge bg-secondary">{paymentStatusLabel(order.paymentStatus)}</span>
-        <Link to="/orders" className="ms-auto link-secondary">
-          My orders
-        </Link>
+        {user?.role === "OPERATOR" ? (
+          <Link to="/operator/orders" className="ms-auto link-secondary">
+            Incoming orders
+          </Link>
+        ) : (
+          <Link to="/orders" className="ms-auto link-secondary">
+            My orders
+          </Link>
+        )}
       </div>
+
+      {order.customer && (
+        <p className="mb-1">
+          <span className="fw-semibold">Customer:</span> {order.customer.displayName}
+        </p>
+      )}
 
       <p className="text-muted">Placed on {formatDateTime(order.createdAt)}</p>
 
