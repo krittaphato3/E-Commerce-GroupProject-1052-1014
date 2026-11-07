@@ -5,9 +5,10 @@ import { defineConfig, devices } from "@playwright/test";
 import { assertTestDatabaseUrl, DEFAULT_TEST_DATABASE_URL } from "./e2e/testDatabase";
 
 const configDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(configDir, "..");
 
 // TEST-09 credentials come from backend/.env; no password is committed.
-const envFile = path.resolve(configDir, "../backend/.env");
+const envFile = path.resolve(repoRoot, "backend/.env");
 if (existsSync(envFile)) {
   process.loadEnvFile(envFile);
 }
@@ -41,9 +42,9 @@ export default defineConfig({
       // Nesting them here would apply them twice per run. The API can start on an
       // unmigrated database because `/api/health` never touches the database, and
       // globalSetup finishes before the first test executes.
-      command: "npm run dev --prefix ../backend",
+      command: "npm run dev --workspace=backend",
       url: `http://localhost:${apiPort}/api/health`,
-      cwd: configDir,
+      cwd: repoRoot,
       env: {
         PORT: apiPort,
         DATABASE_URL: e2eDatabaseUrl,
@@ -53,6 +54,7 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
+      // Intentionally stays relative to `frontend/` so Vite receives its local flags directly.
       command: `npm run dev -- --port ${frontendPort} --strictPort`,
       url: `http://localhost:${frontendPort}`,
       cwd: configDir,
