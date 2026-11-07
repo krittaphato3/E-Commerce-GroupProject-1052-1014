@@ -6,6 +6,7 @@ import { authRouter } from "./routes/auth.js";
 import { healthRouter } from "./routes/health.js";
 import { menuRouter } from "./routes/menu.js";
 import { ordersRouter } from "./routes/orders.js";
+import { mountRouter } from "./routes/registry.js";
 import { errorHandler } from "./middleware/error.js";
 import { env } from "./config/env.js";
 
@@ -21,11 +22,11 @@ export function createApp(configureRoutes?: (app: express.Express) => void) {
   app.use(express.json());
   app.use(cookieParser());
 
-  // Routes
-  app.use("/api/health", healthRouter);
-  app.use("/api/auth", authRouter);
-  app.use("/api/menu", menuRouter);
-  app.use("/api/orders", ordersRouter);
+  // Routes (AC-43: mount through the registry so every route is accounted for)
+  mountRouter(app, "/api/health", healthRouter);
+  mountRouter(app, "/api/auth", authRouter);
+  mountRouter(app, "/api/menu", menuRouter);
+  mountRouter(app, "/api/orders", ordersRouter);
 
   if (configureRoutes) {
     configureRoutes(app);

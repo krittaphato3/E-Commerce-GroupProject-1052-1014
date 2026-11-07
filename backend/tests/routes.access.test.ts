@@ -117,6 +117,8 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
     };
 
     // Phase 1: non-mutating negative checks first.
+    let wrongRoleChecks = 0;
+
     for (const entry of protectedRoutes) {
       const path = concretePath(entry.path, order1Id);
       const label = `${entry.method} ${entry.path}`;
@@ -126,19 +128,19 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
       expect(anonymous.body.error.code, `${label} anonymous`).toBe("UNAUTHENTICATED");
       assertNoPrivateData(anonymous, `${label} anonymous`);
 
+      // A route that allows both roles has no non-allowed role to reject.
       const wrongRoles = ALL_ROLES.filter((role) => !entry.roles.includes(role));
-      expect(
-        wrongRoles.length,
-        `${label} must have at least one non-allowed role`
-      ).toBeGreaterThan(0);
 
       for (const role of wrongRoles) {
+        wrongRoleChecks += 1;
         const forbidden = await requestApp(entry.method, path, cookies[role]);
         expect(forbidden.status, `${label} as ${role}`).toBe(403);
         expect(forbidden.body.error.code, `${label} as ${role}`).toBe("FORBIDDEN");
         assertNoPrivateData(forbidden, `${label} as ${role}`);
       }
     }
+
+    expect(wrongRoleChecks, "the 403 loop must not be vacuous").toBeGreaterThan(0);
 
     // Q-03 / BR-08 / NFR-02: a customer may not read another customer's order.
     const crossOwner = await requestApp(
