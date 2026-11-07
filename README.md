@@ -196,8 +196,7 @@ Get-NetTCPConnection -LocalPort 3100,5174 |
 │   ├── src/              # Pages, components, routing
 │   └── tests/            # Component and unit tests
 └── docs/                 # SRS, System SDS, Feature contracts, Traceability matrix
-    ├── evidence/         # Sprint 1 screenshots, terminal logs and their index
-    └── deliverable-1/    # Deliverable 1 build scripts and page map (Word file generated locally)
+    └── evidence/         # Sprint 1 screenshots, terminal logs and their index
 ```
 
 ---
@@ -226,14 +225,7 @@ Get-NetTCPConnection -LocalPort 3100,5174 |
 | [`docs/traceability.md`](docs/traceability.md) | Requirement → AC → test → result matrix for all 46 Sprint 1 tests |
 | [`docs/evidence/README.md`](docs/evidence/README.md) | Evidence pack index: screenshots, red/green logs, workflow evidence |
 
-The Word document is generated from the Markdown files above, so the sources stay the single source of truth. The generated `Deliverable-1.docx` is intentionally not committed; rebuild it after editing a document:
-
-```bash
-pip install python-docx          # one-time, Python 3.10+
-python docs/deliverable-1/build_docx.py
-```
-
-The generated file is written to `docs/deliverable-1/Deliverable-1.docx`; if a PDF is required, open it in Word and choose **File → Save As → PDF**.
+The Word deliverable is assembled locally in `docs/deliverable-1/`. That folder is intentionally ignored by Git and is not part of the repository; the Markdown files above remain the single source of truth.
 
 ---
 
