@@ -505,7 +505,7 @@ In addition to the Product Definition of Done:
 | Requirements | FR-08, FR-09, BR-06, BR-07, BR-08, BR-15 |
 | Sprint | 1 |
 | Depends on | F-01, F-03, R-01 |
-| Contract version | 1.3 (2026-11-07) |
+| Contract version | 1.4 (2026-11-07) |
 | Issue / branch | ISSUE-6 / `feature/F-04-operator-acceptance` |
 
 ### Revision history
@@ -515,6 +515,7 @@ In addition to the Product Definition of Done:
 | 1.1 | 2026-11-05 | AC-34 and TEST-34 assert the accept history `createdAt` | Cover BR-15's timestamp clause |
 | 1.2 | 2026-11-05 | Added a Failure and boundary cases subsection citing AC-33, AC-35 to AC-38, AC-40 and AC-42 | Document failure and boundary behavior already defined by the AC and STS |
 | 1.3 | 2026-11-07 | Contract revision for AC-42 / TEST-42: wrong-role navigation renders in-place 403 Forbidden alert and suppresses operator table, rather than redirecting, matching ProtectedRoute behavior established in d7ec1c2 (DEC-23) | Team Decision 1 (Option A) to preserve existing role guard contract |
+| 1.4 | 2026-11-07 | Clarified UI 409 alert message ("This order was already handled.") with filter reconciliation on resolution, and strengthened TEST-40 with synchronization barrier and exact history assertions | Follow-up code review fixes |
 
 ### 1. Feature design
 
@@ -573,7 +574,7 @@ Same endpoint as F-03. For an Operator it returns 200 for any existing order and
 |---|---|
 | `/operator/orders` | Table: order number (link), customer name, item count, total, status badge, created time, and an **Accept** button on `PENDING` rows only |
 | Filter | Tabs or select for All, Pending, Accepted, and so on; default Pending |
-| Accept | Click shows "Accepting…" on that row; on success the row's badge changes to Accepted and the button disappears; on 409 an alert says the order was already handled and the list reloads |
+| Accept | Click shows "Accepting…" on that row; on success the row's badge changes to Accepted and the button disappears; on 409 an alert says the order was already handled ("This order was already handled.") and the list reloads |
 | Loading, empty, error | "Loading orders…", "No orders to show.", error alert with Retry |
 | Role guard | A Customer opening `/operator/orders` sees an in-place 403 Forbidden alert ("403 Forbidden: You have no access to this page.") and no operator table (navigation only; the API enforces access) |
 | Customer view | The order detail page shows the new status and history entry after reload |
