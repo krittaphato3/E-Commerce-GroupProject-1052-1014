@@ -16,7 +16,7 @@
  * Consequence: `npm test` and `npm run e2e` must never run concurrently, since
  * both own the test database.
  */
-import { execFileSync } from "node:child_process";
+import { execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -35,7 +35,10 @@ export default function globalSetup(): void {
     process.env.TEST_DATABASE_URL || DEFAULT_TEST_DATABASE_URL
   );
 
-  execFileSync("npm", ["run", "db:reset:test", "--workspace=backend"], {
+  // Run through the platform shell (execSync) because on Windows `npm` resolves to
+  // `npm.cmd`, and spawning a `.cmd` file without a shell fails (ENOENT / EINVAL on
+  // Node >= 20.12).
+  execSync("npm run db:reset:test --workspace=backend", {
     cwd: repoRoot,
     stdio: "inherit",
     env: {
