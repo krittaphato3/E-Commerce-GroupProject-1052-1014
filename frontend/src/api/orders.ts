@@ -35,6 +35,7 @@ export interface Order {
   pickupNote: string | null;
   items: OrderLine[];
   history: OrderHistoryEntry[];
+  customer?: { id: number; displayName: string };
   createdAt: string;
   updatedAt: string;
 }
@@ -47,6 +48,10 @@ export interface OrderSummary {
   totalSatang: number;
   itemCount: number;
   createdAt: string;
+}
+
+export interface OperatorOrderSummary extends OrderSummary {
+  customer: { id: number; displayName: string };
 }
 
 export interface CreateOrderInput {
@@ -65,4 +70,15 @@ export function fetchOrder(id: number): Promise<{ order: Order }> {
 
 export function fetchMyOrders(): Promise<{ orders: OrderSummary[] }> {
   return apiRequest<{ orders: OrderSummary[] }>("/api/orders/mine");
+}
+
+export function fetchOperatorOrders(
+  status?: OrderStatus
+): Promise<{ orders: OperatorOrderSummary[] }> {
+  const query = status ? `?status=${encodeURIComponent(status)}` : "";
+  return apiRequest<{ orders: OperatorOrderSummary[] }>(`/api/orders${query}`);
+}
+
+export function acceptOrder(id: number): Promise<{ order: Order }> {
+  return apiRequest<{ order: Order }>(`/api/orders/${id}/accept`, { method: "POST" });
 }

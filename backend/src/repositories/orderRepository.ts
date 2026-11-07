@@ -1,3 +1,4 @@
+import type { OrderStatus } from "@prisma/client";
 import { prisma } from "../db/prisma.js";
 
 export const orderRepository = {
@@ -15,6 +16,7 @@ export const orderRepository = {
       include: {
         items: { orderBy: { id: "asc" } },
         history: { orderBy: { id: "asc" } },
+        customer: { select: { id: true, displayName: true } },
       },
     });
   },
@@ -25,6 +27,18 @@ export const orderRepository = {
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: 200,
       include: { _count: { select: { items: true } } },
+    });
+  },
+
+  findAllForOperator(status?: OrderStatus) {
+    return prisma.order.findMany({
+      where: status ? { status } : undefined,
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      take: 200,
+      include: {
+        customer: { select: { id: true, displayName: true } },
+        _count: { select: { items: true } },
+      },
     });
   },
 };

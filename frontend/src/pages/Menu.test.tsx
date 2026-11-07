@@ -182,4 +182,126 @@ describe("F-02 Menu screen (AC-12, AC-13)", () => {
     expect(await screen.findByRole("link", { name: "Log in to order" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Place order" })).toBeNull();
   });
+
+  it("Follow-up 5: caps the card stepper, Add button, and cart quantity at item.stockQty when stockQty is below 10", async () => {
+    mockedFetchMenu.mockResolvedValue({
+      items: [
+        {
+          id: 5,
+          name: "Mango Sticky Rice",
+          description: "Sweet mango with sticky rice",
+          priceSatang: 8000,
+          stockQty: 2,
+          isAvailable: true,
+          available: true,
+        },
+      ],
+    });
+
+    renderMenu();
+
+    const card = (await screen.findByText("Mango Sticky Rice")).closest("article")!;
+    const increaseBtn = within(card).getByRole("button", {
+      name: "Increase menu quantity for Mango Sticky Rice",
+    }) as HTMLButtonElement;
+
+    // Step 1: 1 -> 2
+    fireEvent.click(increaseBtn);
+    expect(within(card).getByText("2")).toBeTruthy();
+    // At stockQty 2, + button on card should be disabled
+    expect(increaseBtn.disabled).toBe(true);
+
+    // Add 2 to cart
+    fireEvent.click(within(card).getByRole("button", { name: "Add Mango Sticky Rice to cart" }));
+
+    const cart = screen.getByRole("region", { name: "Cart" });
+    const cartIncreaseBtn = within(cart).getByRole("button", {
+      name: "Increase quantity in cart for Mango Sticky Rice",
+    }) as HTMLButtonElement;
+    expect(cartIncreaseBtn.disabled).toBe(true);
+  });
+
+  it("Follow-up 5 (stockQty 0 edge case): sold-out item disables card stepper, + button, and Add button", async () => {
+    mockedFetchMenu.mockResolvedValue({
+      items: [
+        {
+          id: 6,
+          name: "Chicken Sandwich",
+          description: "Sold out sandwich",
+          priceSatang: 7000,
+          stockQty: 0,
+          isAvailable: true,
+          available: false,
+        },
+      ],
+    });
+
+    renderMenu();
+
+    const card = (await screen.findByText("Chicken Sandwich")).closest("article")!;
+    expect(within(card).getByText("Sold out")).toBeTruthy();
+
+    const decBtn = within(card).getByRole("button", {
+      name: "Decrease menu quantity for Chicken Sandwich",
+    }) as HTMLButtonElement;
+    const incBtn = within(card).getByRole("button", {
+      name: "Increase menu quantity for Chicken Sandwich",
+    }) as HTMLButtonElement;
+    const addBtn = within(card).getByRole("button", {
+      name: "Add Chicken Sandwich to cart",
+    }) as HTMLButtonElement;
+
+    expect(decBtn.disabled).toBe(true);
+    expect(incBtn.disabled).toBe(true);
+    expect(addBtn.disabled).toBe(true);
+  });
+
+  it("Follow-up 5 (stockQty 1 edge case): card stepper + is disabled at 1, cart line capped at 1, cart + disabled", async () => {
+    mockedFetchMenu.mockResolvedValue({
+      items: [
+        {
+          id: 7,
+          name: "Single Item",
+          description: "Only one in stock",
+          priceSatang: 5000,
+          stockQty: 1,
+          isAvailable: true,
+          available: true,
+        },
+      ],
+    });
+
+    renderMenu();
+
+    const card = (await screen.findByText("Single Item")).closest("article")!;
+    const decBtn = within(card).getByRole("button", {
+      name: "Decrease menu quantity for Single Item",
+    }) as HTMLButtonElement;
+    const incBtn = within(card).getByRole("button", {
+      name: "Increase menu quantity for Single Item",
+    }) as HTMLButtonElement;
+    const addBtn = within(card).getByRole("button", {
+      name: "Add Single Item to cart",
+    }) as HTMLButtonElement;
+
+    // Quantity starts at 1; with stockQty = 1, + is disabled immediately
+    expect(within(card).getByText("1")).toBeTruthy();
+    expect(decBtn.disabled).toBe(true);
+    expect(incBtn.disabled).toBe(true);
+    expect(addBtn.disabled).toBe(false);
+
+    // Add 1 to cart
+    fireEvent.click(addBtn);
+
+    const cart = screen.getByRole("region", { name: "Cart" });
+    const cartIncBtn = within(cart).getByRole("button", {
+      name: "Increase quantity in cart for Single Item",
+    }) as HTMLButtonElement;
+    expect(cartIncBtn.disabled).toBe(true);
+
+    // Clicking Add on the card again does not exceed stockQty 1
+    fireEvent.click(addBtn);
+    expect(within(cart).getByText("1")).toBeTruthy();
+    expect(cartIncBtn.disabled).toBe(true);
+  });
 });

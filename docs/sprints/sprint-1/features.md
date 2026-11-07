@@ -6,8 +6,8 @@
 | Sprint | 1 (due with Deliverable 1, 8 Nov 2026) |
 | Staging branch | `sprint-1-staging` |
 | Release tag (planned) | `sprint-1-v1.0` |
-| Version | 1.4 |
-| Date | 2026-11-06 |
+| Version | 1.6 |
+| Date | 2026-11-07 |
 | Related | `docs/srs.md`, `docs/features.md` (whole-product inventory), `docs/traceability.md`, `docs/sprints/plan.md`, `docs/system-sds.md` |
 
 ## Revision history (contract set)
@@ -19,6 +19,7 @@
 | 1.3 | 2026-11-05 | F-01 Failure and boundary cases: clarified wrong-password vs unknown-email cookie behavior; clarified logout session invalidation and 204 return | Precision fix aligning failure and boundary statements with AC-02, AC-03, and AC-06 |
 | 1.4 | 2026-11-06 | F-01 Validation: login `password` limit changed from 128 characters to 72 bytes (`Buffer.byteLength`) | Match bcrypt's 72-byte input limit so passwords beyond 72 UTF-8 bytes are not silently truncated (DEC-18) |
 | 1.5 | 2026-11-06 | F-02 API: `GET /api/menu` also returns `isAvailable` alongside the computed `available` flag | ISSUE-4 technical specification lists `isAvailable` in the payload; the field is the stored flag, so the client never has to infer it |
+| 1.6 | 2026-11-07 | F-04 Contract revision: AC-42 / TEST-42 asserts in-place 403 Forbidden alert rather than redirect per DEC-23 (Option A); F-03 POST /api/orders adds `Location: /api/orders/:id` header (Follow-up 3); Menu UI caps quantity at Math.min(10, stockQty) (Follow-up 5) | Feature F-04 implementation alignment and follow-up defect resolutions |
 
 Each contract below keeps its own revision history. Log every change there with a reason; do not rewrite earlier entries.
 
@@ -333,7 +334,7 @@ In addition to the Product Definition of Done:
 | Requirements | FR-05, FR-06, FR-07, BR-01, BR-02 (enforces the rule defined in F-02; AC-11/AC-21/AC-22), BR-03, BR-04, BR-05, BR-07, BR-14, BR-15, NFR-09 (partial) |
 | Sprint | 1 |
 | Depends on | F-01, F-02, R-01, R-02 |
-| Contract version | 1.2 (2026-11-05) |
+| Contract version | 1.3 (2026-11-07) |
 | Issue / branch | ISSUE-5 / `feature/F-03-order-submission` |
 
 ### Revision history
@@ -342,6 +343,7 @@ In addition to the Product Definition of Done:
 | 1.0 | 2026-11-03 | Initial contract | Before implementation |
 | 1.1 | 2026-11-05 | Header states BR-02 enforcement; AC-25 and TEST-25 assert the order-creation history `createdAt` | Cover BR-15's timestamp clause and clarify requirement ownership |
 | 1.2 | 2026-11-05 | Added a Failure and boundary cases subsection citing AC-16, AC-18 to AC-22, AC-24, AC-26 to AC-28, AC-30 and AC-31 | Document failure and boundary behavior already defined by the AC and STS |
+| 1.3 | 2026-11-07 | POST /api/orders sets Location header /api/orders/:id on 201 response (Follow-up 3); Menu cart UI caps selectable and cart line quantities at Math.min(10, stockQty) while retaining 409 ITEM_UNAVAILABLE backend safety net (Follow-up 5) | Follow-up defect resolutions identified prior to branch 5 |
 
 ### 1. Feature design
 
@@ -357,7 +359,7 @@ In addition to the Product Definition of Done:
    3. Build lines with the returned name and price (BR-04) and compute `lineTotal = price × qty`.
    4. `total = calculateOrderTotal(lines)` (BR-03).
    5. Insert `Order` (`PENDING`, `UNPAID`, `customerId` from the session), `OrderItem` rows, and one `OrderStatusHistory` row (`fromStatus` null → `PENDING`, actor = customer) (BR-15).
-5. Commit and return 201.
+5. Commit and return 201 with header `Location: /api/orders/:id`.
 
 **Business rules.** BR-01 (quantity 1–10, 1–10 lines, no duplicate item), BR-02, BR-03, BR-04, BR-05, BR-07, BR-14 (order number `CB-` + id padded to 6 digits, computed when building the response), BR-15.
 
@@ -390,7 +392,7 @@ Request:
 { "items": [ { "menuItemId": 1, "quantity": 2 }, { "menuItemId": 4, "quantity": 1 } ],
   "pickupNote": "Pickup at 12:30" }
 ```
-201 response:
+201 response (sets header `Location: /api/orders/:id`):
 ```json
 { "order": {
   "id": 12, "orderNumber": "CB-000012",
@@ -424,7 +426,7 @@ Request:
 ### 3. UI specification
 | Element | Behavior |
 |---|---|
-| Menu page cart | Each available item has a quantity stepper (0–10) and "Add" control. Cart summary lists lines and an **"Estimated total"** (client-side, labelled as an estimate) |
+| Menu page cart | Each available item has a quantity stepper capped at `Math.min(10, stockQty)` and "Add" control; cart line quantity stepper is similarly capped by `stockQty`. Cart summary lists lines and an **"Estimated total"** (client-side, labelled as an estimate) |
 | Pickup note | Text input, max 200 characters with counter |
 | Place order | Disabled when the cart is empty or the user is not logged in (anonymous users see "Log in to order" linking to `/login`). Shows "Placing order…" while pending |
 | Success | Cart cleared; redirect to `/orders/:id` |
@@ -503,7 +505,7 @@ In addition to the Product Definition of Done:
 | Requirements | FR-08, FR-09, BR-06, BR-07, BR-08, BR-15 |
 | Sprint | 1 |
 | Depends on | F-01, F-03, R-01 |
-| Contract version | 1.2 (2026-11-05) |
+| Contract version | 1.5 (2026-11-07) |
 | Issue / branch | ISSUE-6 / `feature/F-04-operator-acceptance` |
 
 ### Revision history
@@ -512,6 +514,9 @@ In addition to the Product Definition of Done:
 | 1.0 | 2026-11-03 | Initial contract | Before implementation |
 | 1.1 | 2026-11-05 | AC-34 and TEST-34 assert the accept history `createdAt` | Cover BR-15's timestamp clause |
 | 1.2 | 2026-11-05 | Added a Failure and boundary cases subsection citing AC-33, AC-35 to AC-38, AC-40 and AC-42 | Document failure and boundary behavior already defined by the AC and STS |
+| 1.3 | 2026-11-07 | Contract revision for AC-42 / TEST-42: wrong-role navigation renders in-place 403 Forbidden alert and suppresses operator table, rather than redirecting, matching ProtectedRoute behavior established in d7ec1c2 (DEC-23) | Team Decision 1 (Option A) to preserve existing role guard contract |
+| 1.4 | 2026-11-07 | Clarified UI 409 alert message ("This order was already handled.") with filter reconciliation on resolution, and strengthened TEST-40 with synchronization barrier and exact history assertions | Follow-up code review fixes |
+| 1.5 | 2026-11-07 | TEST-40 iteration count set to 10 with barrier synchronization as required by AC-40 contract | Contract compliance fix |
 
 ### 1. Feature design
 
@@ -540,7 +545,7 @@ In addition to the Product Definition of Done:
 - A Customer calling the operator list gets 403 and an anonymous call gets 401, neither with order data (AC-38).
 - An unknown `status` filter value returns 400 `VALIDATION_ERROR` (AC-33).
 - Two Operators accepting the same order at once: exactly one 200, one 409, and exactly one `PENDING → ACCEPTED` history row (AC-40).
-- A Customer opening `/operator/orders` is redirected away; that redirect is navigation only, and backend protection is what AC-37 and AC-38 prove (AC-42).
+- A Customer opening `/operator/orders` sees an in-place 403 Forbidden alert and no operator table; that role guard is navigation only, and backend protection is what AC-37 and AC-38 prove (AC-42).
 
 ### 2. API specification
 
@@ -570,9 +575,9 @@ Same endpoint as F-03. For an Operator it returns 200 for any existing order and
 |---|---|
 | `/operator/orders` | Table: order number (link), customer name, item count, total, status badge, created time, and an **Accept** button on `PENDING` rows only |
 | Filter | Tabs or select for All, Pending, Accepted, and so on; default Pending |
-| Accept | Click shows "Accepting…" on that row; on success the row's badge changes to Accepted and the button disappears; on 409 an alert says the order was already handled and the list reloads |
+| Accept | Click shows "Accepting…" on that row; on success the row's badge changes to Accepted and the button disappears; on 409 an alert says the order was already handled ("This order was already handled.") and the list reloads |
 | Loading, empty, error | "Loading orders…", "No orders to show.", error alert with Retry |
-| Role guard | A Customer opening `/operator/orders` is redirected to `/menu` (navigation only; the API enforces access) |
+| Role guard | A Customer opening `/operator/orders` sees an in-place 403 Forbidden alert ("403 Forbidden: You have no access to this page.") and no operator table (navigation only; the API enforces access) |
 | Customer view | The order detail page shows the new status and history entry after reload |
 
 ### 4. Data specification
@@ -594,7 +599,7 @@ Same endpoint as F-03. For an Operator it returns 200 for any existing order and
 | AC-39 | An Operator can open any customer's order through `GET /api/orders/:id`; the response includes the customer's display name and no email or password hash. |
 | AC-40 | When two Operators accept the same `PENDING` order at the same time, exactly one gets 200 and the other gets 409; the order has exactly one `PENDING → ACCEPTED` history row. |
 | AC-41 | In the UI an Operator sees a new order, clicks Accept, sees the status change to Accepted, and the Customer then sees "Accepted" on their order after logging in again. |
-| AC-42 | In the UI a Customer who opens `/operator/orders` is redirected away. (Navigation convenience only; backend protection is proven by AC-37 and AC-38.) |
+| AC-42 | In the UI a Customer who opens `/operator/orders` sees an in-place 403 Forbidden alert and no operator table. (Navigation convenience only; backend protection is proven by AC-37 and AC-38.) |
 
 ### 6. Software Test Specification (STS)
 
@@ -610,7 +615,7 @@ Same endpoint as F-03. For an Operator it returns 200 for any existing order and
 | TEST-39 | AC-39 | Integration | Order O1 owned by `customer1`; `operator1` logged in | GET `/api/orders/O1` | 200; includes `customer.displayName`; body does not contain `email` or `passwordHash` |
 | TEST-40 | AC-40 | Integration | `PENDING` order O1; `operator1` and `operator2` logged in | Two `POST accept` calls at the same time with `Promise.all`; repeat 10 times with new orders | One 200 and one 409 each time; exactly one accept history row per order |
 | TEST-41 | AC-41 | End-to-end | `customer1` has submitted an order (created in the test) | Playwright: log in as operator1, open `/operator/orders`, click Accept on the order, check badge; log out; log in as customer1, open the order | Operator sees "Accepted" and no Accept button for that row; customer sees status "Accepted" and a history entry |
-| TEST-42 | AC-42 | End-to-end | `customer1` logged in | Playwright: navigate to `/operator/orders` | Redirected to `/menu`; operator table is not shown |
+| TEST-42 | AC-42 | End-to-end | `customer1` logged in | Playwright: navigate to `/operator/orders` | In-place 403 Forbidden alert is rendered ("403 Forbidden: You have no access to this page."); operator table is not shown |
 
 Planned test files: `backend/tests/orders.operator.test.ts`, `backend/src/services/orderStateMachine.test.ts`, `frontend/e2e/operator.spec.ts`.
 

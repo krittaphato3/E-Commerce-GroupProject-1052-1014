@@ -1,0 +1,93 @@
+import { test, expect } from "@playwright/test";
+
+const customerEmail = process.env.E2E_CUSTOMER_EMAIL ?? "customer1@campusbites.test";
+const operatorEmail = process.env.E2E_OPERATOR_EMAIL ?? "operator1@campusbites.test";
+
+test.beforeAll(() => {
+  if (!process.env.SEED_CUSTOMER_PASSWORD || !process.env.SEED_OPERATOR_PASSWORD) {
+    throw new Error(
+      "SEED_CUSTOMER_PASSWORD and SEED_OPERATOR_PASSWORD must be set (backend/.env is loaded by playwright.config.ts)"
+    );
+  }
+});
+
+/** TEST-41: operator accepts order, customer sees Accepted and history (AC-41). */
+test("TEST-41: an operator accepts a pending order and the customer sees Accepted and history", async ({
+  page,
+}) => {
+  const customerPassword = process.env.SEED_CUSTOMER_PASSWORD as string;
+  const operatorPassword = process.env.SEED_OPERATOR_PASSWORD as string;
+
+  // 1. Customer places an order
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(customerEmail);
+  await page.getByLabel("Password").fill(customerPassword);
+  await page.getByRole("button", { name: "Log in" }).click();
+  await expect(page).toHaveURL(/\/menu$/);
+
+  const card = page.locator("article").filter({ hasText: "Basil Pork Rice" });
+  await card.getByRole("button", { name: "Add Basil Pork Rice to cart" }).click();
+  await page.getByRole("button", { name: "Place order" }).click();
+
+  await expect(page).toHaveURL(/\/orders\/\d+$/);
+  const orderNumber = (await page.getByTestId("order-number").textContent())?.trim() ?? "";
+  expect(orderNumber).toMatch(/^CB-\d{6}$/);
+
+  // Customer logs out
+  await page.getByRole("button", { name: "Logout" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+
+  // 2. Operator logs in and accepts the order
+  await page.getByLabel("Email").fill(operatorEmail);
+  await page.getByLabel("Password").fill(operatorPassword);
+  await page.getByRole("button", { name: "Log in" }).click();
+  await expect(page).toHaveURL(/\/operator\/orders$/);
+
+  const orderRow = page.locator("tr").filter({ hasText: orderNumber });
+  await expect(orderRow).toBeVisible();
+  await expect(orderRow.getByText("Pending", { exact: true })).toBeVisible();
+
+  await orderRow.getByRole("button", { name: "Accept" }).click();
+
+  await expect(orderRow.getByText("Accepted", { exact: true })).toBeVisible();
+  await expect(orderRow.getByRole("button", { name: "Accept" })).toHaveCount(0);
+
+  // Operator logs out
+  await page.getByRole("button", { name: "Logout" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+
+  // 3. Customer logs in and verifies Accepted status and history
+  await page.getByLabel("Email").fill(customerEmail);
+  await page.getByLabel("Password").fill(customerPassword);
+  await page.getByRole("button", { name: "Log in" }).click();
+  await expect(page).toHaveURL(/\/menu$/);
+
+  await page.getByRole("link", { name: "My orders" }).click();
+  await expect(page).toHaveURL(/\/orders$/);
+
+  const customerOrderRow = page.locator("tr").filter({ hasText: orderNumber });
+  await expect(customerOrderRow.getByText("Accepted", { exact: true })).toBeVisible();
+
+  await customerOrderRow.getByRole("link", { name: orderNumber }).click();
+  await expect(page.getByText("Accepted", { exact: true })).toBeVisible();
+  await expect(page.getByText("Pending → Accepted")).toBeVisible();
+});
+
+/** TEST-42: customer opening /operator/orders sees in-place 403 Forbidden without operator table (AC-42). */
+test("TEST-42: a customer navigating to /operator/orders sees in-place 403 Forbidden", async ({
+  page,
+}) => {
+  const customerPassword = process.env.SEED_CUSTOMER_PASSWORD as string;
+
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(customerEmail);
+  await page.getByLabel("Password").fill(customerPassword);
+  await page.getByRole("button", { name: "Log in" }).click();
+  await expect(page).toHaveURL(/\/menu$/);
+
+  await page.goto("/operator/orders");
+
+  // In-place 403 alert is displayed per DEC-17 / d7ec1c2
+  await expect(page.getByRole("alert")).toContainText("403 Forbidden: You have no access to this page.");
+  await expect(page.getByRole("table")).toHaveCount(0);
+});

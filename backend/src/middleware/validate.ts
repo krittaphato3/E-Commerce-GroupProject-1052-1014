@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import type { OrderStatus } from "@prisma/client";
 import { z } from "zod";
 import { AppError } from "./error.js";
 
@@ -67,6 +68,29 @@ export function parsePositiveIntegerParam(value: string | undefined): number | n
   }
 
   return parsed;
+}
+
+const ORDER_STATUS_VALUES = [
+  "PENDING",
+  "ACCEPTED",
+  "REJECTED",
+  "CANCELLED",
+  "PREPARING",
+  "READY",
+  "COMPLETED",
+] as const;
+
+/** Validates and parses the status query parameter for order filtering (AC-33). */
+export function parseOrderStatusQuery(value: unknown): OrderStatus | undefined {
+  if (value === undefined || value === "") {
+    return undefined;
+  }
+
+  if (typeof value !== "string" || !ORDER_STATUS_VALUES.includes(value as OrderStatus)) {
+    throw new AppError(400, "VALIDATION_ERROR", "Invalid status query parameter");
+  }
+
+  return value as OrderStatus;
 }
 
 /** Validates a body against a strict zod schema and returns 400 VALIDATION_ERROR on failure. */

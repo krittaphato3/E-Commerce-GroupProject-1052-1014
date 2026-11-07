@@ -3,8 +3,8 @@
 | Item | Value |
 |---|---|
 | Document | `docs/system-sds.md` |
-| Version | 1.1 |
-| Date | 2026-11-03 |
+| Version | 1.2 |
+| Date | 2026-11-07 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/plan.md` |
 
 ### Revision history
@@ -12,6 +12,7 @@
 |---|---|---|---|
 | 1.0 | 2026-11-03 | Initial system design | Deliverable 1 |
 | 1.1 | 2026-11-05 | AC-43 coverage claim limited to the Sprint 1 rows; cookie `Max-Age` documented as derived from `SESSION_TTL_HOURS` | Audit corrections: remove an unsupported test claim and reconcile session configuration |
+| 1.2 | 2026-11-07 | Update route guard summary: wrong-role routes show an in-place 403 Forbidden alert from ProtectedRoute ("403 Forbidden: You have no access to this page.") rather than redirect to the role home, consistent with F-04 contract and AC-42 (DEC-23, Option A) | Reconcile system SDS with ProtectedRoute behavior and AC-42 contract revision |
 
 ---
 
@@ -182,7 +183,7 @@ Header: shop name, links by role, display name and role badge, Logout button. Af
 | Validation | Client checks (quantity 1–10, note length) for convenience only; the server is authoritative |
 | Money | Formatted from satang to `฿` with 2 decimals |
 | Status | Colored badge per status |
-| Route guards | Redirect to `/login` if not logged in; redirect to the role home on a wrong-role route. **This is navigation only, not authorization.** |
+| Route guards | Redirect to `/login` if not logged in; show an in-place 403 Forbidden alert from `ProtectedRoute` ("403 Forbidden: You have no access to this page.") and suppress role content on a wrong-role route. **This is navigation only, not authorization.** |
 
 ## 4. API conventions
 

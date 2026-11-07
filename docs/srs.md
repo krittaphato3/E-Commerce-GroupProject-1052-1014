@@ -3,8 +3,8 @@
 | Item | Value |
 |---|---|
 | Document | `docs/srs.md` |
-| Version | 1.6 |
-| Date | 2026-11-06 |
+| Version | 1.7 |
+| Date | 2026-11-07 |
 | Course / Theme | CPE 334, Semester 1/2026 — Theme 4: E-Commerce or Ordering System |
 | Student 1 | Krittaphat Panyasomphan (67070501052) |
 | Student 2 | Napat Kasemweerasan (67070501014) |
@@ -20,6 +20,7 @@
 | 1.4 | 2026-11-06 | Both | Added §9.1 decision entries DEC-12 to DEC-16 for the F-01 implementation decisions (D-1 to D-5); no requirement, AC, TEST or contract wording changed | Record the decisions taken while implementing Issue #3 (F-01) |
 | 1.5 | 2026-11-06 | Both | Added §9.1 decision entries DEC-17 (remove unused `SESSION_SECRET`), DEC-18 (cap F-01 login password validation at 72 UTF-8 bytes), DEC-19 (`requireRole` stub-route tests), DEC-20 (lazy `BCRYPT_ROUNDS` dummy hash, explicit `/me` field projection, expired-session deletion on lookup and startup, and Node `>=20.12` engine requirement), and DEC-21 (literal `TEST-44` error-handler test additions) | Record decisions taken during PR #10 review of Issue #3 (F-01) |
 | 1.6 | 2026-11-06 | Both | Added §9.1 decision entry DEC-22 clarifying that following `1ea658b`, `seed.ts` uses `env.BCRYPT_ROUNDS` whose unset default is 10 (superseding the dual 10/4 fallback described in DEC-15; test cost 4 is set by `backend/tests/setup.ts`) | Align DEC-15 documentation with single-source-of-truth env refactor in PR #10 Tier 2 |
+| 1.7 | 2026-11-07 | Both | Added §9.1 decision entry DEC-23 for F-04 contract revision (AC-42 / TEST-42 in-place 403 alert per DEC-23 Option A), POST /api/orders Location header, and Menu UI quantity capping by stockQty | Record decisions and contract revisions taken for F-04 (Issue #6) |
 
 ---
 
@@ -166,9 +167,9 @@ Payment status: `UNPAID` → `PAID` (Customer pays an `ACCEPTED` order, Sprint 2
 | DEC-10 | Orders cannot be edited after submission. | Keeps price and stock logic simple; the customer cancels and re-orders. | 2026-11-03 |
 | DEC-11 | Sprint 1 slice is: login, menu, customer submits order, operator accepts. | Matches the Theme 4 Sprint 1 example exactly. | 2026-11-03 |
 
-### 9.1 Sprint 1 F-01 implementation decisions (DEC-12 to DEC-22)
+### 9.1 Sprint 1 F-01 and F-04 implementation decisions (DEC-12 to DEC-23)
 
-These entries continue the §9 numbering. They record decisions taken while delivering and reviewing F-01 (Issue #3, PR #10). DEC-17 edits an Issue #2 test file (`backend/tests/env.test.ts`), DEC-21 adds `TEST-44` cases to an Issue #2 test file (`backend/tests/error.test.ts`), DEC-18 changes one contract wording item (`docs/sprints/sprint-1/features.md` §7 (F-01 contract), subsection 1 (Feature design), password maximum `128 characters` → `72 bytes`), and DEC-22 clarifies the single-source-of-truth rounds default following the `seed.ts` refactor.
+These entries continue the §9 numbering. They record decisions taken while delivering and reviewing F-01 (Issue #3, PR #10) and F-04 (Issue #6). DEC-17 edits an Issue #2 test file (`backend/tests/env.test.ts`), DEC-21 adds `TEST-44` cases to an Issue #2 test file (`backend/tests/error.test.ts`), DEC-18 changes one contract wording item (`docs/sprints/sprint-1/features.md` §7 (F-01 contract), subsection 1 (Feature design), password maximum `128 characters` → `72 bytes`), DEC-22 clarifies the single-source-of-truth rounds default following the `seed.ts` refactor, and DEC-23 records the F-04 contract revision for AC-42 / TEST-42, Location header, and stock-capped UI quantity stepper.
 
 | ID | Decision | Rationale | Affected files / requirements | Status | Date |
 |---|---|---|---|---|---|
@@ -183,6 +184,7 @@ These entries continue the §9 numbering. They record decisions taken while deli
 | DEC-20 | Lazily hash and cache the unknown-email dummy password at `env.BCRYPT_ROUNDS` (`9587c12` red, `bb0acb4` green), explicitly project `{ id, email, displayName, role }` in `authController.me` (`eff7034` red, `2022899` green), delete expired sessions on lookup in `sessionRepository.findValid` and at startup via `sessionRepository.deleteExpired()` in `server.ts` (`ad00bd2` red, `6e68bee` green), and declare `"engines": { "node": ">=20.12" }` in root `package.json` and `README.md` (`84fb684`). | Matches dummy-hash cost to configured `BCRYPT_ROUNDS`, prevents extra user fields from leaking through `/me`, removes expired session rows, and documents the Node.js `>=20.12` requirement for `process.loadEnvFile`. | `backend/src/services/authService.ts`, `backend/src/controllers/authController.ts`, `backend/src/repositories/sessionRepository.ts`, `backend/src/server.ts`, `backend/tests/auth.test.ts`, `package.json`, `README.md`; FR-01, FR-02, FR-03, NFR-03, NFR-04, NFR-08 | Implemented in 9587c12 (red), bb0acb4 (green), eff7034 (red), 2022899 (green), ad00bd2 (red), 6e68bee (green), 84fb684 | 2026-11-06 |
 | DEC-21 | Add literal `TEST-44` test cases (`POST /api/auth/login` with body `{bad json` and a route throwing `new Error("db password leak")`) to `backend/tests/error.test.ts` (`9de7923`) while keeping all existing Issue #2 assertions intact, and mark `NFR-07` (`TEST-04`, `TEST-44`) as `PASS`. | Aligns `backend/tests/error.test.ts` with the exact `TEST-44` specification in `docs/sprints/sprint-1/features.md` §11 (R-01, R-02, R-03 Cross-Cutting contract), subsection 6 (Software Test Specification (STS)) without weakening any existing check. | `backend/tests/error.test.ts`, `docs/traceability.md`; R-02, NFR-07, AC-44, TEST-44 | Implemented in 9de7923 | 2026-11-06 |
 | DEC-22 | Following the `seed.ts` refactor in `1ea658b` to reuse `hashPassword` and import `env.BCRYPT_ROUNDS` directly from `backend/src/config/env.ts`, the effective default when `BCRYPT_ROUNDS` is unset is unconditionally 10 (as defined by `env.ts`), superseding the dual 10/4 fallback logic previously described in DEC-15. Fast test hashing (cost 4) is set by `backend/tests/setup.ts` via `process.env.BCRYPT_ROUNDS = "4"` prior to env parsing. | Unifies password hashing across seed and runtime into a single configuration source (`env.ts`), avoiding duplicate fallback logic. | `backend/prisma/seed.ts`, `backend/src/config/env.ts`, `backend/tests/setup.ts`; DEC-15, SDS §6, SDS §7.1 | Implemented in 1ea658b | 2026-11-06 |
+| DEC-23 | F-04 contract revision for AC-42 / TEST-42: wrong-role navigation renders an in-place 403 Forbidden alert without the operator table, rather than redirecting, matching ProtectedRoute behavior established in d7ec1c2 (Option A); POST /api/orders returns Location: /api/orders/:id on 201 (Follow-up 3); Menu UI caps line quantity at Math.min(10, stockQty) (Follow-up 5) while retaining 409 ITEM_UNAVAILABLE backend safety net. | Option A avoids regressions and maintains consistent ProtectedRoute behavior; Location header adheres to RESTful standard on resource creation; UI quantity cap improves UX without weakening backend concurrency protection. | `frontend/src/components/ProtectedRoute.tsx`, `frontend/e2e/operator.spec.ts`, `backend/src/controllers/orderController.ts`, `frontend/src/pages/Menu.tsx`, `docs/sprints/sprint-1/features.md`; FR-08, FR-09, AC-42, TEST-42, AC-14, TEST-14, AC-30 | Implemented in c04ca45 (red), 6d1d2f7 (backend), 984ddb9 (UI) | 2026-11-07 |
 
 Note on issue numbering: `docs/sprints/sprint-1/features.md` §4 labels F-01 as ISSUE-2 and R-01/R-02 as ISSUE-3, while GitHub numbers Issue #2 as the scaffold (R-03) and Issue #3 as F-01. The work follows the GitHub numbering and the contract's AC/TEST IDs; the §4 table is left unchanged.
 

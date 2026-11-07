@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
 import request from "supertest";
 import { app } from "../src/app.js";
 import { testPrisma, clearTestDatabase } from "./helpers/testDb.js";
 import { seedDatabase } from "../prisma/seed.js";
+import { menuRepository } from "../src/repositories/menuRepository.js";
 
 describe("F-02 Menu API (AC-10, AC-11, AC-12)", () => {
   beforeEach(async () => {
@@ -86,6 +87,31 @@ describe("F-02 Menu API (AC-10, AC-11, AC-12)", () => {
 
     for (const item of items) {
       expect(item.available).toBe(item.isAvailable && item.stockQty > 0);
+    }
+  });
+
+  it("TEST-10 (500 path): GET /api/menu returns 500 INTERNAL_ERROR with a generic message when the repository fails", async () => {
+    const spy = vi
+      .spyOn(menuRepository, "findAll")
+      .mockRejectedValueOnce(new Error("PrismaClientInitializationError: connection refused"));
+
+    try {
+      const response = await request(app).get("/api/menu");
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "Something went wrong.",
+        },
+      });
+
+      const bodyStr = JSON.stringify(response.body);
+      expect(bodyStr).not.toContain("Prisma");
+      expect(bodyStr).not.toContain("stack");
+      expect(bodyStr).not.toContain("connection refused");
+    } finally {
+      spy.mockRestore();
     }
   });
 });

@@ -63,18 +63,28 @@ export function Menu() {
     [quantities]
   );
 
-  const changeQuantity = useCallback((menuItemId: number, delta: number) => {
-    setQuantities((current) => {
-      const next = Math.min(
-        MAX_LINE_QUANTITY,
-        Math.max(1, (current[menuItemId] ?? 1) + delta)
-      );
-      return { ...current, [menuItemId]: next };
-    });
-  }, []);
+  const maxOrderable = useCallback(
+    (stockQty: number) => Math.min(MAX_LINE_QUANTITY, Math.max(0, stockQty)),
+    []
+  );
+
+  const changeQuantity = useCallback(
+    (menuItemId: number, delta: number, stockQty: number) => {
+      setQuantities((current) => {
+        const max = maxOrderable(stockQty);
+        const next = Math.min(
+          max,
+          Math.max(1, (current[menuItemId] ?? 1) + delta)
+        );
+        return { ...current, [menuItemId]: next };
+      });
+    },
+    [maxOrderable]
+  );
 
   function addToCart(item: MenuItem) {
-    const quantity = quantityFor(item.id);
+    const max = maxOrderable(item.stockQty);
+    const quantity = Math.min(max, quantityFor(item.id));
 
     setCart((current) => {
       const existing = current.find((line) => line.menuItemId === item.id);
@@ -82,7 +92,7 @@ export function Menu() {
       if (existing) {
         return current.map((line) =>
           line.menuItemId === item.id
-            ? { ...line, quantity: Math.min(MAX_LINE_QUANTITY, line.quantity + quantity) }
+            ? { ...line, quantity: Math.min(max, line.quantity + quantity) }
             : line
         );
       }
@@ -100,13 +110,16 @@ export function Menu() {
   }
 
   function changeCartQuantity(menuItemId: number, delta: number) {
+    const item = items.find((i) => i.id === menuItemId);
+    const max = item ? maxOrderable(item.stockQty) : MAX_LINE_QUANTITY;
+
     setCart((current) =>
       current
         .map((line) =>
           line.menuItemId === menuItemId ? { ...line, quantity: line.quantity + delta } : line
         )
         .filter((line) => line.quantity > 0)
-        .map((line) => ({ ...line, quantity: Math.min(MAX_LINE_QUANTITY, line.quantity) }))
+        .map((line) => ({ ...line, quantity: Math.min(max, line.quantity) }))
     );
   }
 
@@ -213,7 +226,7 @@ export function Menu() {
                           type="button"
                           className="btn btn-outline-secondary btn-sm"
                           aria-label={`Decrease menu quantity for ${item.name}`}
-                          onClick={() => changeQuantity(item.id, -1)}
+                          onClick={() => changeQuantity(item.id, -1, item.stockQty)}
                           disabled={!item.available || quantity <= 1}
                         >
                           −
@@ -223,8 +236,8 @@ export function Menu() {
                           type="button"
                           className="btn btn-outline-secondary btn-sm"
                           aria-label={`Increase menu quantity for ${item.name}`}
-                          onClick={() => changeQuantity(item.id, 1)}
-                          disabled={!item.available || quantity >= MAX_LINE_QUANTITY}
+                          onClick={() => changeQuantity(item.id, 1, item.stockQty)}
+                          disabled={!item.available || quantity >= maxOrderable(item.stockQty)}
                         >
                           +
                         </button>
@@ -255,41 +268,46 @@ export function Menu() {
                 <p className="text-muted">Your cart is empty.</p>
               ) : (
                 <ul className="list-unstyled mb-3">
-                  {cart.map((line) => (
-                    <li key={line.menuItemId} className="border-bottom py-2">
-                      <div className="d-flex justify-content-between">
-                        <span className="fw-semibold">{line.name}</span>
-                        <span>{formatThb(line.unitPriceSatang * line.quantity)}</span>
-                      </div>
-                      <div className="d-flex align-items-center gap-2 mt-1">
-                        <button
-                          type="button"
-                          className="btn btn-outline-secondary btn-sm"
-                          aria-label={`Decrease quantity in cart for ${line.name}`}
-                          onClick={() => changeCartQuantity(line.menuItemId, -1)}
-                        >
-                          −
-                        </button>
-                        <span>{line.quantity}</span>
-                        <button
-                          type="button"
-                          className="btn btn-outline-secondary btn-sm"
-                          aria-label={`Increase quantity in cart for ${line.name}`}
-                          onClick={() => changeCartQuantity(line.menuItemId, 1)}
-                          disabled={line.quantity >= MAX_LINE_QUANTITY}
-                        >
-                          +
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-link btn-sm text-danger ms-auto"
-                          onClick={() => removeLine(line.menuItemId)}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </li>
-                  ))}
+                  {cart.map((line) => {
+                    const item = items.find((i) => i.id === line.menuItemId);
+                    const lineMax = item ? maxOrderable(item.stockQty) : MAX_LINE_QUANTITY;
+
+                    return (
+                      <li key={line.menuItemId} className="border-bottom py-2">
+                        <div className="d-flex justify-content-between">
+                          <span className="fw-semibold">{line.name}</span>
+                          <span>{formatThb(line.unitPriceSatang * line.quantity)}</span>
+                        </div>
+                        <div className="d-flex align-items-center gap-2 mt-1">
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary btn-sm"
+                            aria-label={`Decrease quantity in cart for ${line.name}`}
+                            onClick={() => changeCartQuantity(line.menuItemId, -1)}
+                          >
+                            −
+                          </button>
+                          <span>{line.quantity}</span>
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary btn-sm"
+                            aria-label={`Increase quantity in cart for ${line.name}`}
+                            onClick={() => changeCartQuantity(line.menuItemId, 1)}
+                            disabled={line.quantity >= lineMax}
+                          >
+                            +
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-link btn-sm text-danger ms-auto"
+                            onClick={() => removeLine(line.menuItemId)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
 
