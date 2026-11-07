@@ -5,7 +5,7 @@
 | Document | `docs/evidence/README.md` |
 | Sprint | 1 (Deliverable 1) |
 | Date | 2026-11-07 |
-| Related | `docs/traceability.md`, `docs/sprints/sprint-1/features.md` §6, `docs/deliverable-1/Deliverable-1.docx` |
+| Related | `docs/traceability.md`, `docs/sprints/sprint-1/features.md` §6. The assembled Word file is built locally from these sources and submitted for Lab 2; it is not part of this repository. |
 
 This directory holds the evidence that the Sprint 1 requirements were met by running the product, not by assertion. File names carry the feature or responsibility they support (`F-01` to `F-04`, `R-01`), and terminal logs carry the tested commit hash in their file name.
 
@@ -34,7 +34,7 @@ The seven flows required by the Sprint 1 deliverable, captured from the running 
 | Unavailable item rejected without losing the cart | AC-21, AC-30 | `F-03-order-unavailable-409.png` | Inline alert "Mango Sticky Rice is sold out." while both cart lines and the total stay on screen; no navigation |
 | Customer blocked from an operator screen | AC-42 | `F-04-customer-forbidden-403.png` | In-place "403 Forbidden: You have no access to this page." instead of the operator order table |
 | My orders list | AC-28, AC-31 | `F-03-my-orders.png` | Customer order table with number, placed time, status and total, newest first |
-| Logout returns to the login form | AC-06, AC-09 | `F-01-after-logout-login.png` | Post-logout state; the old session cookie is rejected (401 asserted by TEST-06) |
+| Logout returns to the login form | AC-06, AC-09 | `F-01-after-logout-login.png` | Post-logout state, back at the empty login form. The image is byte-identical to `F-01-login-page.png` because it is the same form and both were captured with animations disabled; TEST-06 supplies the proof that the session is gone (the old cookie is rejected with 401 and the URL is `/login`) |
 
 ## 3. Terminal evidence — red, then green
 
@@ -45,9 +45,11 @@ Every feature was seen failing before it passed. The file names record the commi
 | F-01 Authentication and session | `F-01-red-full-8398fe2.txt`, `F-01-red-TEST-06-05a4f08.txt`, `F-01-red-TEST-09-retroactive-60b5e57.txt` | `F-01-green-full-f222daa.txt` (backend 30 passed, frontend 1 passed), `F-01-green-TEST-06-f222daa.txt` | `F-01-e2e-097da41.txt` (1 journey passed) |
 | F-02 Menu, F-03 Order submission | `F-02-F-03-red-140c030.txt` | `F-02-F-03-green-tests-0f3c649.txt` (backend 69 passed, frontend 22 passed) | `F-02-F-03-green-e2e-0f3c649.txt` (3 journeys passed) |
 | F-04 Operator acceptance | `F-04-red-c04ca45.txt` | `F-04-green-tests-37cf31f.txt` (backend 82 passed, frontend 36 passed), `F-04-TEST-40-mutation-37cf31f.txt` | `F-04-green-e2e-37cf31f.txt` (5 journeys passed) |
-| R-01 Access control | `R-01-red-TEST-43-d7792c8.txt` | `R-01-green-TEST-43-8f42cbd.txt`, `R-01-green-tests-c8fd8fc.txt` (backend 84 passed, frontend 36 passed) | `R-01-green-e2e-c8fd8fc.txt` (6 journeys passed) |
+| R-01 Access control | `R-01-red-TEST-43-d7792c8.txt` | `R-01-green-TEST-43-8f42cbd.txt`, `R-01-green-tests-4a37e95.txt` (backend 85 passed, frontend 36 passed) | `R-01-green-e2e-4a37e95.txt` (6 journeys passed) |
 
-Supporting logs: `F-01-build-097da41.txt`, `F-01-typecheck-097da41.txt`, `F-01-test-097da41.txt`, `F-01-logout-401-097da41.txt`, `F-02-F-03-green-build-0f3c649.txt`, `F-04-green-build-*.txt`, `F-04-green-e2e-*.txt`, `R-01-green-build-c8fd8fc.txt`.
+Supporting logs: `F-01-build-097da41.txt`, `F-01-typecheck-097da41.txt`, `F-01-test-097da41.txt`, `F-01-logout-401-097da41.txt`, `F-02-F-03-green-build-0f3c649.txt`, `F-04-green-build-*.txt`, `F-04-green-e2e-*.txt`, `R-01-green-build-4a37e95.txt`.
+
+The R-01 row supersedes the earlier `c8fd8fc` runs (`R-01-green-tests-c8fd8fc.txt`, `R-01-green-e2e-c8fd8fc.txt`, `R-01-green-build-c8fd8fc.txt`), which are kept for history. The current logs were produced at `4a37e95`, the commit this pack documents, after the Playwright specs last changed in `9d8e7cb`.
 
 Commands used for every run:
 
@@ -84,12 +86,12 @@ CAPTURE_EVIDENCE=1 npm run e2e
 These are disclosed rather than hidden; they belong to the team/Lab 5 and Sprint 2–3 work:
 
 - **NFR-05 load benchmark (autocannon) has not been run.** It is allocated to Sprint 3 in `docs/srs.md` and `docs/traceability.md`, so the row is `NOT RUN` by design.
-- **The unit and integration suites have not been re-run since `c8fd8fc`.** The Playwright journeys were re-run when this screenshot set was captured and all six passed; the `npm test` log is still the earlier one.
+- **The unit, integration and Playwright suites were last run at `4a37e95`**, the commit this pack documents (backend 85 passed, frontend 36 passed, 6 journeys passed). The screenshots were captured one documentation commit earlier at `9d8e7cb`; no runtime code changed between the two.
 - **No separate order-confirmation screen.** The application navigates straight to the order detail after a successful POST, so `F-03-order-detail.png` is the confirmation evidence.
 - **The login screenshot covers invalid credentials**, not the 400 field-validation state; that path is covered by TEST-04.
 - **Release tag `sprint-1-v1.0`** from the contract has not been created yet.
 - **Contribution table and AI-use declaration** are team-authored statements and are not generated here.
-- **Deliverable format is DOCX**, not PDF, as agreed for this submission; export to PDF from Word if the course requires PDF.
+- **Deliverable format is DOCX**, not PDF, as agreed for this submission; export to PDF from Word if the course requires PDF. The assembled file and the scripts that build it stay out of Git and are submitted for Lab 2.
 
 ## 7. Integrity
 

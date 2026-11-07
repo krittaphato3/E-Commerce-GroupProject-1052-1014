@@ -130,11 +130,11 @@ Playwright (TEST-09) reads the same two variables from `backend/.env`, so log in
 | **Backend only** | `npm test --workspace=backend` | Vitest + Supertest against the real PostgreSQL test database (no mocked SQL) |
 | **Frontend components** | `npm test --workspace=frontend` | Vitest + Testing Library: TEST-13, TEST-30, TEST-31 and the app shell |
 | **Route access meta-test (R-01)** | `npm run test --workspace=backend -- tests/routes.access.test.ts` | TEST-43: every protected route answers 401 anonymously and 403 for each disallowed role, and the route registry matches the mounted Express routes |
-| **End-to-end** | `npm run e2e` | Playwright journeys: TEST-09, TEST-12, TEST-29, TEST-41, TEST-42 |
+| **End-to-end** | `npm run e2e` | Playwright journeys: TEST-09, TEST-12, TEST-29, TEST-41, TEST-42, plus the AC-21/AC-30 stale-cart journey |
 | **Type check** | `npm run typecheck` | `tsc --noEmit` across both workspaces |
 | **Production build** | `npm run build` | Backend `tsc` emit and Vite bundle |
 
-Test counts from the latest recorded run (`c8fd8fc`): **84 backend tests in 15 files**, **36 frontend tests in 8 files**, and **6 Playwright journeys** — all passing. The per-feature statements of the 46 traceability tests are in [`docs/traceability.md`](docs/traceability.md), and the raw output is indexed in [`docs/evidence/README.md`](docs/evidence/README.md).
+Test counts from the latest recorded run (`4a37e95`): **85 backend tests in 16 files**, **36 frontend tests in 8 files**, and **6 Playwright journeys** — all passing. The per-feature statements of the 46 traceability tests are in [`docs/traceability.md`](docs/traceability.md), and the raw output is indexed in [`docs/evidence/README.md`](docs/evidence/README.md).
 
 Notes:
 
@@ -155,7 +155,7 @@ npm run e2e:install --workspace=frontend
 npm run e2e
 ```
 
-The suite covers five journeys in `frontend/e2e/`: `auth.spec.ts` (TEST-09), `menu.spec.ts` (TEST-12), `order.spec.ts` (TEST-29), and `operator.spec.ts` (TEST-41, TEST-42).
+The suite covers six journeys in `frontend/e2e/`: `auth.spec.ts` (TEST-09), `menu.spec.ts` (TEST-12), `order.spec.ts` (TEST-29 and the AC-21/AC-30 stale-cart 409 journey), and `operator.spec.ts` (TEST-41, TEST-42).
 
 - Credentials come only from environment variables: `SEED_CUSTOMER_PASSWORD` and `SEED_OPERATOR_PASSWORD` are read from `backend/.env`. Optional `E2E_CUSTOMER_EMAIL` and `E2E_OPERATOR_EMAIL` override the seeded emails (defaults: `customer1@campusbites.test`, `operator1@campusbites.test`).
 - The seeded accounts must exist in the development database (`npm run db:seed`) with the same passwords.
@@ -225,7 +225,7 @@ Get-NetTCPConnection -LocalPort 3100,5174 |
 | [`docs/traceability.md`](docs/traceability.md) | Requirement → AC → test → result matrix for all 46 Sprint 1 tests |
 | [`docs/evidence/README.md`](docs/evidence/README.md) | Evidence pack index: screenshots, red/green logs, workflow evidence |
 
-The Word deliverable is assembled locally in `docs/deliverable-1/`. That folder is intentionally ignored by Git and is not part of the repository; the Markdown files above remain the single source of truth.
+The Word deliverable is assembled locally from these Markdown sources and submitted for Lab 2; it is **not** part of this repository. The `docs/deliverable-1/` working folder (the assembled `.docx` and the scripts that build it) is ignored by Git on purpose, so the Markdown files above remain the tracked, reviewable record.
 
 ---
 
