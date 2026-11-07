@@ -1,7 +1,9 @@
 /**
  * Resets the E2E database before every Playwright run (TEST-09, 12, 29, 41, 42).
  *
- * Applies migrations, truncates every table and re-seeds with the passwords from
+ * This script is the single owner of E2E migrations: the Playwright `webServer`
+ * command does not migrate, so `prisma migrate deploy` runs exactly once per
+ * run, here. It then truncates every table and re-seeds with the passwords from
  * `backend/.env`, so a run never inherits state from `npm test` or a previous
  * E2E run. It refuses to touch anything whose database name does not end with
  * `_test`.
@@ -14,7 +16,14 @@ import path from "node:path";
 const DEFAULT_TEST_DATABASE_URL =
   "postgresql://postgres:postgres@localhost:5432/campusbites_test?schema=public";
 
-/** Mirrors `backend/tests/setup.ts`: never point this script at a real database. */
+/**
+ * Never point this script at a real database.
+ *
+ * Copy, not a shared import: this script runs inside the backend workspace under
+ * tsx. The Playwright-side copy lives in `frontend/e2e/testDatabase.ts` (used by
+ * `playwright.config.ts` and `e2e/globalSetup.ts`); keep the checks and message in
+ * sync when either changes.
+ */
 export function assertTestDatabaseUrl(databaseUrl: string): string {
   const databaseName = new URL(databaseUrl).pathname.replace(/^\//, "");
 

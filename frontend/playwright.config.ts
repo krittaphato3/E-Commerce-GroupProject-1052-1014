@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, devices } from "@playwright/test";
+import { assertTestDatabaseUrl, DEFAULT_TEST_DATABASE_URL } from "./e2e/testDatabase";
 
 const configDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -16,16 +17,9 @@ const frontendPort = process.env.E2E_FRONTEND_PORT ?? "5174";
 const apiPort = process.env.E2E_API_PORT ?? "3100";
 
 // The whole E2E run uses the test database, never the development database.
-// `globalSetup` truncates and re-seeds it after the API has started.
-const DEFAULT_TEST_DATABASE_URL =
-  "postgresql://postgres:postgres@localhost:5432/campusbites_test?schema=public";
-const e2eDatabaseUrl = process.env.TEST_DATABASE_URL || DEFAULT_TEST_DATABASE_URL;
-
-if (!new URL(e2eDatabaseUrl).pathname.replace(/^\//, "").endsWith("_test")) {
-  throw new Error(
-    `Refusing to run E2E against "${e2eDatabaseUrl}": the test database name must end with "_test".`
-  );
-}
+const e2eDatabaseUrl = assertTestDatabaseUrl(
+  process.env.TEST_DATABASE_URL || DEFAULT_TEST_DATABASE_URL
+);
 
 export default defineConfig({
   testDir: "./e2e",
@@ -43,8 +37,11 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
-      // Migrations must exist before server.ts runs its startup session cleanup.
-      command: "npm run db:migrate:test --prefix ../backend && npm run dev --prefix ../backend",
+      // Migrations and seeding run once in `e2e/globalSetup.ts` (single owner).
+      // Nesting them here would apply them twice per run. The API can start on an
+      // unmigrated database because `/api/health` never touches the database, and
+      // globalSetup finishes before the first test executes.
+      command: "npm run dev --prefix ../backend",
       url: `http://localhost:${apiPort}/api/health`,
       cwd: configDir,
       env: {
