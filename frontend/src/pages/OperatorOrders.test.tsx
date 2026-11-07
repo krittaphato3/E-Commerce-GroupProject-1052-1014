@@ -209,8 +209,8 @@ describe("OperatorOrders screen (AC-32, AC-33, AC-34, AC-35, AC-41)", () => {
     });
 
     // 4. Assert the accepted row appears in the Accepted tab
-    expect(await screen.findByText("CB-000001")).toBeTruthy();
-    expect(screen.getByText("Accepted")).toBeTruthy();
+    const row = (await screen.findByText("CB-000001")).closest("tr")!;
+    expect(within(row).getByText("Accepted")).toBeTruthy();
     expect(mockedFetchOperatorOrders).toHaveBeenCalledTimes(3);
   });
 });

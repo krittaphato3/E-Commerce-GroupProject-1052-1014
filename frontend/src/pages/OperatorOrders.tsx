@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   acceptOrder,
@@ -29,6 +29,12 @@ export function OperatorOrders() {
   const [acceptingId, setAcceptingId] = useState<number | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
+  const statusFilterRef = useRef(statusFilter);
+  statusFilterRef.current = statusFilter;
+
+  const ordersRef = useRef(orders);
+  ordersRef.current = orders;
+
   useEffect(() => {
     let cancelled = false;
 
@@ -52,20 +58,31 @@ export function OperatorOrders() {
   }, [statusFilter, reloadKey]);
 
   async function handleAccept(orderId: number) {
+    const filterAtClick = statusFilterRef.current;
     setAcceptingId(orderId);
     setActionError(null);
 
     try {
       await acceptOrder(orderId);
-      // In-place row update per Decision 2
-      setOrders((current) =>
-        current.map((order) =>
-          order.id === orderId ? { ...order, status: "ACCEPTED" } : order
-        )
-      );
+      const currentFilter = statusFilterRef.current;
+      const orderInList = ordersRef.current.some((o) => o.id === orderId);
+
+      if (
+        currentFilter !== filterAtClick ||
+        (!orderInList && (currentFilter === "" || currentFilter === "ACCEPTED"))
+      ) {
+        setReloadKey((k) => k + 1);
+      } else {
+        // In-place row update per Decision 2 when active filter is unchanged
+        setOrders((current) =>
+          current.map((order) =>
+            order.id === orderId ? { ...order, status: "ACCEPTED" } : order
+          )
+        );
+      }
     } catch (err) {
-      if (err instanceof ApiRequestError && err.status === 409) {
-        setActionError(err.message);
+      if (err instanceof ApiRequestError && (err.status === 409 || err.code === "INVALID_TRANSITION")) {
+        setActionError("This order was already handled.");
         setReloadKey((k) => k + 1);
       } else {
         setActionError(
