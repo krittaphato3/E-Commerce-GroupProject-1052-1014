@@ -4,6 +4,9 @@ __pycache__/
 *$py.class
 *.py
 
+# Deliverable build tooling (Word document generator)
+!docs/deliverable-1/build_docx.py
+
 # ZCode agent configuration & local session data
 .zcode/
 
