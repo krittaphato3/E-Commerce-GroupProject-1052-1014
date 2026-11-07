@@ -225,7 +225,7 @@ Get-NetTCPConnection -LocalPort 3100,5174 |
 | [`docs/traceability.md`](docs/traceability.md) | Requirement → AC → test → result matrix for all 46 Sprint 1 tests |
 | [`docs/evidence/README.md`](docs/evidence/README.md) | Evidence pack index: screenshots, red/green logs, workflow evidence |
 
-The Word deliverable is assembled locally from these Markdown sources and submitted for Lab 2; it is **not** part of this repository. The `docs/deliverable-1/` working folder (the assembled `.docx` and the scripts that build it) is ignored by Git on purpose, so the Markdown files above remain the tracked, reviewable record.
+The Word deliverable is assembled locally from these Markdown sources and submitted outside this repository; it is **not** part of GitHub. The `docs/deliverable-1/` folder (the assembled `.docx` and the scripts that build it) is Git-ignored on purpose, so the Markdown files above remain the tracked, reviewable record.
 
 ---
 

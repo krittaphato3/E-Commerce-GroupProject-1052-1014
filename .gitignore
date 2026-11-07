@@ -4,9 +4,9 @@ __pycache__/
 *$py.class
 *.py
 
-# Deliverable 1: built locally and submitted for Lab 2, not versioned.
-# The Markdown sources in docs/ are the tracked record; the assembled Word
-# file and its builder stay on the author's machine.
+# Deliverable 1 working folder: built locally and submitted outside this
+# repository, so it is not versioned here.
+# The Markdown sources in docs/ are the tracked record.
 docs/deliverable-1/
 
 # Keep future tracked Python tooling reachable despite the global *.py rule

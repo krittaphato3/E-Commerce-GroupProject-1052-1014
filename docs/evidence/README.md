@@ -5,7 +5,7 @@
 | Document | `docs/evidence/README.md` |
 | Sprint | 1 (Deliverable 1) |
 | Date | 2026-11-07 |
-| Related | `docs/traceability.md`, `docs/sprints/sprint-1/features.md` §6. The assembled Word file is built locally from these sources and submitted for Lab 2; it is not part of this repository. |
+| Related | `docs/traceability.md`, `docs/sprints/sprint-1/features.md` §6. The assembled Word file is produced from these sources and submitted outside this repository. |
 
 This directory holds the evidence that the Sprint 1 requirements were met by running the product, not by assertion. File names carry the feature or responsibility they support (`F-01` to `F-04`, `R-01`), and terminal logs carry the tested commit hash in their file name.
 
@@ -91,7 +91,7 @@ These are disclosed rather than hidden; they belong to the team/Lab 5 and Sprint
 - **The login screenshot covers invalid credentials**, not the 400 field-validation state; that path is covered by TEST-04.
 - **Release tag `sprint-1-v1.0`** from the contract has not been created yet.
 - **Contribution table and AI-use declaration** are team-authored statements and are not generated here.
-- **Deliverable format is DOCX**, not PDF, as agreed for this submission; export to PDF from Word if the course requires PDF. The assembled file and the scripts that build it stay out of Git and are submitted for Lab 2.
+- **Deliverable format is DOCX**, not PDF, as required by the submission; export to PDF from Word if the receiving site requires PDF. The assembled file and the scripts that build it are not tracked in Git and are submitted outside this repository.
 
 ## 7. Integrity
 

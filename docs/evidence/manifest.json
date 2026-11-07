@@ -291,7 +291,7 @@
     "No distinct order-confirmation screen exists: the SPA navigates straight to the order detail after a 201, so E-07 is the confirmation evidence.",
     "The login screenshot covers invalid credentials, not the 400 field-validation state asserted by TEST-04.",
     "The release tag sprint-1-v1.0 has not been created.",
-    "The assembled Word deliverable and its build scripts are kept out of this repository and submitted for Lab 2; the Markdown sources here are the tracked record.",
+    "The assembled Word deliverable and its build scripts are not tracked here; the file is submitted outside this repository. The Markdown sources are the tracked record.",
     "The contribution table and AI-use declaration are team-authored statements and are not included in the generated document."
   ]
 }
