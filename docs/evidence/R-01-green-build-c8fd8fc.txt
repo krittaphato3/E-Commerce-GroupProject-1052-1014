@@ -1,0 +1,39 @@
+Omazon — R-01 Sprint 1 build and typecheck (green)
+Tested commit: c8fd8fc
+Date: 2026-11-07
+Commands: npm run build; npm run typecheck
+Exit codes: build=0 typecheck=0
+
+
+> campusbites@1.0.0 build
+> npm run build --workspaces
+
+
+> campusbites-backend@1.0.0 build
+> tsc -p tsconfig.json
+
+
+> campusbites-frontend@1.0.0 build
+> tsc && vite build
+
+vite v6.4.5 building for production...
+transforming...
+✓ 45 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.39 kB │ gzip:  0.27 kB
+dist/assets/index-BL5QWnkG.css  231.14 kB │ gzip: 30.69 kB
+dist/assets/index-3RL4BJA3.js   185.39 kB │ gzip: 59.25 kB
+✓ built in 373ms
+
+> campusbites@1.0.0 typecheck
+> npm run typecheck --workspaces
+
+
+> campusbites-backend@1.0.0 typecheck
+> tsc --noEmit
+
+
+> campusbites-frontend@1.0.0 typecheck
+> tsc --noEmit
+

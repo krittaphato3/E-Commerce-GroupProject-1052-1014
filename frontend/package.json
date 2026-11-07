@@ -2,7 +2,7 @@
   "name": "campusbites-frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "CampusBites Web Frontend SPA",
+  "description": "Omazon Web Frontend SPA",
   "type": "module",
   "scripts": {
     "dev": "vite",

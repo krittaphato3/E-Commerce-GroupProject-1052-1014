@@ -61,7 +61,7 @@ export function Header() {
     <header className="bg-white border-bottom">
       <div className="container py-3 d-flex flex-wrap align-items-center gap-3">
         <Link to="/" className="h4 text-primary text-decoration-none m-0">
-          CampusBites
+          Omazon
         </Link>
 
         {user && (

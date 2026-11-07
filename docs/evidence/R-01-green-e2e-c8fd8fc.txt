@@ -1,0 +1,49 @@
+Omazon — R-01 Playwright journeys, three consecutive runs after npm test
+Tested commit: c8fd8fc
+Date: 2026-11-07
+Command: npm test, then npm run e2e three times in a row
+Exit codes: npm test=0; e2e run 1=0; e2e run 2=0; e2e run 3=0
+Result: 6 Playwright journeys pass on every run, each starting from a freshly reset campusbites_test.
+
+=== npm test (2026-11-07T11:05:30Z) ===
+ Test Files  15 passed (15)
+      Tests  84 passed (84)
+ Test Files  8 passed (8)
+      Tests  36 passed (36)
+npm test exit=0
+
+=== npm run e2e run 1 (2026-11-07T11:05:37Z) ===
+[E2E] Test database reset and seeded.
+Running 6 tests using 1 worker
+  ✓  1 [chromium] › e2e/auth.spec.ts:16:1 › TEST-09: customer and operator login, logout and invalid credentials (791ms)
+  ✓  2 [chromium] › e2e/menu.spec.ts:4:1 › TEST-12: anonymous menu shows formatted prices and sold-out items (144ms)
+  ✓  3 [chromium] › e2e/operator.spec.ts:16:1 › TEST-41: an operator accepts a pending order and the customer sees Accepted and history (922ms)
+  ✓  4 [chromium] › e2e/operator.spec.ts:81:1 › TEST-42: a customer navigating to /operator/orders sees in-place 403 Forbidden (340ms)
+  ✓  5 [chromium] › e2e/order.spec.ts:18:1 › TEST-29: a customer places an order and sees the saved total (569ms)
+  ✓  6 [chromium] › e2e/order.spec.ts:74:1 › AC-21 / AC-30: a stale cart gets 409 ITEM_UNAVAILABLE and keeps both lines (511ms)
+  6 passed (7.0s)
+e2e run 1 exit=0
+
+=== npm run e2e run 2 (2026-11-07T11:05:44Z) ===
+[E2E] Test database reset and seeded.
+Running 6 tests using 1 worker
+  ✓  1 [chromium] › e2e/auth.spec.ts:16:1 › TEST-09: customer and operator login, logout and invalid credentials (704ms)
+  ✓  2 [chromium] › e2e/menu.spec.ts:4:1 › TEST-12: anonymous menu shows formatted prices and sold-out items (150ms)
+  ✓  3 [chromium] › e2e/operator.spec.ts:16:1 › TEST-41: an operator accepts a pending order and the customer sees Accepted and history (924ms)
+  ✓  4 [chromium] › e2e/operator.spec.ts:81:1 › TEST-42: a customer navigating to /operator/orders sees in-place 403 Forbidden (345ms)
+  ✓  5 [chromium] › e2e/order.spec.ts:18:1 › TEST-29: a customer places an order and sees the saved total (570ms)
+  ✓  6 [chromium] › e2e/order.spec.ts:74:1 › AC-21 / AC-30: a stale cart gets 409 ITEM_UNAVAILABLE and keeps both lines (480ms)
+  6 passed (6.7s)
+e2e run 2 exit=0
+
+=== npm run e2e run 3 (2026-11-07T11:05:52Z) ===
+[E2E] Test database reset and seeded.
+Running 6 tests using 1 worker
+  ✓  1 [chromium] › e2e/auth.spec.ts:16:1 › TEST-09: customer and operator login, logout and invalid credentials (687ms)
+  ✓  2 [chromium] › e2e/menu.spec.ts:4:1 › TEST-12: anonymous menu shows formatted prices and sold-out items (169ms)
+  ✓  3 [chromium] › e2e/operator.spec.ts:16:1 › TEST-41: an operator accepts a pending order and the customer sees Accepted and history (906ms)
+  ✓  4 [chromium] › e2e/operator.spec.ts:81:1 › TEST-42: a customer navigating to /operator/orders sees in-place 403 Forbidden (341ms)
+  ✓  5 [chromium] › e2e/order.spec.ts:18:1 › TEST-29: a customer places an order and sees the saved total (570ms)
+  ✓  6 [chromium] › e2e/order.spec.ts:74:1 › AC-21 / AC-30: a stale cart gets 409 ITEM_UNAVAILABLE and keeps both lines (495ms)
+  6 passed (6.7s)
+e2e run 3 exit=0

@@ -1,0 +1,18 @@
+Omazon — R-01 (AC-43 / TEST-43) TDD green run
+Commit: 8f42cbd
+Date: 2026-11-07
+Command: npx vitest run tests/routes.access.test.ts (in backend/)
+Exit code: 0
+Result: 2/2 tests pass; registry and mounted routes agree on 10 routes (4 public + 6 protected).
+Database: TEST_DATABASE_URL (campusbites_test) on localhost:5432
+
+
+ RUN  v3.2.7 /Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/backend
+
+ ✓ tests/routes.access.test.ts (2 tests) 176ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  17:56:28
+   Duration  496ms (transform 60ms, setup 14ms, collect 201ms, tests 176ms, environment 0ms, prepare 32ms)
+

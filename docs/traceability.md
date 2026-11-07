@@ -1,9 +1,9 @@
-# CampusBites — Requirements Traceability Matrix
+# Omazon — Requirements Traceability Matrix
 
 | Item | Value |
 |---|---|
 | Document | `docs/traceability.md` |
-| Version | 1.12 |
+| Version | 1.13 |
 | Date | 2026-11-07 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md` |
 
@@ -23,6 +23,7 @@
 | 1.10 | 2026-11-07 | Record F-04 verification results: red (failing) test evidence at c04ca45; FR-08, FR-09, BR-06, BR-07, BR-15 PASS at 6d1d2f7 (backend green) and 984ddb9 (UI green); BR-08 and NFR-02 record TEST-37 and TEST-38 while remaining INCOMPLETE pending ISSUE-3 (TEST-43) | Verification of Issue #6 (F-04, AC-32 to AC-42) |
 | 1.11 | 2026-11-07 | Update F-04 verification results: red test evidence at a614473; follow-up review fixes PASS at c680623 (UI fix green), 8fe7793 (TEST-40 race barrier & mutation check), 162b413 (types), with updated green evidence files | Review fixes for Issue #6 (F-04) |
 | 1.12 | 2026-11-07 | TEST-40 restored to 10 iterations with barrier synchronization and verified PASS against real PostgreSQL at 37cf31f | Verification of TEST-40 contract compliance |
+| 1.13 | 2026-11-07 | Record R-01 verification results: TEST-43 red at d7792c8 and green at 8f42cbd; mark BR-08, NFR-01 and NFR-02 PASS; add CHG-02 for the Omazon display brand rename | Verification of Issue #3 (R-01, AC-43/TEST-43) and the display brand rename |
 
 ### How to use this file
 - Sprint 1 test IDs follow the rule **TEST-nn verifies AC-nn** (for example TEST-24 verifies AC-24).
@@ -63,7 +64,7 @@
 | BR-05 | F-03 | 1 | AC-23, AC-24, AC-46 | TEST-23, 24, 46 | backend/tests/orders.create.test.ts::TEST-23, ::TEST-24; backend/tests/constraints.test.ts::TEST-46 | PASS | 140c030 (red), 0f3c649 (green) |
 | BR-06 | F-04, F-06, F-08, F-09, F-12 | 1 (F-04); 2 (F-06, F-08); 3 (F-09, F-12) | AC-35 (S1 transitions); full machine in Sprint 2 and 3 contracts | TEST-35, then TBD | backend/src/services/orderStateMachine.test.ts::TEST-35; backend/tests/orders.operator.test.ts::TEST-35 | PASS | c04ca45, a614473 (red); 6d1d2f7, c680623, 8fe7793, 37cf31f (green) |
 | BR-07 | F-03, F-04, R-01 | 1 | AC-27, AC-28, AC-39 | TEST-27, 28, 39 | backend/tests/orders.access.test.ts::TEST-27, ::TEST-28; backend/tests/orders.operator.test.ts::TEST-39 | PASS | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green) |
-| BR-08 | F-04, R-01 | 1 | AC-26, AC-37, AC-38, AC-43 | TEST-26, 37, 38, 43 | backend/tests/orders.access.test.ts::TEST-26; backend/tests/orders.operator.test.ts::TEST-37, ::TEST-38 PASS; TEST-43 belongs to ISSUE-3 (not implemented) | INCOMPLETE | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green) |
+| BR-08 | F-04, R-01 | 1 | AC-26, AC-37, AC-38, AC-43 | TEST-26, 37, 38, 43 | backend/tests/orders.access.test.ts::TEST-26; backend/tests/orders.operator.test.ts::TEST-37, ::TEST-38; backend/tests/routes.access.test.ts::TEST-43 | PASS | 140c030, c04ca45, d7792c8 (red); 0f3c649, 6d1d2f7, 8f42cbd (green) |
 | BR-09 | F-08 | 2 | To be defined in Sprint 2 contract | TBD | | NOT RUN | |
 | BR-10 | F-06 | 2 | To be defined in the Sprint 2 contract (F-06) | TBD | | NOT RUN | |
 | BR-11 | F-07 | 2 | To be defined in Sprint 2 contract | TBD | | NOT RUN | |
@@ -76,8 +77,8 @@
 
 | Requirement | Feature / responsibility | Sprint | Target and verification | Planned test | Actual test / measurement | Result | Version |
 |---|---|---|---|---|---|---|---|
-| NFR-01 | R-01 | 1, extended 2 and 3 | 401 without session on every protected route (AC-43) | TEST-43 | | NOT RUN | |
-| NFR-02 | R-01 | 1, extended 2 and 3 | 403 for wrong role or non-owner on every protected route (AC-43, AC-27, AC-37, AC-38) | TEST-43, 27, 37, 38 | backend/tests/orders.access.test.ts::TEST-27; backend/tests/orders.operator.test.ts::TEST-37, ::TEST-38 PASS; TEST-43 belongs to ISSUE-3 (not implemented) | INCOMPLETE | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green) |
+| NFR-01 | R-01 | 1, extended 2 and 3 | 401 without session on every protected route (AC-43) | TEST-43 | backend/tests/routes.access.test.ts::TEST-43 | PASS | d7792c8 (red), 8f42cbd (green) |
+| NFR-02 | R-01 | 1, extended 2 and 3 | 403 for wrong role or non-owner on every protected route (AC-43, AC-27, AC-37, AC-38) | TEST-43, 27, 37, 38 | backend/tests/orders.access.test.ts::TEST-27; backend/tests/orders.operator.test.ts::TEST-37, ::TEST-38; backend/tests/routes.access.test.ts::TEST-43 | PASS | 140c030, c04ca45, d7792c8 (red); 0f3c649, 6d1d2f7, 8f42cbd (green) |
 | NFR-03 | F-01 | 1 | bcrypt hash stored; hash never returned (AC-08) | TEST-08 | backend/tests/auth.test.ts::TEST-08; backend/src/services/password.test.ts::TEST-08 | PASS | 8398fe2 (red), f222daa (green), 2022899 (explicit `/me` field projection) |
 | NFR-04 | F-01 | 1 | 8-hour expiry (AC-07); logout invalidates at once (AC-06) | TEST-06, 07 | backend/tests/auth.test.ts::TEST-06, ::TEST-07 | PASS | 8398fe2 (red; TEST-06 reworked in 05a4f08), f222daa (green), 6e68bee (expired session deletion on lookup & startup) |
 | NFR-05 | R-04 | 3 | p95 ≤ 500 ms and zero 5xx responses for `GET /api/menu` and `POST /api/orders`, measured at 20 concurrent connections for 30 s per endpoint, database seeded with 500 orders plus an order-test item with enough stock for the whole run (NFR-05) | LOAD-01: autocannon script, raw output and tested commit saved (Sprint 3) | | NOT RUN | |
@@ -111,3 +112,4 @@ Total Sprint 1 AC and tests: 46 each (one test per AC; some tests contain severa
 | Change ID | Date | Affected requirement / feature | Description | Rationale | Approved by |
 |---|---|---|---|---|---|
 | CHG-01 | 2026-11-07 | FR-09 / AC-42 / TEST-42 | In-place 403 Forbidden alert rather than redirect on wrong-role navigation (DEC-23, Option A) | Matches ProtectedRoute behavior established in d7ec1c2 | Team decision |
+| CHG-02 | 2026-11-07 | Cross-cutting display brand | Rename user-facing brand display name and document titles to Omazon while preserving technical identifiers (DEC-25) | Align user-facing branding with team product name | Team decision |

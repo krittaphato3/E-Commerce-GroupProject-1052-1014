@@ -1,4 +1,4 @@
-# CampusBites — Sprint 1 Features: Engineering Contracts
+# Omazon — Sprint 1 Features: Engineering Contracts
 
 | Item | Value |
 |---|---|
@@ -6,7 +6,7 @@
 | Sprint | 1 (due with Deliverable 1, 8 Nov 2026) |
 | Staging branch | `sprint-1-staging` |
 | Release tag (planned) | `sprint-1-v1.0` |
-| Version | 1.6 |
+| Version | 1.7 |
 | Date | 2026-11-07 |
 | Related | `docs/srs.md`, `docs/features.md` (whole-product inventory), `docs/traceability.md`, `docs/sprints/plan.md`, `docs/system-sds.md` |
 
@@ -20,6 +20,7 @@
 | 1.4 | 2026-11-06 | F-01 Validation: login `password` limit changed from 128 characters to 72 bytes (`Buffer.byteLength`) | Match bcrypt's 72-byte input limit so passwords beyond 72 UTF-8 bytes are not silently truncated (DEC-18) |
 | 1.5 | 2026-11-06 | F-02 API: `GET /api/menu` also returns `isAvailable` alongside the computed `available` flag | ISSUE-4 technical specification lists `isAvailable` in the payload; the field is the stored flag, so the client never has to infer it |
 | 1.6 | 2026-11-07 | F-04 Contract revision: AC-42 / TEST-42 asserts in-place 403 Forbidden alert rather than redirect per DEC-23 (Option A); F-03 POST /api/orders adds `Location: /api/orders/:id` header (Follow-up 3); Menu UI caps quantity at Math.min(10, stockQty) (Follow-up 5) | Feature F-04 implementation alignment and follow-up defect resolutions |
+| 1.7 | 2026-11-07 | R-01 contract version 1.1: the route registry is implemented in `backend/src/routes/registry.ts` with `guardsFor`, `mountRouter`, `extractExpressRoutes` and `findUnregisteredRoutes`; §11 gains its own revision row; the document titles use the Omazon display name | Record the R-01 implementation shape and the display brand rename (DEC-24, DEC-25) |
 
 Each contract below keeps its own revision history. Log every change there with a reason; do not rewrite earlier entries.
 
@@ -636,13 +637,14 @@ In addition to the Product Definition of Done:
 | Requirements | NFR-01, NFR-02, NFR-07, NFR-08, BR-07, BR-08, BR-13 (database CHECK part) |
 | Sprint | 1 (extended in Sprints 2 and 3) |
 | Depends on | none (R-03 is built first) |
-| Contract version | 1.0 (2026-11-03) |
+| Contract version | 1.1 (2026-11-07) |
 | Issues / branches | ISSUE-1 `feature/R-03-setup-seed`; ISSUE-3 `feature/R-01-R-02-access-errors` |
 
 ### Revision history
 | Version | Date | Change | Reason |
 |---|---|---|---|
 | 1.0 | 2026-11-03 | Initial contract | Before implementation |
+| 1.1 | 2026-11-07 | R-01 implemented: the shared registry (`guardsFor`, `mountRouter`, `extractExpressRoutes`, `findUnregisteredRoutes`) replaces the per-router guard lists, and TEST-43 runs in `backend/tests/routes.access.test.ts` | Record the implementation that satisfies AC-43 and the route-completeness meta-test (DEC-24) |
 
 ### 1. Design
 

@@ -1,6 +1,13 @@
 import { test, expect } from "@playwright/test";
 
-/** TEST-12: the public menu shows THB prices and sold-out items (AC-12). */
+/**
+ * TEST-12: the public menu shows THB prices and sold-out items (AC-12).
+ *
+ * The sold-out state asserted here comes from the seed itself (Chicken Sandwich
+ * has `stockQty: 0`, Pad Thai is delisted), applied by `globalSetup` before any
+ * test runs. It is not produced by another spec consuming stock, so this test
+ * does not depend on the order in which Playwright runs the spec files.
+ */
 test("TEST-12: anonymous menu shows formatted prices and sold-out items", async ({ page }) => {
   await page.goto("/menu");
 
