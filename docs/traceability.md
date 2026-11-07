@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/traceability.md` |
-| Version | 1.13 |
+| Version | 1.14 |
 | Date | 2026-11-07 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md` |
 
@@ -24,6 +24,7 @@
 | 1.11 | 2026-11-07 | Update F-04 verification results: red test evidence at a614473; follow-up review fixes PASS at c680623 (UI fix green), 8fe7793 (TEST-40 race barrier & mutation check), 162b413 (types), with updated green evidence files | Review fixes for Issue #6 (F-04) |
 | 1.12 | 2026-11-07 | TEST-40 restored to 10 iterations with barrier synchronization and verified PASS against real PostgreSQL at 37cf31f | Verification of TEST-40 contract compliance |
 | 1.13 | 2026-11-07 | Record R-01 verification results: TEST-43 red at d7792c8 and green at 8f42cbd; mark BR-08, NFR-01 and NFR-02 PASS; add CHG-02 for the Omazon display brand rename | Verification of Issue #3 (R-01, AC-43/TEST-43) and the display brand rename |
+| 1.14 | 2026-11-07 | Deliverable 1 finalisation: TEST-20 is named explicitly in the FR-05 actual-test cell; the TEST-45 and TEST-46 version cells cite the commit that introduced the tests (`c215549`) instead of a branch name | Evidence pack and document assembly (Issue #7) |
 
 ### How to use this file
 - Sprint 1 test IDs follow the rule **TEST-nn verifies AC-nn** (for example TEST-24 verifies AC-24).
@@ -39,7 +40,7 @@
 | FR-02 | F-01 | 1 | AC-06, AC-09 | TEST-06, 09 | backend/tests/auth.test.ts::TEST-06 (seeded session plus supporting login-to-logout test); frontend/e2e/auth.spec.ts::TEST-09 | PASS | 8398fe2 (red; TEST-06 reworked in 05a4f08), f222daa (green), 097da41 (E2E green), 9ec70cb (retroactive red, created after 097da41) |
 | FR-03 | F-01 | 1 | AC-05 | TEST-05 | backend/tests/auth.test.ts::TEST-05 | PASS | 8398fe2 (red), f222daa (green), 2022899 (explicit user field projection) |
 | FR-04 | F-02 | 1 | AC-10, AC-11, AC-12, AC-13 | TEST-10, 11, 12, 13 | backend/tests/menu.test.ts::TEST-10; backend/src/services/menuRules.test.ts::TEST-11; frontend/e2e/menu.spec.ts::TEST-12; frontend/src/pages/Menu.test.tsx::TEST-13 | PASS | 140c030 (red), 0f3c649 (green) |
-| FR-05 | F-03 | 1 | AC-14, AC-15, AC-16, AC-18, AC-19, AC-20, AC-21, AC-22, AC-23, AC-26, AC-29, AC-30 | TEST-14, 15, 16, 18–23, 26, 29, 30 | backend/tests/orders.create.test.ts::TEST-14 to ::TEST-23; backend/tests/orders.access.test.ts::TEST-26; frontend/e2e/order.spec.ts::TEST-29; frontend/src/pages/Menu.test.tsx::TEST-30 | PASS | 140c030 (red), 0f3c649 (green) |
+| FR-05 | F-03 | 1 | AC-14, AC-15, AC-16, AC-18, AC-19, AC-20, AC-21, AC-22, AC-23, AC-26, AC-29, AC-30 | TEST-14, 15, 16, 18–23, 26, 29, 30 | backend/tests/orders.create.test.ts::TEST-14, ::TEST-15, ::TEST-16, ::TEST-17, ::TEST-18, ::TEST-19, ::TEST-20, ::TEST-21, ::TEST-22, ::TEST-23; backend/tests/orders.access.test.ts::TEST-26; frontend/e2e/order.spec.ts::TEST-29; frontend/src/pages/Menu.test.tsx::TEST-30 | PASS | 140c030 (red), 0f3c649 (green) |
 | FR-06 | F-03 | 1 | AC-14, AC-17, AC-25, AC-27 | TEST-14, 17, 25, 27 | backend/tests/orders.create.test.ts::TEST-14, ::TEST-17, ::TEST-25; backend/tests/orders.access.test.ts::TEST-27 | PASS | 140c030 (red), 0f3c649 (green) |
 | FR-07 | F-03 | 1 | AC-28, AC-31 | TEST-28, 31 | backend/tests/orders.access.test.ts::TEST-28; frontend/src/pages/MyOrders.test.tsx::TEST-31 | PASS | 140c030 (red), 0f3c649 (green) |
 | FR-08 | F-04 | 1 | AC-32, AC-33, AC-38, AC-39 | TEST-32, 33, 38, 39 | backend/tests/orders.operator.test.ts::TEST-32, ::TEST-33, ::TEST-38, ::TEST-39 | PASS | c04ca45 (red), 6d1d2f7 (green) |
@@ -69,7 +70,7 @@
 | BR-10 | F-06 | 2 | To be defined in the Sprint 2 contract (F-06) | TBD | | NOT RUN | |
 | BR-11 | F-07 | 2 | To be defined in Sprint 2 contract | TBD | | NOT RUN | |
 | BR-12 | F-09 | 3 | To be defined in Sprint 3 contract | TBD | | NOT RUN | |
-| BR-13 | F-05, R-03 | 1 (DB), 2 (API) | S1: AC-46 (DB constraints). S2: API validation in contract | TEST-46, then TBD | backend/tests/constraints.test.ts::TEST-46 | PASS | feature/sprint1/scaffold-db-seed |
+| BR-13 | F-05, R-03 | 1 (DB), 2 (API) | S1: AC-46 (DB constraints). S2: API validation in contract | TEST-46, then TBD | backend/tests/constraints.test.ts::TEST-46 | PASS | c215549 |
 | BR-14 | F-03 | 1 | AC-14 (order number format) | TEST-14 | backend/tests/orders.create.test.ts::TEST-14; backend/src/services/orderRules.test.ts::TEST-15 | PASS | 140c030 (red), 0f3c649 (green) |
 | BR-15 | F-03, F-04 | 1 | AC-25, AC-34 | TEST-25, 34 | backend/tests/orders.create.test.ts::TEST-25; backend/tests/orders.operator.test.ts::TEST-34 | PASS | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green) |
 
@@ -84,7 +85,7 @@
 | NFR-05 | R-04 | 3 | p95 ≤ 500 ms and zero 5xx responses for `GET /api/menu` and `POST /api/orders`, measured at 20 concurrent connections for 30 s per endpoint, database seeded with 500 orders plus an order-test item with enough stock for the whole run (NFR-05) | LOAD-01: autocannon script, raw output and tested commit saved (Sprint 3) | | NOT RUN | |
 | NFR-06 | R-05 | 2 | Order survives restart and redeploy (post-deployment check) | CHECK-01 (Sprint 2) | | NOT RUN | |
 | NFR-07 | R-02 | 1 | Standard error shape; no stack trace (AC-04, AC-44) | TEST-04, 44 | backend/tests/auth.test.ts::TEST-04; backend/tests/error.test.ts::TEST-44 | PASS | f222daa, 83f0337 (TEST-04); 9de7923 (TEST-44) |
-| NFR-08 | R-03 | 1 | Fresh clone in 8 commands or fewer; seed repeatable (AC-45) | TEST-45 | backend/tests/seed.test.ts::TEST-45 | PASS | feature/sprint1/scaffold-db-seed |
+| NFR-08 | R-03 | 1 | Fresh clone in 8 commands or fewer; seed repeatable (AC-45) | TEST-45 | backend/tests/seed.test.ts::TEST-45 | PASS | c215549 |
 | NFR-09 | F-02, F-03, R-04 | 1 partial, 3 complete | Loading, empty and error states (AC-13, AC-30, AC-31 in S1) | TEST-13, 30, 31, then TBD | frontend/src/pages/Menu.test.tsx::TEST-13, ::TEST-30; frontend/src/pages/MyOrders.test.tsx::TEST-31 PASS; the Sprint 1 states are verified, the R-04 final usability pass is Sprint 3 | INCOMPLETE | 140c030 (red), 0f3c649 (green) |
 | NFR-10 | R-05 | 2 | At least 85% service-layer line coverage (coverage report) | COV-01 (Sprint 2) | | NOT RUN | |
 | NFR-11 | F-13 | 3 | 429 after 5 failed logins in 15 minutes | TBD (Sprint 3) | | NOT RUN | |

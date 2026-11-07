@@ -8,7 +8,7 @@
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 
 const evidenceDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -20,5 +20,23 @@ export async function captureEvidence(page: Page, fileName: string): Promise<voi
     return;
   }
 
-  await page.screenshot({ path: path.join(evidenceDir, fileName), fullPage: true });
+  // Bootstrap buttons and alerts animate colour for ~150 ms; snapshotting the
+  // first painted frame captures the previous state, so fast-forward them.
+  await page.screenshot({
+    path: path.join(evidenceDir, fileName),
+    fullPage: true,
+    animations: "disabled",
+  });
+}
+
+/** Capture a single element (for example one table row) as its own evidence image. */
+export async function captureEvidenceLocator(locator: Locator, fileName: string): Promise<void> {
+  if (process.env.CAPTURE_EVIDENCE !== "1") {
+    return;
+  }
+
+  await locator.screenshot({
+    path: path.join(evidenceDir, fileName),
+    animations: "disabled",
+  });
 }
