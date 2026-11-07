@@ -67,9 +67,25 @@ npm run e2e
 
 - Credentials come only from environment variables: `SEED_CUSTOMER_PASSWORD` and `SEED_OPERATOR_PASSWORD` are read from `backend/.env`. Optional `E2E_CUSTOMER_EMAIL` and `E2E_OPERATOR_EMAIL` override the seeded emails (defaults: `customer1@campusbites.test`, `operator1@campusbites.test`).
 - The seeded accounts must exist in the development database (`npm run db:seed`) with the same passwords.
-- Playwright runs against `TEST_DATABASE_URL` (the `*_test` database), never the development database. Its `globalSetup` truncates and re-seeds it with the `backend/.env` passwords before the first test, so the seed stock is identical on every run.
+- Playwright runs against `TEST_DATABASE_URL` (the `*_test` database), never the development database. Its `globalSetup` applies migrations, truncates the tables and re-seeds them with the `backend/.env` passwords before the first test, so the seed stock is identical on every run. `globalSetup` is the only migration owner; the `webServer` command does not migrate, so exactly one migration step runs per run.
 - **`npm test` and `npm run e2e` must never run concurrently**: both use the `*_test` database. Running them one after the other is safe, because `globalSetup` resets the database at the start of every E2E run.
 - Playwright starts the API on port 3100 and Vite on port 5174 so a running `npm run dev` server is not disturbed. Override with `E2E_API_PORT` and `E2E_FRONTEND_PORT`, or point `E2E_BASE_URL` at an already-running frontend.
+
+### Troubleshooting: leftover E2E servers
+
+Playwright sets `reuseExistingServer: false` for the API (port 3100) so a run can never attach to a server pointed at the development database. If a previous run crashed, its process can keep the port and the next run fails immediately with a port-in-use error. Find and stop the leftovers, then re-run:
+
+```bash
+# macOS / Linux
+lsof -ti:3100,5174 | xargs kill
+```
+
+```powershell
+# Windows (PowerShell)
+Get-NetTCPConnection -LocalPort 3100,5174 |
+  Select-Object -ExpandProperty OwningProcess -Unique |
+  ForEach-Object { Stop-Process -Id $_ -Force }
+```
 
 ---
 
@@ -100,6 +116,15 @@ npm run e2e
 - `npm run db:migrate`: Apply pending Prisma migrations to the active database.
 - `npm run db:seed`: Run idempotent seed script.
 - `npm run db:reset`: Drop, re-migrate, and re-seed database.
+
+---
+
+## Known Limitations (Sprint 2 backlog)
+
+These are known gaps in the R-01 route registry (`backend/src/routes/registry.ts`); the TEST-43 meta-test does not cover them yet, and fixing them is Sprint 2 work:
+
+- **Nested sub-routers are not extracted.** `extractExpressRoutes` reads one level of `layer.handle.stack`. A router mounted inside another router (`router.use(...)` inside a router) is invisible to the meta-test.
+- **A router mounted under two prefixes keeps only the last mount.** `mountRouter` stores one prefix per router in a `WeakMap`, so `extractExpressRoutes` reports the router once, under the prefix mounted last.
 
 ---
 
