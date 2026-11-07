@@ -5,6 +5,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Login } from "./pages/Login";
 import { Menu } from "./pages/Menu";
 import { OperatorOrders } from "./pages/OperatorOrders";
+import { OrderDetail } from "./pages/OrderDetail";
 import { Orders } from "./pages/Orders";
 
 export function AppShell() {
@@ -15,19 +16,20 @@ export function AppShell() {
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
-          <Route
-            path="/menu"
-            element={
-              <ProtectedRoute>
-                <Menu />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/menu" element={<Menu />} />
           <Route
             path="/orders"
             element={
               <ProtectedRoute roles={["CUSTOMER"]}>
                 <Orders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders/:id"
+            element={
+              <ProtectedRoute>
+                <OrderDetail />
               </ProtectedRoute>
             }
           />

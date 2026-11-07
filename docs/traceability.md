@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/traceability.md` |
-| Version | 1.8 |
+| Version | 1.9 |
 | Date | 2026-11-06 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md` |
 
@@ -19,6 +19,7 @@
 | 1.6 | 2026-11-06 | NFR-08 quickstart repaired: `.env` co-located with the backend workspace, `prisma generate` runs on install, Express 5 async error propagation, FK indexes added. Re-verified fresh-clone quickstart before keeping NFR-08 PASS | Review fix for PR #9 |
 | 1.7 | 2026-11-06 | Record F-01 results: FR-01 to FR-03 and NFR-03/NFR-04 PASS at f222daa (backend) and 097da41 (TEST-09); NFR-07 INCOMPLETE because TEST-44 has no recorded result | Verification of Issue #3 (F-01, AC-01 to AC-09) |
 | 1.8 | 2026-11-06 | Record PR #10 Tier 1 review fixes for F-01 (`bb0acb4`, `f45ba47`, `2022899`, `6e68bee`, `83f0337`, and retroactive `TEST-09` red run at `60b5e57` in `9ec70cb`) and mark NFR-07 PASS with `TEST-44` added in `9de7923` | PR #10 review fixes for Issue #3 (F-01) |
+| 1.9 | 2026-11-06 | Record F-02 and F-03 results for TEST-10 to TEST-31 at `0f3c649`; BR-07, BR-08 and BR-15 stay `INCOMPLETE` because their TEST-39, TEST-37/38/43 and TEST-34 rows belong to F-04 and ISSUE-3 | Verification of Issue #4 (F-02, F-03, AC-10 to AC-31) |
 
 ### How to use this file
 - Sprint 1 test IDs follow the rule **TEST-nn verifies AC-nn** (for example TEST-24 verifies AC-24).
@@ -33,10 +34,10 @@
 | FR-01 | F-01 | 1 | AC-01, AC-02, AC-03, AC-04, AC-09 | TEST-01, 02, 03, 04, 09 | backend/tests/auth.test.ts::TEST-01, ::TEST-02, ::TEST-03, ::TEST-04; frontend/e2e/auth.spec.ts::TEST-09 | PASS | 8398fe2 (red), f222daa (green), bb0acb4 (TEST-03 rounds fix), 83f0337 (TEST-04 72-byte cap), 097da41 (E2E green), 9ec70cb (retroactive red, created after 097da41) |
 | FR-02 | F-01 | 1 | AC-06, AC-09 | TEST-06, 09 | backend/tests/auth.test.ts::TEST-06 (seeded session plus supporting login-to-logout test); frontend/e2e/auth.spec.ts::TEST-09 | PASS | 8398fe2 (red; TEST-06 reworked in 05a4f08), f222daa (green), 097da41 (E2E green), 9ec70cb (retroactive red, created after 097da41) |
 | FR-03 | F-01 | 1 | AC-05 | TEST-05 | backend/tests/auth.test.ts::TEST-05 | PASS | 8398fe2 (red), f222daa (green), 2022899 (explicit user field projection) |
-| FR-04 | F-02 | 1 | AC-10, AC-11, AC-12, AC-13 | TEST-10, 11, 12, 13 | | NOT RUN | |
-| FR-05 | F-03 | 1 | AC-14, AC-15, AC-16, AC-18, AC-19, AC-20, AC-21, AC-22, AC-23, AC-26, AC-29, AC-30 | TEST-14, 15, 16, 18–23, 26, 29, 30 | | NOT RUN | |
-| FR-06 | F-03 | 1 | AC-14, AC-17, AC-25, AC-27 | TEST-14, 17, 25, 27 | | NOT RUN | |
-| FR-07 | F-03 | 1 | AC-28, AC-31 | TEST-28, 31 | | NOT RUN | |
+| FR-04 | F-02 | 1 | AC-10, AC-11, AC-12, AC-13 | TEST-10, 11, 12, 13 | backend/tests/menu.test.ts::TEST-10; backend/src/services/menuRules.test.ts::TEST-11; frontend/e2e/menu.spec.ts::TEST-12; frontend/src/pages/Menu.test.tsx::TEST-13 | PASS | 140c030 (red), 0f3c649 (green) |
+| FR-05 | F-03 | 1 | AC-14, AC-15, AC-16, AC-18, AC-19, AC-20, AC-21, AC-22, AC-23, AC-26, AC-29, AC-30 | TEST-14, 15, 16, 18–23, 26, 29, 30 | backend/tests/orders.create.test.ts::TEST-14 to ::TEST-23; backend/tests/orders.access.test.ts::TEST-26; frontend/e2e/order.spec.ts::TEST-29; frontend/src/pages/Menu.test.tsx::TEST-30 | PASS | 140c030 (red), 0f3c649 (green) |
+| FR-06 | F-03 | 1 | AC-14, AC-17, AC-25, AC-27 | TEST-14, 17, 25, 27 | backend/tests/orders.create.test.ts::TEST-14, ::TEST-17, ::TEST-25; backend/tests/orders.access.test.ts::TEST-27 | PASS | 140c030 (red), 0f3c649 (green) |
+| FR-07 | F-03 | 1 | AC-28, AC-31 | TEST-28, 31 | backend/tests/orders.access.test.ts::TEST-28; frontend/src/pages/MyOrders.test.tsx::TEST-31 | PASS | 140c030 (red), 0f3c649 (green) |
 | FR-08 | F-04 | 1 | AC-32, AC-33, AC-38, AC-39 | TEST-32, 33, 38, 39 | | NOT RUN | |
 | FR-09 | F-04 | 1 | AC-34, AC-35, AC-36, AC-37, AC-40, AC-41, AC-42 | TEST-34, TEST-35, TEST-36, TEST-37, TEST-40, TEST-41, TEST-42 | | NOT RUN | |
 | FR-10 | F-05 | 2 | To be defined in Sprint 2 contract | TBD | | NOT RUN | |
@@ -52,21 +53,21 @@
 
 | Requirement | Feature | Sprint | AC / verification target | Planned test | Actual test (file::name) | Result | Version |
 |---|---|---|---|---|---|---|---|
-| BR-01 | F-03 | 1 | AC-18, AC-19 | TEST-18, 19 | | NOT RUN | |
-| BR-02 | F-02 (defines), F-03 (enforces) | 1 | AC-11, AC-21, AC-22 | TEST-11, 21, 22 | | NOT RUN | |
-| BR-03 | F-03 | 1 | AC-15, AC-16 | TEST-15, 16 | | NOT RUN | |
-| BR-04 | F-03, F-05 | 1 (F-03), 2 (F-05) | AC-17 (S1); S2: catalog-edit AC to be defined in the Sprint 2 contract | TEST-17 | | NOT RUN | |
-| BR-05 | F-03 | 1 | AC-23, AC-24, AC-46 | TEST-23, 24, 46 | | NOT RUN | |
+| BR-01 | F-03 | 1 | AC-18, AC-19 | TEST-18, 19 | backend/src/services/orderRules.test.ts::TEST-18; backend/tests/orders.create.test.ts::TEST-18, ::TEST-19 | PASS | 140c030 (red), 0f3c649 (green) |
+| BR-02 | F-02 (defines), F-03 (enforces) | 1 | AC-11, AC-21, AC-22 | TEST-11, 21, 22 | backend/src/services/menuRules.test.ts::TEST-11; backend/tests/orders.create.test.ts::TEST-21, ::TEST-22 | PASS | 140c030 (red), 0f3c649 (green) |
+| BR-03 | F-03 | 1 | AC-15, AC-16 | TEST-15, 16 | backend/src/services/orderRules.test.ts::TEST-15; backend/tests/orders.create.test.ts::TEST-15, ::TEST-16 | PASS | 140c030 (red), 0f3c649 (green) |
+| BR-04 | F-03, F-05 | 1 (F-03), 2 (F-05) | AC-17 (S1); S2: catalog-edit AC to be defined in the Sprint 2 contract | TEST-17 | backend/tests/orders.create.test.ts::TEST-17 | PASS | 140c030 (red), 0f3c649 (green) |
+| BR-05 | F-03 | 1 | AC-23, AC-24, AC-46 | TEST-23, 24, 46 | backend/tests/orders.create.test.ts::TEST-23, ::TEST-24; backend/tests/constraints.test.ts::TEST-46 | PASS | 140c030 (red), 0f3c649 (green) |
 | BR-06 | F-04, F-06, F-08, F-09, F-12 | 1 (F-04); 2 (F-06, F-08); 3 (F-09, F-12) | AC-35 (S1 transitions); full machine in Sprint 2 and 3 contracts | TEST-35, then TBD | | NOT RUN | |
-| BR-07 | F-03, F-04, R-01 | 1 | AC-27, AC-28, AC-39 | TEST-27, 28, 39 | | NOT RUN | |
-| BR-08 | F-04, R-01 | 1 | AC-26, AC-37, AC-38, AC-43 | TEST-26, 37, 38, 43 | | NOT RUN | |
+| BR-07 | F-03, F-04, R-01 | 1 | AC-27, AC-28, AC-39 | TEST-27, 28, 39 | backend/tests/orders.access.test.ts::TEST-27, ::TEST-28 PASS; TEST-39 belongs to F-04 (not implemented) | INCOMPLETE | 140c030 (red), 0f3c649 (green) |
+| BR-08 | F-04, R-01 | 1 | AC-26, AC-37, AC-38, AC-43 | TEST-26, 37, 38, 43 | backend/tests/orders.access.test.ts::TEST-26 PASS; TEST-37/38 belong to F-04 and TEST-43 to ISSUE-3 (not implemented) | INCOMPLETE | 140c030 (red), 0f3c649 (green) |
 | BR-09 | F-08 | 2 | To be defined in Sprint 2 contract | TBD | | NOT RUN | |
 | BR-10 | F-06 | 2 | To be defined in the Sprint 2 contract (F-06) | TBD | | NOT RUN | |
 | BR-11 | F-07 | 2 | To be defined in Sprint 2 contract | TBD | | NOT RUN | |
 | BR-12 | F-09 | 3 | To be defined in Sprint 3 contract | TBD | | NOT RUN | |
 | BR-13 | F-05, R-03 | 1 (DB), 2 (API) | S1: AC-46 (DB constraints). S2: API validation in contract | TEST-46, then TBD | backend/tests/constraints.test.ts::TEST-46 | PASS | feature/sprint1/scaffold-db-seed |
-| BR-14 | F-03 | 1 | AC-14 (order number format) | TEST-14 | | NOT RUN | |
-| BR-15 | F-03, F-04 | 1 | AC-25, AC-34 | TEST-25, 34 | | NOT RUN | |
+| BR-14 | F-03 | 1 | AC-14 (order number format) | TEST-14 | backend/tests/orders.create.test.ts::TEST-14; backend/src/services/orderRules.test.ts::TEST-15 | PASS | 140c030 (red), 0f3c649 (green) |
+| BR-15 | F-03, F-04 | 1 | AC-25, AC-34 | TEST-25, 34 | backend/tests/orders.create.test.ts::TEST-25 PASS; TEST-34 belongs to F-04 (not implemented) | INCOMPLETE | 140c030 (red), 0f3c649 (green) |
 
 ## 3. Non-functional requirements
 
@@ -80,7 +81,7 @@
 | NFR-06 | R-05 | 2 | Order survives restart and redeploy (post-deployment check) | CHECK-01 (Sprint 2) | | NOT RUN | |
 | NFR-07 | R-02 | 1 | Standard error shape; no stack trace (AC-04, AC-44) | TEST-04, 44 | backend/tests/auth.test.ts::TEST-04; backend/tests/error.test.ts::TEST-44 | PASS | f222daa, 83f0337 (TEST-04); 9de7923 (TEST-44) |
 | NFR-08 | R-03 | 1 | Fresh clone in 8 commands or fewer; seed repeatable (AC-45) | TEST-45 | backend/tests/seed.test.ts::TEST-45 | PASS | feature/sprint1/scaffold-db-seed |
-| NFR-09 | F-02, F-03, R-04 | 1 partial, 3 complete | Loading, empty and error states (AC-13, AC-30, AC-31 in S1) | TEST-13, 30, 31, then TBD | | NOT RUN | |
+| NFR-09 | F-02, F-03, R-04 | 1 partial, 3 complete | Loading, empty and error states (AC-13, AC-30, AC-31 in S1) | TEST-13, 30, 31, then TBD | frontend/src/pages/Menu.test.tsx::TEST-13, ::TEST-30; frontend/src/pages/MyOrders.test.tsx::TEST-31 PASS; the Sprint 1 states are verified, the R-04 final usability pass is Sprint 3 | INCOMPLETE | 140c030 (red), 0f3c649 (green) |
 | NFR-10 | R-05 | 2 | At least 85% service-layer line coverage (coverage report) | COV-01 (Sprint 2) | | NOT RUN | |
 | NFR-11 | F-13 | 3 | 429 after 5 failed logins in 15 minutes | TBD (Sprint 3) | | NOT RUN | |
 
