@@ -1,9 +1,21 @@
 import type { OrderStatus } from "@prisma/client";
+import { AppError } from "../middleware/error.js";
 
-export function canTransition(_from: OrderStatus, _to: OrderStatus): boolean {
-  return false;
+const ALLOWED_TRANSITIONS: Partial<Record<OrderStatus, readonly OrderStatus[]>> = {
+  PENDING: ["ACCEPTED"],
+};
+
+export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
+  return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
-export function assertTransition(_from: OrderStatus, _to: OrderStatus): void {
-  // Stub for red test phase
+export function assertTransition(from: OrderStatus, to: OrderStatus): void {
+  if (!canTransition(from, to)) {
+    throw new AppError(
+      409,
+      "INVALID_TRANSITION",
+      `Cannot transition order from ${from} to ${to}`,
+      { from, to }
+    );
+  }
 }

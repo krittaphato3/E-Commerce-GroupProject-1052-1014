@@ -1,10 +1,11 @@
-import type { Prisma, Role } from "@prisma/client";
+import type { OrderStatus, Prisma, Role } from "@prisma/client";
 import { prisma } from "../db/prisma.js";
 import { AppError } from "../middleware/error.js";
 import type { OrderCreateBody } from "../middleware/validate.js";
 import { orderRepository } from "../repositories/orderRepository.js";
 import { isOrderable } from "./menuRules.js";
 import { calculateOrderTotal, formatOrderNumber } from "./orderRules.js";
+import { assertTransition } from "./orderStateMachine.js";
 
 interface StockRow {
   name: string;
@@ -26,6 +27,11 @@ export interface OrderHistoryView {
   createdAt: string;
 }
 
+export interface CustomerView {
+  id: number;
+  displayName: string;
+}
+
 export interface OrderDetailView {
   id: number;
   orderNumber: string;
@@ -35,6 +41,7 @@ export interface OrderDetailView {
   pickupNote: string | null;
   items: OrderLineView[];
   history: OrderHistoryView[];
+  customer?: CustomerView;
   createdAt: string;
   updatedAt: string;
 }
@@ -49,11 +56,23 @@ export interface OrderSummaryView {
   createdAt: string;
 }
 
-type OrderWithDetail = Prisma.OrderGetPayload<{
-  include: { items: true; history: true };
-}>;
+export interface OperatorOrderSummaryView extends OrderSummaryView {
+  customer: CustomerView;
+}
 
-function toDetailView(order: OrderWithDetail): OrderDetailView {
+type OrderWithDetail = Prisma.OrderGetPayload<{
+  include: {
+    items: true;
+    history: true;
+  };
+}> & {
+  customer?: { id: number; displayName: string };
+};
+
+function toDetailView(
+  order: OrderWithDetail,
+  options?: { includeCustomer?: boolean }
+): OrderDetailView {
   return {
     id: order.id,
     orderNumber: formatOrderNumber(order.id),
@@ -74,6 +93,14 @@ function toDetailView(order: OrderWithDetail): OrderDetailView {
       actorRole: entry.actorRole,
       createdAt: entry.createdAt.toISOString(),
     })),
+    ...(options?.includeCustomer && order.customer
+      ? {
+          customer: {
+            id: order.customer.id,
+            displayName: order.customer.displayName,
+          },
+        }
+      : {}),
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
   };
@@ -206,6 +233,85 @@ export const orderService = {
     }));
   },
 
+  /** FR-08/AC-32/AC-33: operator order list, oldest first, with optional status filter (at most 200). */
+  async listForOperator(status?: OrderStatus): Promise<OperatorOrderSummaryView[]> {
+    const orders = await orderRepository.findAllForOperator(status);
+
+    return orders.map((order) => ({
+      id: order.id,
+      orderNumber: formatOrderNumber(order.id),
+      customer: {
+        id: order.customer.id,
+        displayName: order.customer.displayName,
+      },
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      totalSatang: order.totalSatang,
+      itemCount: order._count.items,
+      createdAt: order.createdAt.toISOString(),
+    }));
+  },
+
+  /** FR-09/BR-06/BR-15/AC-34..37/AC-40: accept a PENDING order with atomic state transition and history. */
+  async accept(orderId: number, operatorId: number): Promise<OrderDetailView> {
+    const order = await prisma.$transaction(async (tx) => {
+      const existing = await tx.order.findUnique({
+        where: { id: orderId },
+        select: { id: true, status: true },
+      });
+
+      if (!existing) {
+        throw new AppError(404, "NOT_FOUND", "Order not found");
+      }
+
+      assertTransition(existing.status, "ACCEPTED");
+
+      const updated = await tx.order.updateMany({
+        where: { id: orderId, status: "PENDING" },
+        data: { status: "ACCEPTED" },
+      });
+
+      if (updated.count === 0) {
+        const latest = await tx.order.findUnique({
+          where: { id: orderId },
+          select: { status: true },
+        });
+
+        if (!latest) {
+          throw new AppError(404, "NOT_FOUND", "Order not found");
+        }
+
+        throw new AppError(
+          409,
+          "INVALID_TRANSITION",
+          `Cannot transition order from ${latest.status} to ACCEPTED`,
+          { from: latest.status, to: "ACCEPTED" }
+        );
+      }
+
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId,
+          fromStatus: "PENDING",
+          toStatus: "ACCEPTED",
+          actorId: operatorId,
+          actorRole: "OPERATOR",
+        },
+      });
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        include: {
+          items: { orderBy: { id: "asc" } },
+          history: { orderBy: { id: "asc" } },
+          customer: { select: { id: true, displayName: true } },
+        },
+      });
+    });
+
+    return toDetailView(order, { includeCustomer: true });
+  },
+
   /** FR-06/BR-07: the owner customer or any operator may read an order. */
   async getForViewer(
     orderId: number,
@@ -221,6 +327,6 @@ export const orderService = {
       throw new AppError(403, "FORBIDDEN", "You do not have permission to view this order");
     }
 
-    return toDetailView(order);
+    return toDetailView(order, { includeCustomer: viewer.role === "OPERATOR" });
   },
 };
