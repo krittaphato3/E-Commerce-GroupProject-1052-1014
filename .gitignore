@@ -9,6 +9,9 @@ __pycache__/
 !docs/deliverable-1/docx_base.py
 !docs/deliverable-1/check_docx.py
 
+# Generated Word output (rebuild locally with build_docx.py)
+docs/deliverable-1/Deliverable-1.docx
+
 # ZCode agent configuration & local session data
 .zcode/
 
