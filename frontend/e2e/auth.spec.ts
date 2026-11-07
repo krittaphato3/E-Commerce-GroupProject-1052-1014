@@ -25,6 +25,7 @@ test("TEST-09: customer and operator login, logout and invalid credentials", asy
   await expect(page).toHaveURL(/\/menu$/);
   await expect(page.getByText("Alice Customer")).toBeVisible();
   await expect(page.getByText("CUSTOMER", { exact: true })).toBeVisible();
+  await expect(page.getByRole("banner").getByRole("link", { name: "Omazon" })).toBeVisible();
   await captureEvidence(page, "F-01-customer-menu.png");
 
   await page.getByRole("button", { name: "Logout" }).click();

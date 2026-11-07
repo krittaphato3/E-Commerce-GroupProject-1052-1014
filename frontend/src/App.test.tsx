@@ -5,7 +5,7 @@ import { AppShell } from "./App";
 import { AuthProvider } from "./auth/AuthContext";
 
 describe("Frontend app shell", () => {
-  it("renders the CampusBites header and the login form", () => {
+  it("renders the Omazon header and the login form", () => {
     const html = renderToStaticMarkup(
       <MemoryRouter initialEntries={["/login"]}>
         <AuthProvider>
@@ -14,7 +14,7 @@ describe("Frontend app shell", () => {
       </MemoryRouter>
     );
 
-    expect(html).toContain("CampusBites");
+    expect(html).toContain("Omazon");
     expect(html).toContain("Log in");
     expect(html).toContain("Email");
     expect(html).toContain("Password");
