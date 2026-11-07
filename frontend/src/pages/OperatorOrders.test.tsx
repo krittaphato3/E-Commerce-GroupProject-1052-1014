@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { cleanup, render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { OperatorOrders } from "./OperatorOrders";
-import { fetchOperatorOrders, acceptOrder } from "../api/orders";
+import { fetchOperatorOrders, acceptOrder, type OperatorOrderSummary, type Order } from "../api/orders";
 import { ApiRequestError } from "../api/client";
 
 vi.mock("../api/orders", () => ({
