@@ -2,6 +2,8 @@
 
 Omazon is an online food ordering platform designed for a university canteen, supporting role-based authentication, real-time menu management, atomic ordering with inventory guarantees, and order fulfillment workflows.
 
+> Order numbers keep the `CB-` prefix by design (along with technical identifiers such as `cb_session` and `@campusbites.test` seed addresses) — see DEC-25 in [`docs/srs.md`](docs/srs.md).
+
 ---
 
 ## Quickstart Setup Guide (Fresh Clone)
