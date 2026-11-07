@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import express from "express";
 import request from "supertest";
 import type { Response as SupertestResponse } from "supertest";
-import type { Role } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { createApp } from "../src/app.js";
 import {
   publicRoutes,
@@ -21,7 +21,7 @@ const OPERATOR1_EMAIL = "operator1@campusbites.test";
 const CUSTOMER_PASSWORD = process.env.SEED_CUSTOMER_PASSWORD ?? "";
 const OPERATOR_PASSWORD = process.env.SEED_OPERATOR_PASSWORD ?? "";
 
-const ALL_ROLES: ReadonlyArray<Role> = ["CUSTOMER", "OPERATOR"];
+const ALL_ROLES: ReadonlyArray<Role> = Object.values(Role);
 
 // AC-43: neither the 401 nor the 403 body may carry order, item, user or email data.
 const PRIVATE_FRAGMENTS = [
@@ -111,6 +111,7 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
       "the registry must list the six protected Sprint 1 routes"
     ).toBe(6);
 
+    // Keyed by Role so adding a new schema role requires a seeded account cookie here.
     const cookies: Record<Role, string> = {
       CUSTOMER: customer1Cookie,
       OPERATOR: operator1Cookie,

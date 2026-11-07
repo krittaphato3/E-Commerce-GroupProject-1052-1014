@@ -7,7 +7,7 @@
  * skipped the registry. `backend/tests/routes.access.test.ts` drives both.
  */
 import type { Express, RequestHandler, Router } from "express";
-import type { Role } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 
 export type HttpMethod = "GET" | "POST";
@@ -38,15 +38,18 @@ export const publicRoutes: ReadonlyArray<PublicRoute> = [
 
 /** Routes that require a session, with the roles each one allows. */
 export const protectedRoutes: ReadonlyArray<ProtectedRoute> = [
-  { method: "GET", path: "/api/auth/me", roles: ["CUSTOMER", "OPERATOR"] },
-  { method: "POST", path: "/api/orders", roles: ["CUSTOMER"] },
-  { method: "GET", path: "/api/orders", roles: ["OPERATOR"] },
-  { method: "GET", path: "/api/orders/mine", roles: ["CUSTOMER"] },
-  { method: "GET", path: "/api/orders/:id", roles: ["CUSTOMER", "OPERATOR"] },
-  { method: "POST", path: "/api/orders/:id/accept", roles: ["OPERATOR"] },
+  { method: "GET", path: "/api/auth/me", roles: [Role.CUSTOMER, Role.OPERATOR] },
+  { method: "POST", path: "/api/orders", roles: [Role.CUSTOMER] },
+  { method: "GET", path: "/api/orders", roles: [Role.OPERATOR] },
+  { method: "GET", path: "/api/orders/mine", roles: [Role.CUSTOMER] },
+  { method: "GET", path: "/api/orders/:id", roles: [Role.CUSTOMER, Role.OPERATOR] },
+  { method: "POST", path: "/api/orders/:id/accept", roles: [Role.OPERATOR] },
 ];
 
-const ALL_ROLES: ReadonlyArray<Role> = ["CUSTOMER", "OPERATOR"];
+// Derived from the enum so a newly added schema role automatically widens the
+// "all roles" shortcut, while `requireRole(...entry.roles)` still enforces each
+// route's explicit list.
+const ALL_ROLES: ReadonlyArray<Role> = Object.values(Role);
 
 const EXPRESS_METHODS = new Set([
   "get",
