@@ -1,9 +1,9 @@
-# CampusBites — Feature Inventory
+# Omazon — Feature Inventory
 
 | Item | Value |
 |---|---|
 | Document | `docs/features.md` |
-| Version | 1.2 |
+| Version | 1.3 |
 | Date | 2026-11-03 |
 | Related | `docs/srs.md`, `docs/traceability.md`, `docs/sprints/plan.md`, `docs/sprints/sprint-1/features.md` (Sprint 1 contracts) |
 
@@ -13,6 +13,7 @@
 | 1.0 | 2026-11-03 | Initial inventory | Deliverable 1 |
 | 1.1 | 2026-11-05 | BR-02 split between F-02 (defines) and F-03 (enforces, AC-11/AC-21/AC-22); R-04 states the full NFR-05 load-test parameters; coverage wording defers verification gaps to traceability §5; approved-changes cross-reference corrected to §6 | Audit corrections: remove the BR-02 ambiguity and make NFR-05 verifiable |
 | 1.2 | 2026-11-05 | Removed BR-13 from F-03: order submission does not enforce the catalog price/stock bounds, which belong to F-05 API validation and the R-03 DB checks | Align F-03 with the traceability matrix; F-03 enforces BR-02 and BR-05, not BR-13 |
+| 1.3 | 2026-11-07 | Document title uses the Omazon display name | Display brand rename (DEC-25); no requirement, feature or sprint content changed |
 
 ## 1. Features
 

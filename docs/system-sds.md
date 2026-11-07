@@ -1,9 +1,9 @@
-# CampusBites — System-Level Software Design Specification (SDS)
+# Omazon — System-Level Software Design Specification (SDS)
 
 | Item | Value |
 |---|---|
 | Document | `docs/system-sds.md` |
-| Version | 1.2 |
+| Version | 1.3 |
 | Date | 2026-11-07 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/plan.md` |
 
@@ -13,6 +13,7 @@
 | 1.0 | 2026-11-03 | Initial system design | Deliverable 1 |
 | 1.1 | 2026-11-05 | AC-43 coverage claim limited to the Sprint 1 rows; cookie `Max-Age` documented as derived from `SESSION_TTL_HOURS` | Audit corrections: remove an unsupported test claim and reconcile session configuration |
 | 1.2 | 2026-11-07 | Update route guard summary: wrong-role routes show an in-place 403 Forbidden alert from ProtectedRoute ("403 Forbidden: You have no access to this page.") rather than redirect to the role home, consistent with F-04 contract and AC-42 (DEC-23, Option A) | Reconcile system SDS with ProtectedRoute behavior and AC-42 contract revision |
+| 1.3 | 2026-11-07 | Document title uses the Omazon display name | Display brand rename (DEC-25); no design content changed |
 
 ---
 

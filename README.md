@@ -1,6 +1,6 @@
-# CampusBites — Online Food Ordering Platform
+# Omazon — Online Food Ordering Platform
 
-CampusBites is an online food ordering platform designed for a university canteen, supporting role-based authentication, real-time menu management, atomic ordering with inventory guarantees, and order fulfillment workflows.
+Omazon is an online food ordering platform designed for a university canteen, supporting role-based authentication, real-time menu management, atomic ordering with inventory guarantees, and order fulfillment workflows.
 
 ---
 

@@ -1,9 +1,9 @@
-# CampusBites — Three-Sprint Plan
+# Omazon — Three-Sprint Plan
 
 | Item | Value |
 |---|---|
 | Document | `docs/sprints/plan.md` |
-| Version | 1.1 |
+| Version | 1.2 |
 | Date | 2026-11-03 |
 | Related | `docs/features.md`, `docs/traceability.md` |
 
@@ -12,6 +12,7 @@
 |---|---|---|---|
 | 1.0 | 2026-11-03 | Initial plan | Deliverable 1 |
 | 1.1 | 2026-11-05 | Sprint 1 feasibility counts corrected to six tables and ten endpoints | Audit corrections: match the System SDS data model and endpoint summary |
+| 1.2 | 2026-11-07 | Document title uses the Omazon display name | Display brand rename (DEC-25); no sprint content changed |
 
 ## 1. Overview
 
