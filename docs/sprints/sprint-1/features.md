@@ -505,7 +505,7 @@ In addition to the Product Definition of Done:
 | Requirements | FR-08, FR-09, BR-06, BR-07, BR-08, BR-15 |
 | Sprint | 1 |
 | Depends on | F-01, F-03, R-01 |
-| Contract version | 1.4 (2026-11-07) |
+| Contract version | 1.5 (2026-11-07) |
 | Issue / branch | ISSUE-6 / `feature/F-04-operator-acceptance` |
 
 ### Revision history
@@ -516,6 +516,7 @@ In addition to the Product Definition of Done:
 | 1.2 | 2026-11-05 | Added a Failure and boundary cases subsection citing AC-33, AC-35 to AC-38, AC-40 and AC-42 | Document failure and boundary behavior already defined by the AC and STS |
 | 1.3 | 2026-11-07 | Contract revision for AC-42 / TEST-42: wrong-role navigation renders in-place 403 Forbidden alert and suppresses operator table, rather than redirecting, matching ProtectedRoute behavior established in d7ec1c2 (DEC-23) | Team Decision 1 (Option A) to preserve existing role guard contract |
 | 1.4 | 2026-11-07 | Clarified UI 409 alert message ("This order was already handled.") with filter reconciliation on resolution, and strengthened TEST-40 with synchronization barrier and exact history assertions | Follow-up code review fixes |
+| 1.5 | 2026-11-07 | TEST-40 iteration count set to 10 with barrier synchronization as required by AC-40 contract | Contract compliance fix |
 
 ### 1. Feature design
 
