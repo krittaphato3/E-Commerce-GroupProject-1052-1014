@@ -153,9 +153,64 @@ describe("OperatorOrders screen (AC-32, AC-33, AC-34, AC-35, AC-41)", () => {
     fireEvent.click(acceptBtn);
 
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toContain("Cannot transition order from ACCEPTED to ACCEPTED");
+    expect(alert.textContent).toBe("This order was already handled.");
 
     // Reload was triggered
     expect(mockedFetchOperatorOrders).toHaveBeenCalledTimes(2);
+  });
+
+  it("reconciles and displays the accepted order when switching to Accepted tab while accept is in flight", async () => {
+    const pendingOrder = SAMPLE_ORDERS[0];
+    const acceptedOrder: OperatorOrderSummary = { ...SAMPLE_ORDERS[0], status: "ACCEPTED" };
+
+    let resolveAccept!: (value: { order: Order }) => void;
+    const acceptPromise = new Promise<{ order: Order }>((resolve) => {
+      resolveAccept = resolve;
+    });
+
+    let fetchCount = 0;
+    mockedFetchOperatorOrders.mockImplementation(async () => {
+      fetchCount += 1;
+      if (fetchCount === 1) {
+        return { orders: [pendingOrder] };
+      }
+      if (fetchCount === 2) {
+        return { orders: [] };
+      }
+      return { orders: [acceptedOrder] };
+    });
+
+    mockedAcceptOrder.mockImplementation(() => acceptPromise);
+
+    renderOperatorOrders();
+    expect(await screen.findByText("CB-000001")).toBeTruthy();
+
+    // 1. Operator clicks Accept on Pending tab
+    const acceptBtn = screen.getByRole("button", { name: "Accept" });
+    fireEvent.click(acceptBtn);
+
+    // 2. While accept request is in flight, switch to "Accepted" tab
+    const acceptedTab = screen.getByRole("button", { name: "Accepted" });
+    fireEvent.click(acceptedTab);
+
+    // List fetch resolves empty
+    expect(await screen.findByText("No orders to show.")).toBeTruthy();
+    expect(screen.queryByText("CB-000001")).toBeNull();
+
+    // 3. Now the accept request resolves successfully
+    resolveAccept({
+      order: {
+        ...acceptedOrder,
+        pickupNote: null,
+        items: [],
+        history: [],
+        updatedAt: "2026-11-06T06:00:00.000Z",
+      },
+    });
+
+    // 4. Assert the accepted row appears in the Accepted tab
+    expect(await screen.findByText("CB-000001")).toBeTruthy();
+    expect(screen.getByText("Accepted")).toBeTruthy();
+    expect(mockedFetchOperatorOrders).toHaveBeenCalledTimes(3);
   });
 });
