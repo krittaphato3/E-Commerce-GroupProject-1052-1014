@@ -1,0 +1,297 @@
+{
+  "version": 2,
+  "generated": "2026-11-07",
+  "screenshots": [
+    {
+      "id": "E-01",
+      "flow": "Login page",
+      "ac": "AC-01, AC-09",
+      "captured": "2026-11-07",
+      "commit": "9d8e7cb",
+      "file": "F-01-login-page.png",
+      "caption": "The login screen before any credentials are entered: email, password and the single Log in action.",
+      "note": "The entry point for every journey in this pack."
+    },
+    {
+      "id": "E-02",
+      "flow": "Login validation",
+      "ac": "AC-02, AC-04, AC-09",
+      "captured": "2026-11-07",
+      "commit": "9d8e7cb",
+      "file": "F-01-login-failure.png",
+      "caption": "Login with a wrong password: the generic \"Invalid email or password.\" alert. The wording is identical for an unknown email, so it does not reveal whether an account exists.",
+      "note": "TEST-02 and TEST-03 assert the same response against the API; TEST-04 covers the 400 field-validation shape."
+    },
+    {
+      "id": "E-03",
+      "flow": "Menu browsing, available and sold out",
+      "ac": "AC-10, AC-12",
+      "captured": "2026-11-07",
+      "commit": "9d8e7cb",
+      "file": "F-01-customer-menu.png",
+      "caption": "Customer menu at desktop width: THB prices, a \"1 left\" stock hint on Mango Sticky Rice, \"Sold out\" badges on Chicken Sandwich and Pad Thai, and the empty cart panel.",
+      "note": "Availability is computed by the shared isOrderable rule (TEST-10, TEST-11)."
+    },
+    {
+      "id": "E-04",
+      "flow": "Menu browsing at phone width",
+      "ac": "AC-10, AC-12",
+      "captured": "2026-11-07",
+      "commit": "9d8e7cb",
+      "file": "F-02-menu-sold-out-mobile.png",
+      "caption": "The same catalogue at 430 px width: the sold-out badges, the low-stock hint, the disabled Add buttons and the anonymous \"Log in to order\" action all stay visible.",
+      "note": "Responsive evidence; the desktop view is E-03."
+    },
+    {
+      "id": "E-05",
+      "flow": "Cart filled before placing an order",
+      "ac": "AC-14, AC-15",
+      "captured": "2026-11-07",
+      "commit": "9d8e7cb",
+      "file": "F-03-cart-filled.png",
+      "caption": "Cart with Basil Pork Rice x2 and Thai Iced Tea x1, per-line totals, estimated total THB 150.00 and an empty pickup note.",
+      "note": "The cart total is an estimate; the authoritative total is recalculated by the server (TEST-15)."
+    },
+    {
+      "id": "E-06",
+      "flow": "Unavailable item rejected without losing the cart",
+      "ac": "AC-21, AC-30",
+      "captured": "2026-11-07",
+      "commit": "9d8e7cb",
+      "file": "F-03-order-unavailable-409.png",
+      "caption": "The stale-cart case: an inline alert reads \"Mango Sticky Rice is sold out.\" while both cart lines and the total stay on screen and no navigation occurs.",
+      "note": "The cart survives the 409; TEST-30 asserts the same behaviour in a component test."
+    },
+    {
+      "id": "E-07",
+      "flow": "Order confirmation and customer order detail (PENDING)",
+      "ac": "AC-14, AC-25, AC-29",
+      "captured": "2026-11-07",
+      "commit": "9d8e7cb",
+      "file": "F-03-order-detail.png",
+      "caption": "Immediately after a successful POST: order CB-000003 with Pending and Unpaid badges, both lines with unit prices and totals, THB 150.00, the pickup note, and the first history entry \"Order placed\" by CUSTOMER with a timestamp.",
+      "note": "This screen is also the confirmation step: the SPA navigates straight to the detail after a 201."
+    },
+    {
+      "id": "E-08",
+      "flow": "Customer My orders list",
+      "ac": "AC-28, AC-31",
+      "captured": "2026-11-07",
+      "commit": "9d8e7cb",
+      "file": "F-03-my-orders.png",
+      "caption": "My orders: CB-000003 and CB-000002 Pending, CB-000001 Accepted, newest first, each with its placed time and total.",
+      "note": "TEST-28 asserts that only the caller's orders are returned, newest first."
+    },
+    {
+      "id": "E-09",
+      "flow": "Operator orders dashboard, oldest first",
+      "ac": "AC-32, AC-33",
+      "captured": "2026-11-07",
+      "commit": "9d8e7cb",
+      "file": "F-01-operator-orders.png",
+      "caption": "Operator \"Incoming orders\" with the Pending filter active: two PENDING orders with distinct placed times, CB-000001 above CB-000002, each with an Accept button.",
+      "note": "TEST-32 asserts the oldest-first ordering; this capture shows two orders with different timestamps."
+    },
+    {
+      "id": "E-10",
+      "flow": "Operator order acceptance action",
+      "ac": "AC-34, AC-41",
+      "captured": "2026-11-07",
+      "commit": "9d8e7cb",
+      "file": "F-04-operator-accept-action.png",
+      "caption": "The acceptance action itself: row CB-000001 while still PENDING, with its green Accept button before the click.",
+      "note": "Captured from the row element so the button and the status it acts on are unambiguous."
+    },
+    {
+      "id": "E-11",
+      "flow": "Operator order accepted",
+      "ac": "AC-34, AC-41",
+      "captured": "2026-11-07",
+      "commit": "9d8e7cb",
+      "file": "F-04-operator-accepted.png",
+      "caption": "After accepting, on the unfiltered All view: CB-000001 is ACCEPTED with no action button, while CB-000002 remains PENDING with its Accept button.",
+      "note": "The All filter avoids showing an ACCEPTED row under the PENDING filter after the in-place row update."
+    },
+    {
+      "id": "E-12",
+      "flow": "Customer sees ACCEPTED with history",
+      "ac": "AC-41, AC-25",
+      "captured": "2026-11-07",
+      "commit": "9d8e7cb",
+      "file": "F-04-customer-accepted.png",
+      "caption": "The same order as the customer sees it: CB-000001 Accepted, with a two-row history, \"Order placed\" by CUSTOMER then \"Pending to Accepted\" by OPERATOR, each with a timestamp.",
+      "note": "TEST-41 drives this journey end to end."
+    },
+    {
+      "id": "E-13",
+      "flow": "Customer blocked from an operator screen",
+      "ac": "AC-42",
+      "captured": "2026-11-07",
+      "commit": "9d8e7cb",
+      "file": "F-04-customer-forbidden-403.png",
+      "caption": "A customer opening the operator orders route sees the in-place \"403 Forbidden: You have no access to this page.\" alert instead of the order table.",
+      "note": "TEST-42 asserts the in-place alert; TEST-37 and TEST-38 assert the API returns 403 with no order data."
+    },
+    {
+      "id": "E-14",
+      "flow": "Logout returns to the login form",
+      "ac": "AC-06, AC-09",
+      "captured": "2026-11-07",
+      "commit": "9d8e7cb",
+      "file": "F-01-after-logout-login.png",
+      "caption": "After logout the session cookie is cleared and the browser is back at the empty login form.",
+      "note": "The screenshot is byte-identical to E-01 by design: both are the same empty login form, captured with animations disabled. TEST-06 supplies the proof that the session is really gone - it asserts the old cookie is rejected with 401 and that the browser URL is /login."
+    }
+  ],
+  "logs": [
+    {
+      "id": "L-01",
+      "feature": "F-01",
+      "state": "RED",
+      "commit": "8398fe2",
+      "command": "npm test",
+      "summary": "Failing tests written before the implementation",
+      "file": "F-01-red-full-8398fe2.txt",
+      "embed": false
+    },
+    {
+      "id": "L-02",
+      "feature": "F-01",
+      "state": "GREEN",
+      "commit": "f222daa",
+      "command": "npm test",
+      "summary": "backend 30 passed (7 files); frontend 1 passed (1 file)",
+      "file": "F-01-green-full-f222daa.txt",
+      "embed": true
+    },
+    {
+      "id": "L-03",
+      "feature": "F-01",
+      "state": "GREEN",
+      "commit": "097da41",
+      "command": "npm run e2e",
+      "summary": "1 Playwright journey passed",
+      "file": "F-01-e2e-097da41.txt",
+      "embed": true
+    },
+    {
+      "id": "L-04",
+      "feature": "F-02 / F-03",
+      "state": "RED",
+      "commit": "140c030",
+      "command": "npm test",
+      "summary": "Failing tests written before the implementation",
+      "file": "F-02-F-03-red-140c030.txt",
+      "embed": false
+    },
+    {
+      "id": "L-05",
+      "feature": "F-02 / F-03",
+      "state": "GREEN",
+      "commit": "0f3c649",
+      "command": "npm test",
+      "summary": "backend 69 passed (12 files); frontend 22 passed (6 files)",
+      "file": "F-02-F-03-green-tests-0f3c649.txt",
+      "embed": true
+    },
+    {
+      "id": "L-06",
+      "feature": "F-02 / F-03",
+      "state": "GREEN",
+      "commit": "0f3c649",
+      "command": "npm run e2e",
+      "summary": "3 Playwright journeys passed",
+      "file": "F-02-F-03-green-e2e-0f3c649.txt",
+      "embed": true
+    },
+    {
+      "id": "L-07",
+      "feature": "F-04",
+      "state": "RED",
+      "commit": "c04ca45",
+      "command": "npm test",
+      "summary": "Failing tests written before the implementation",
+      "file": "F-04-red-c04ca45.txt",
+      "embed": false
+    },
+    {
+      "id": "L-08",
+      "feature": "F-04",
+      "state": "GREEN",
+      "commit": "37cf31f",
+      "command": "npm test",
+      "summary": "backend 82 passed (14 files); frontend 36 passed (8 files)",
+      "file": "F-04-green-tests-37cf31f.txt",
+      "embed": true
+    },
+    {
+      "id": "L-09",
+      "feature": "F-04",
+      "state": "GREEN",
+      "commit": "37cf31f",
+      "command": "npm run e2e",
+      "summary": "5 Playwright journeys passed",
+      "file": "F-04-green-e2e-37cf31f.txt",
+      "embed": true
+    },
+    {
+      "id": "L-10",
+      "feature": "F-04 (TEST-40)",
+      "state": "MUTATION CHECK",
+      "commit": "37cf31f",
+      "command": "npm run test --workspace=backend -- tests/orders.operator.test.ts",
+      "summary": "Mutation check proving TEST-40 fails when the concurrency guard is removed",
+      "file": "F-04-TEST-40-mutation-37cf31f.txt",
+      "embed": true
+    },
+    {
+      "id": "L-11",
+      "feature": "R-01",
+      "state": "RED",
+      "commit": "d7792c8",
+      "command": "npm test",
+      "summary": "TEST-43 failing before the route registry was implemented",
+      "file": "R-01-red-TEST-43-d7792c8.txt",
+      "embed": false
+    },
+    {
+      "id": "L-12",
+      "feature": "R-01",
+      "state": "GREEN",
+      "commit": "8f42cbd",
+      "command": "npm run test --workspace=backend -- tests/routes.access.test.ts",
+      "summary": "TEST-43 passing",
+      "file": "R-01-green-TEST-43-8f42cbd.txt",
+      "embed": true
+    },
+    {
+      "id": "L-13",
+      "feature": "R-01",
+      "state": "GREEN",
+      "commit": "4a37e95",
+      "command": "npm test",
+      "summary": "backend 85 passed (16 files); frontend 36 passed (8 files)",
+      "file": "R-01-green-tests-4a37e95.txt",
+      "embed": true
+    },
+    {
+      "id": "L-14",
+      "feature": "R-01",
+      "state": "GREEN",
+      "commit": "4a37e95",
+      "command": "npm run e2e",
+      "summary": "6 Playwright journeys passed",
+      "file": "R-01-green-e2e-4a37e95.txt",
+      "embed": true
+    }
+  ],
+  "gaps": [
+    "NFR-05 load benchmark (autocannon, 20 connections, 30 s per endpoint) is allocated to Sprint 3 and has not been run; the matrix row stays NOT RUN.",
+    "The unit, integration and Playwright suites were last run at 4a37e95 (the commit this evidence pack documents). The screenshots were captured one documentation commit earlier, at 9d8e7cb; no runtime code changed between the two.",
+    "No distinct order-confirmation screen exists: the SPA navigates straight to the order detail after a 201, so E-07 is the confirmation evidence.",
+    "The login screenshot covers invalid credentials, not the 400 field-validation state asserted by TEST-04.",
+    "The release tag sprint-1-v1.0 has not been created.",
+    "The assembled Word deliverable and its build scripts are not tracked here; the file is submitted outside this repository. The Markdown sources are the tracked record.",
+    "The contribution table and AI-use declaration are team-authored statements and are not included in the generated document."
+  ]
+}
