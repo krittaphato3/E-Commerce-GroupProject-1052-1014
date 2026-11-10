@@ -1,0 +1,338 @@
+{
+  "requirement": "NFR-05 / LOAD-01",
+  "testedAt": "2026-11-10T06:27:02.671Z",
+  "baseUrl": "http://localhost:3100",
+  "node": "v26.13.0",
+  "platform": "win32 x64",
+  "autocannon": "9.0.0",
+  "configuration": {
+    "connections": 20,
+    "durationSeconds": 30,
+    "runsPerEndpoint": 5,
+    "warmupSeconds": 5,
+    "perfItem": {
+      "id": 8,
+      "name": "Order Test Item (NFR-05)",
+      "stockProvisionedPerRun": 5000000
+    }
+  },
+  "seededRowsBeforeRun": {
+    "users": 4,
+    "menuItems": 8,
+    "orders": 500,
+    "orderItems": 500
+  },
+  "rowsAfterRun": {
+    "users": 4,
+    "menuItems": 8,
+    "orders": 34561,
+    "orderItems": 34562
+  },
+  "perEndpoint": {
+    "GET /api/menu": {
+      "runs": 5,
+      "p95": {
+        "median": 2,
+        "p90": 2,
+        "worst": 2
+      },
+      "requestsPerSecond": {
+        "median": 8208.6,
+        "p90": 8335.2
+      },
+      "fiveHundreds": 0,
+      "statusCodes": {
+        "200": 1234512
+      }
+    },
+    "POST /api/orders": {
+      "runs": 5,
+      "p95": {
+        "median": 304,
+        "p90": 312.2,
+        "worst": 313
+      },
+      "requestsPerSecond": {
+        "median": 221.3,
+        "p90": 222.5
+      },
+      "fiveHundreds": 0,
+      "statusCodes": {
+        "201": 32918
+      }
+    }
+  },
+  "verdict": "PASS",
+  "runs": [
+    {
+      "endpoint": "GET /api/menu",
+      "run": 1,
+      "durationSeconds": 30,
+      "connections": 20,
+      "requests": {
+        "total": 248229,
+        "averagePerSecond": 8274.3
+      },
+      "latencyMs": {
+        "p50": 2,
+        "p95": 2,
+        "p99": 4,
+        "mean": 2.1,
+        "max": 7
+      },
+      "throughputBytesPerSecond": 14471750.7,
+      "statusCodes": {
+        "200": 248229
+      },
+      "non2xx": 0,
+      "fiveHundreds": 0,
+      "errors": 0,
+      "timeouts": 0,
+      "mismatches": 0,
+      "resets": 0
+    },
+    {
+      "endpoint": "GET /api/menu",
+      "run": 2,
+      "durationSeconds": 30,
+      "connections": 20,
+      "requests": {
+        "total": 243393,
+        "averagePerSecond": 8113.1
+      },
+      "latencyMs": {
+        "p50": 2,
+        "p95": 2,
+        "p99": 4,
+        "mean": 2.1,
+        "max": 6
+      },
+      "throughputBytesPerSecond": 14189811.9,
+      "statusCodes": {
+        "200": 243393
+      },
+      "non2xx": 0,
+      "fiveHundreds": 0,
+      "errors": 0,
+      "timeouts": 0,
+      "mismatches": 0,
+      "resets": 0
+    },
+    {
+      "endpoint": "GET /api/menu",
+      "run": 3,
+      "durationSeconds": 30,
+      "connections": 20,
+      "requests": {
+        "total": 251275,
+        "averagePerSecond": 8375.8
+      },
+      "latencyMs": {
+        "p50": 2,
+        "p95": 2,
+        "p99": 4,
+        "mean": 1.9,
+        "max": 7
+      },
+      "throughputBytesPerSecond": 14649332.5,
+      "statusCodes": {
+        "200": 251275
+      },
+      "non2xx": 0,
+      "fiveHundreds": 0,
+      "errors": 0,
+      "timeouts": 0,
+      "mismatches": 0,
+      "resets": 0
+    },
+    {
+      "endpoint": "GET /api/menu",
+      "run": 4,
+      "durationSeconds": 30,
+      "connections": 20,
+      "requests": {
+        "total": 245356,
+        "averagePerSecond": 8178.5
+      },
+      "latencyMs": {
+        "p50": 2,
+        "p95": 2,
+        "p99": 5,
+        "mean": 2.1,
+        "max": 6
+      },
+      "throughputBytesPerSecond": 14304254.8,
+      "statusCodes": {
+        "200": 245356
+      },
+      "non2xx": 0,
+      "fiveHundreds": 0,
+      "errors": 0,
+      "timeouts": 0,
+      "mismatches": 0,
+      "resets": 0
+    },
+    {
+      "endpoint": "GET /api/menu",
+      "run": 5,
+      "durationSeconds": 30,
+      "connections": 20,
+      "requests": {
+        "total": 246259,
+        "averagePerSecond": 8208.6
+      },
+      "latencyMs": {
+        "p50": 2,
+        "p95": 2,
+        "p99": 5,
+        "mean": 2.1,
+        "max": 6
+      },
+      "throughputBytesPerSecond": 14356899.7,
+      "statusCodes": {
+        "200": 246259
+      },
+      "non2xx": 0,
+      "fiveHundreds": 0,
+      "errors": 0,
+      "timeouts": 0,
+      "mismatches": 0,
+      "resets": 0
+    },
+    {
+      "endpoint": "POST /api/orders",
+      "run": 1,
+      "durationSeconds": 30,
+      "connections": 20,
+      "requests": {
+        "total": 6362,
+        "averagePerSecond": 212
+      },
+      "latencyMs": {
+        "p50": 59,
+        "p95": 313,
+        "p99": 503,
+        "mean": 93.2,
+        "max": 1286
+      },
+      "throughputBytesPerSecond": 174048.7,
+      "statusCodes": {
+        "201": 6362
+      },
+      "non2xx": 0,
+      "fiveHundreds": 0,
+      "errors": 0,
+      "timeouts": 0,
+      "mismatches": 0,
+      "resets": 0
+    },
+    {
+      "endpoint": "POST /api/orders",
+      "run": 2,
+      "durationSeconds": 30,
+      "connections": 20,
+      "requests": {
+        "total": 6565,
+        "averagePerSecond": 218.8
+      },
+      "latencyMs": {
+        "p50": 59,
+        "p95": 300,
+        "p99": 492,
+        "mean": 90.5,
+        "max": 863
+      },
+      "throughputBytesPerSecond": 179902.7,
+      "statusCodes": {
+        "201": 6565
+      },
+      "non2xx": 0,
+      "fiveHundreds": 0,
+      "errors": 0,
+      "timeouts": 0,
+      "mismatches": 0,
+      "resets": 0
+    },
+    {
+      "endpoint": "POST /api/orders",
+      "run": 3,
+      "durationSeconds": 30,
+      "connections": 20,
+      "requests": {
+        "total": 6672,
+        "averagePerSecond": 222.3
+      },
+      "latencyMs": {
+        "p50": 61,
+        "p95": 304,
+        "p99": 478,
+        "mean": 89.1,
+        "max": 1045
+      },
+      "throughputBytesPerSecond": 182974.2,
+      "statusCodes": {
+        "201": 6672
+      },
+      "non2xx": 0,
+      "fiveHundreds": 0,
+      "errors": 0,
+      "timeouts": 0,
+      "mismatches": 0,
+      "resets": 0
+    },
+    {
+      "endpoint": "POST /api/orders",
+      "run": 4,
+      "durationSeconds": 30,
+      "connections": 20,
+      "requests": {
+        "total": 6640,
+        "averagePerSecond": 221.3
+      },
+      "latencyMs": {
+        "p50": 68,
+        "p95": 292,
+        "p99": 460,
+        "mean": 89.6,
+        "max": 1117
+      },
+      "throughputBytesPerSecond": 182096.6,
+      "statusCodes": {
+        "201": 6640
+      },
+      "non2xx": 0,
+      "fiveHundreds": 0,
+      "errors": 0,
+      "timeouts": 0,
+      "mismatches": 0,
+      "resets": 0
+    },
+    {
+      "endpoint": "POST /api/orders",
+      "run": 5,
+      "durationSeconds": 30,
+      "connections": 20,
+      "requests": {
+        "total": 6679,
+        "averagePerSecond": 222.6
+      },
+      "latencyMs": {
+        "p50": 30,
+        "p95": 311,
+        "p99": 493,
+        "mean": 89,
+        "max": 913
+      },
+      "throughputBytesPerSecond": 183166.2,
+      "statusCodes": {
+        "201": 6679
+      },
+      "non2xx": 0,
+      "fiveHundreds": 0,
+      "errors": 0,
+      "timeouts": 0,
+      "mismatches": 0,
+      "resets": 0
+    }
+  ]
+}

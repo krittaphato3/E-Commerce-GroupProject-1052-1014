@@ -85,7 +85,7 @@ CAPTURE_EVIDENCE=1 npm run e2e
 
 These are disclosed rather than hidden; they belong to the team/Lab 5 and Sprint 2–3 work:
 
-- **NFR-05 load benchmark (autocannon) has not been run.** It is allocated to Sprint 3 in `docs/srs.md` and `docs/traceability.md`, so the row is `NOT RUN` by design.
+- **NFR-05 load benchmark (autocannon) has a recorded Sprint 1 baseline.** LOAD-01 ran at `f0255a6` on 2026-11-10 (5 runs × 30 s per endpoint at 20 connections, 500-order seed): `GET /api/menu` p95 2 ms and `POST /api/orders` p95 304 ms (run-level median), zero 5xx. Raw runs and the summary are in [`nfr05/`](nfr05/README.md); R-04 hardening and the deployed-build measurement stay in Sprint 3.
 - **The unit, integration and Playwright suites were last run at `4a37e95`**, the commit this pack documents (backend 85 passed, frontend 36 passed, 6 journeys passed). The screenshots were captured one documentation commit earlier at `9d8e7cb`; no runtime code changed between the two.
 - **No separate order-confirmation screen.** The application navigates straight to the order detail after a successful POST, so `F-03-order-detail.png` is the confirmation evidence.
 - **The login screenshot covers invalid credentials**, not the 400 field-validation state; that path is covered by TEST-04.
