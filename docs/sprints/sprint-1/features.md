@@ -6,8 +6,8 @@
 | Sprint | 1 (due with Deliverable 1, 8 Nov 2026) |
 | Staging branch | `sprint-1-staging` |
 | Release tag (planned) | `sprint-1-v1.0` |
-| Version | 1.7 |
-| Date | 2026-11-07 |
+| Version | 1.8 |
+| Date | 2026-11-10 |
 | Related | `docs/srs.md`, `docs/features.md` (whole-product inventory), `docs/traceability.md`, `docs/sprints/plan.md`, `docs/system-sds.md` |
 
 ## Revision history (contract set)
@@ -21,6 +21,7 @@
 | 1.5 | 2026-11-06 | F-02 API: `GET /api/menu` also returns `isAvailable` alongside the computed `available` flag | ISSUE-4 technical specification lists `isAvailable` in the payload; the field is the stored flag, so the client never has to infer it |
 | 1.6 | 2026-11-07 | F-04 Contract revision: AC-42 / TEST-42 asserts in-place 403 Forbidden alert rather than redirect per DEC-23 (Option A); F-03 POST /api/orders adds `Location: /api/orders/:id` header (Follow-up 3); Menu UI caps quantity at Math.min(10, stockQty) (Follow-up 5) | Feature F-04 implementation alignment and follow-up defect resolutions |
 | 1.7 | 2026-11-07 | R-01 contract version 1.1: the route registry is implemented in `backend/src/routes/registry.ts` with `guardsFor`, `mountRouter`, `extractExpressRoutes` and `findUnregisteredRoutes`; §11 gains its own revision row; the document titles use the Omazon display name | Record the R-01 implementation shape and the display brand rename (DEC-24, DEC-25) |
+| 1.8 | 2026-11-10 | §11 corrected against the shipped configuration: the compose command uses the real `postgres` service, the setup list is the README's 8 commands with `dev:backend` and `dev:frontend` in two terminals, `GET /api/health` documents its literal `1.0.0` version, and the planned test files are `error.test.ts` and `constraints.test.ts` | Documentation audit: a reader following §11 hit a compose service that does not exist and a root `dev` script that does not exist (Issue #16) |
 
 Each contract below keeps its own revision history. Log every change there with a reason; do not rewrite earlier entries.
 
@@ -637,7 +638,7 @@ In addition to the Product Definition of Done:
 | Requirements | NFR-01, NFR-02, NFR-07, NFR-08, BR-07, BR-08, BR-13 (database CHECK part) |
 | Sprint | 1 (extended in Sprints 2 and 3) |
 | Depends on | none (R-03 is built first) |
-| Contract version | 1.1 (2026-11-07) |
+| Contract version | 1.2 (2026-11-10) |
 | Issues / branches | ISSUE-1 `feature/R-03-setup-seed`; ISSUE-3 `feature/R-01-R-02-access-errors` |
 
 ### Revision history
@@ -645,6 +646,7 @@ In addition to the Product Definition of Done:
 |---|---|---|---|
 | 1.0 | 2026-11-03 | Initial contract | Before implementation |
 | 1.1 | 2026-11-07 | R-01 implemented: the shared registry (`guardsFor`, `mountRouter`, `extractExpressRoutes`, `findUnregisteredRoutes`) replaces the per-router guard lists, and TEST-43 runs in `backend/tests/routes.access.test.ts` | Record the implementation that satisfies AC-43 and the route-completeness meta-test (DEC-24) |
+| 1.2 | 2026-11-10 | §11 setup commands, health version and planned test-file names corrected to match `docker-compose.yml`, root `package.json`, `backend/src/routes/health.ts` and `backend/tests/` | Documentation audit of Deliverable 1 (Issue #16) |
 
 ### 1. Design
 
@@ -664,17 +666,19 @@ In addition to the Product Definition of Done:
 - Prisma schema and migration `0001_init` create all Sprint 1 tables with CHECK constraints added as raw SQL (price above 0, stock at least 0, quantity 1 to 10) and UNIQUE constraints.
 - Idempotent seed (users and menu from System SDS section 2.3). Passwords come from `SEED_CUSTOMER_PASSWORD` and `SEED_OPERATOR_PASSWORD`.
 - `.env.example` with placeholders, `docker-compose.yml` for local PostgreSQL, README with the setup commands below.
-- `GET /api/health` returns `{ "status": "ok", "version": "<git sha or dev>" }` (used later by deployment checks).
+- `GET /api/health` returns `{ "status": "ok", "version": "1.0.0" }`. The deployment check planned for Lab 5 replaces the literal version with the git SHA (System SDS §7.2).
 
-README setup (target 8 commands or fewer, NFR-08):
-1. `git clone <repository URL>`
-2. `cp backend/.env.example backend/.env`
-3. `docker compose up -d db`
-4. `npm install`
-5. `npm run db:reset` (migrate and seed)
-6. `npm run dev` (API and frontend)
-7. `npm test` (unit, API and component tests)
-8. `npm run e2e` (Playwright, with the dev server running)
+README setup (8 commands or fewer, NFR-08); needs a cloned repository, Node.js >= 20.12 and Docker:
+1. `cp backend/.env.example backend/.env`
+2. `docker compose up -d` (starts the `postgres` service)
+3. `npm install`
+4. `npm run db:migrate`
+5. `npm run db:seed`
+6. `npm test` (unit, API and component tests)
+7. `npm run dev:backend` (terminal 1, http://localhost:3000)
+8. `npm run dev:frontend` (terminal 2, http://localhost:5173)
+
+`npm run e2e` runs afterwards, once `npm run e2e:install --workspace=frontend` has installed the browser. It starts its own servers on ports 3100 and 5174, so the two development terminals can keep running.
 
 ### 2. API specification
 R-01 to R-03 add no business endpoints. They add `GET /api/health` (200 `{ "status": "ok", "version": "..." }`, public) and define the shared behavior of the 401, 403, 400 and 500 responses used by every endpoint (see System SDS section 4).
@@ -708,7 +712,7 @@ No new screens. Shared behavior from the System SDS applies: the API client show
 | TEST-45 | AC-45 | Integration + Manual | Empty test database | Run the seed twice; count users and menu items. Manual: follow README on a fresh clone and count commands | 4 users and 7 menu items after both runs. Manual: 8 commands or fewer, app opens, `npm test` passes. (Manual part is recorded with a screenshot and is a supplement to the automated seed test.) |
 | TEST-46 | AC-46 | Integration | Test database with one user, item and order | Run raw SQL inserts and updates through Prisma `$executeRaw`: price 0; stock -1; quantity 0; quantity 11; same `(orderId, menuItemId)` twice; second user with the same email; update stock below 0 | Each statement fails with a constraint violation; row counts unchanged |
 
-Planned test files: `backend/tests/routes.access.test.ts`, `backend/tests/errors.test.ts`, `backend/tests/seed.test.ts`, `backend/tests/db.constraints.test.ts`.
+Planned test files: `backend/tests/routes.access.test.ts`, `backend/tests/error.test.ts`, `backend/tests/seed.test.ts`, `backend/tests/constraints.test.ts`.
 
 ### 7. Definition of Done (feature-specific)
 In addition to the Product Definition of Done:

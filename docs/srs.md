@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/srs.md` |
-| Version | 1.8 |
+| Version | 1.9 |
 | Date | 2026-11-07 |
 | Course / Theme | CPE 334, Semester 1/2026 — Theme 4: E-Commerce or Ordering System |
 | Student 1 | Krittaphat Panyasomphan (67070501052) |
