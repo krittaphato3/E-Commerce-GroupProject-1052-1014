@@ -3,8 +3,8 @@
 | Item | Value |
 |---|---|
 | Document | `docs/system-sds.md` |
-| Version | 1.3 |
-| Date | 2026-11-07 |
+| Version | 1.4 |
+| Date | 2026-11-10 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/plan.md` |
 
 ### Revision history
@@ -14,6 +14,7 @@
 | 1.1 | 2026-11-05 | AC-43 coverage claim limited to the Sprint 1 rows; cookie `Max-Age` documented as derived from `SESSION_TTL_HOURS` | Audit corrections: remove an unsupported test claim and reconcile session configuration |
 | 1.2 | 2026-11-07 | Update route guard summary: wrong-role routes show an in-place 403 Forbidden alert from ProtectedRoute ("403 Forbidden: You have no access to this page.") rather than redirect to the role home, consistent with F-04 contract and AC-42 (DEC-23, Option A) | Reconcile system SDS with ProtectedRoute behavior and AC-42 contract revision |
 | 1.3 | 2026-11-07 | Document title uses the Omazon display name | Display brand rename (DEC-25); no design content changed |
+| 1.4 | 2026-11-10 | Correct the `DATABASE_URL` and `TEST_DATABASE_URL` examples to match `backend/.env.example`, and note that `GET /api/health` currently reports the literal `1.0.0` while the git SHA is wired in during Lab 5 | Documentation audit: the configuration table contradicted the shipped `.env.example` and the release-identification plan overstated what Sprint 1 returns (Issue #16) |
 
 ---
 
@@ -274,8 +275,8 @@ A hidden button is not authorization. Sprint 1 rows are enforced by backend midd
 |---|---|---|---|
 | `NODE_ENV` | `development`, `test`, `production` | `development` | No |
 | `PORT` | API port | `3000` | No |
-| `DATABASE_URL` | PostgreSQL connection | `postgresql://campusbites:changeme@localhost:5432/campusbites` | Yes in production |
-| `TEST_DATABASE_URL` | Test database | `postgresql://campusbites:changeme@localhost:5432/campusbites_test` | No (local) |
+| `DATABASE_URL` | PostgreSQL connection | `postgresql://postgres:postgres@localhost:5432/campusbites?schema=public` | Yes in production |
+| `TEST_DATABASE_URL` | Test database; the name must end in `_test` | `postgresql://postgres:postgres@localhost:5432/campusbites_test?schema=public` | No (local) |
 | `SESSION_TTL_HOURS` | Session lifetime | `8` | No |
 | `COOKIE_SECURE` | `true` in production | `false` | No |
 | `BCRYPT_ROUNDS` | Hash cost | `10` | No |
@@ -293,7 +294,7 @@ Real values live only in a local `.env` (git-ignored) and, in production, in GCP
 | CD | On merge to `main`: build image, push to Artifact Registry, run `prisma migrate deploy`, deploy to Cloud Run |
 | Database | Cloud SQL for PostgreSQL (durable storage) |
 | Secrets | GCP Secret Manager for `DATABASE_URL` and seed passwords |
-| Release identification | Git tag plus commit SHA shown in `GET /api/health` (`{ "status": "ok", "version": "<sha>" }`) |
+| Release identification | Git tag plus commit SHA shown in `GET /api/health` (`{ "status": "ok", "version": "<sha>" }`). The Sprint 1 build still reports the literal `1.0.0`; the SHA is wired in during Lab 5 |
 
 Exact GCP access will follow the Lab 5 instructions. The application is stateless apart from the database, so it is ready for this design.
 

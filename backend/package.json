@@ -19,7 +19,8 @@
     "db:reset:test": "tsx scripts/reset-test-db.ts",
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force --skip-seed && tsx prisma/seed.ts"
+    "db:reset": "prisma migrate reset --force --skip-seed && tsx prisma/seed.ts",
+    "bench:nfr05": "node benchmarks/nfr05-load.js"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
@@ -36,6 +37,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.5",
     "@types/supertest": "^6.0.2",
+    "autocannon": "9.0.0",
     "prisma": "^6.4.1",
     "supertest": "^7.0.0",
     "tsx": "^4.19.3",

@@ -133,6 +133,7 @@ Playwright (TEST-09) reads the same two variables from `backend/.env`, so log in
 | **End-to-end** | `npm run e2e` | Playwright journeys: TEST-09, TEST-12, TEST-29, TEST-41, TEST-42, plus the AC-21/AC-30 stale-cart journey |
 | **Type check** | `npm run typecheck` | `tsc --noEmit` across both workspaces |
 | **Production build** | `npm run build` | Backend `tsc` emit and Vite bundle |
+| **Load benchmark** | `npm run bench:nfr05` | NFR-05 / LOAD-01: autocannon against `GET /api/menu` and `POST /api/orders`, 20 connections for 30 s per endpoint, 5 runs each. Needs the built API on port 3100 (`PORT=3100 node dist/server.js`) and the benchmark seed (`npm run db:seed -- --with-perf-orders`, 500 orders plus a high-stock order-test item). Evidence is written to `docs/evidence/nfr05/` |
 
 Test counts from the latest recorded run (`4a37e95`): **85 backend tests in 16 files**, **36 frontend tests in 8 files**, and **6 Playwright journeys** — all passing. The per-feature statements of the 46 traceability tests are in [`docs/traceability.md`](docs/traceability.md), and the raw output is indexed in [`docs/evidence/README.md`](docs/evidence/README.md).
 
@@ -160,7 +161,7 @@ The suite covers six journeys in `frontend/e2e/`: `auth.spec.ts` (TEST-09), `men
 - Credentials come only from environment variables: `SEED_CUSTOMER_PASSWORD` and `SEED_OPERATOR_PASSWORD` are read from `backend/.env`. Optional `E2E_CUSTOMER_EMAIL` and `E2E_OPERATOR_EMAIL` override the seeded emails (defaults: `customer1@campusbites.test`, `operator1@campusbites.test`).
 - The seeded accounts must exist in the development database (`npm run db:seed`) with the same passwords.
 - Playwright runs against `TEST_DATABASE_URL` (the `*_test` database), never the development database. Its `globalSetup` applies migrations, truncates the tables and re-seeds them with the `backend/.env` passwords before the first test, so the seed stock is identical on every run. `globalSetup` is the only migration owner; the `webServer` command does not migrate, so exactly one migration step runs per run.
-- Playwright starts the API on port 3100 and Vite on port 5174 so a running `npm run dev` server is not disturbed. Override with `E2E_API_PORT` and `E2E_FRONTEND_PORT`, or point `E2E_BASE_URL` at an already-running frontend.
+- Playwright starts the API on port 3100 and Vite on port 5174 so a running development server is not disturbed. Override with `E2E_API_PORT` and `E2E_FRONTEND_PORT`, or point `E2E_BASE_URL` at an already-running frontend.
 - Screenshots for the evidence pack are captured by `frontend/e2e/evidence.ts` into `docs/evidence/`.
 
 ### Troubleshooting: leftover E2E servers
@@ -236,7 +237,7 @@ These are known gaps in the R-01 route registry (`backend/src/routes/registry.ts
 - **Nested sub-routers are not extracted.** `extractExpressRoutes` reads one level of `layer.handle.stack`. A router mounted inside another router (`router.use(...)` inside a router) is invisible to the meta-test.
 - **A router mounted under two prefixes keeps only the last mount.** `mountRouter` stores one prefix per router in a `WeakMap`, so `extractExpressRoutes` reports the router once, under the prefix mounted last.
 
-Sprint 1 scope stops at `PENDING → ACCEPTED`: payment, fulfilment, cancellation and rejection transitions are contract work for Sprints 2 and 3. The NFR-05 load benchmark (autocannon) is allocated to Sprint 3.
+Sprint 1 scope stops at `PENDING → ACCEPTED`: payment, fulfilment, cancellation and rejection transitions are contract work for Sprints 2 and 3. The NFR-05 load benchmark (autocannon) has a recorded Sprint 1 baseline in [`docs/evidence/nfr05/`](docs/evidence/nfr05/summary.json); the remaining R-04 hardening and the deployed-build measurement stay in Sprint 3.
 
 ---
 
