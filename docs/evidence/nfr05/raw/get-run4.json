@@ -9,19 +9,19 @@
     "durationSeconds": 30,
     "connections": 20,
     "requests": {
-      "total": 245356,
-      "averagePerSecond": 8178.5
+      "total": 499210,
+      "averagePerSecond": 16640.3
     },
     "latencyMs": {
-      "p50": 2,
-      "p95": 2,
-      "p99": 5,
-      "mean": 2.1,
-      "max": 6
+      "p50": 1,
+      "p95": 1,
+      "p99": 3,
+      "mean": 0.9,
+      "max": 16
     },
-    "throughputBytesPerSecond": 14304254.8,
+    "throughputBytesPerSecond": 29120583.3,
     "statusCodes": {
-      "200": 245356
+      "200": 499210
     },
     "non2xx": 0,
     "fiveHundreds": 0,
@@ -31,12 +31,12 @@
     "resets": 0
   },
   "raw": {
-    "latencies": "HISTFAAAAC54nJNpmSzMwMDAx8DAwMjAwMDKAAGMEEpdAM4/pDVnlcw+yUdJt9QbGAF4tgd/",
-    "requests": "HISTFAAAAEB4nJNpmSzMwMAgx8DAwMjAwMDMAAGMYJLfyQHGn2nHNJ+RiYlJkoWTiYmJnYmBhZmFgY2FhYGNjYmJCQCmiQPb",
-    "throughput": "HISTFAAAAEJ4nDXHsRFAUBAA0b29o4EfSORaUZEKJGIlSujC/DE2ejvvZwMWIIDkq3tat5v/ryc8Qm06KKZUVo6oUlpdLyVXBeU=",
-    "totalCompletedRequests": 245356,
-    "totalRequests": 245376,
-    "totalBytes": 429127644,
+    "latencies": "HISTFAAAAD14nJNpmSzMwMAgzcDAwMjAwMDKAAGMEEpdAMZ/toB3yxfdHudteSc0JrH0MDYxuqgY6LnJMEjxAQALMQri",
+    "requests": "HISTFAAAAEp4nDWHwQmAMBTF0vyWHkQ8eHUJDx4FcQDBndzAAVxVqPhCAm+67hFYgAQE31LrsG//fw5PsTfyajiL0SiGmIvaiaVZNay+Cw0ESg==",
+    "throughput": "HISTFAAAAFJ4nDWJsQmAQBAE9+c8RA6jD0xsQszMBSuyAjuwScEKzPQVd5PZ2X7bs6RJUpJk+lK4W9ZD/z6vxIwIVI0YA079NnAcyoPIOIERtIjmsTeqDAao",
+    "totalCompletedRequests": 499210,
+    "totalRequests": 499230,
+    "totalBytes": 873617500,
     "samples": 30,
     "errors": 0,
     "timeouts": 0,
@@ -44,15 +44,15 @@
     "non2xx": 0,
     "statusCodeStats": {
       "200": {
-        "count": 245356
+        "count": 499210
       }
     },
     "resets": 0,
     "duration": 30,
-    "start": "2026-11-10T06:23:27.229Z",
-    "finish": "2026-11-10T06:23:57.232Z",
+    "start": "2026-11-11T12:14:24.258Z",
+    "finish": "2026-11-11T12:14:54.260Z",
     "1xx": 0,
-    "2xx": 245356,
+    "2xx": 499210,
     "3xx": 0,
     "4xx": 0,
     "5xx": 0

@@ -4,8 +4,15 @@
 |---|---|
 | Document | `docs/evidence/README.md` |
 | Sprint | 1 (Deliverable 1) |
-| Date | 2026-11-07 |
+| Version | 1.1 |
+| Date | 2026-11-11 |
 | Related | `docs/traceability.md`, `docs/sprints/sprint-1/features.md` §6. The assembled Word file is produced from these sources and submitted outside this repository. |
+
+### Revision history
+| Version | Date | Change | Reason |
+|---|---|---|---|
+| 1.0 | 2026-11-07 | Initial evidence pack index: screenshots, red/green logs, derived documents | Deliverable 1, Part F |
+| 1.1 | 2026-11-11 | NFR-05 baseline re-measured at `5c3f984`; the earlier baseline cited a commit hash that does not exist in the repository | Pre-submission audit (Issue #18) |
 
 This directory holds the evidence that the Sprint 1 requirements were met by running the product, not by assertion. File names carry the feature or responsibility they support (`F-01` to `F-04`, `R-01`), and terminal logs carry the tested commit hash in their file name.
 
@@ -85,7 +92,7 @@ CAPTURE_EVIDENCE=1 npm run e2e
 
 These are disclosed rather than hidden; they belong to the team/Lab 5 and Sprint 2–3 work:
 
-- **NFR-05 load benchmark (autocannon) has a recorded Sprint 1 baseline.** LOAD-01 ran at `f0255a6` on 2026-11-10 (5 runs × 30 s per endpoint at 20 connections, 500-order seed): `GET /api/menu` p95 2 ms and `POST /api/orders` p95 304 ms (run-level median), zero 5xx. Raw runs and the summary are in [`nfr05/`](nfr05/README.md); R-04 hardening and the deployed-build measurement stay in Sprint 3.
+- **NFR-05 load benchmark (autocannon) has a recorded Sprint 1 baseline.** LOAD-01 was re-measured at `5c3f984` on 2026-11-11 (5 runs × 30 s per endpoint at 20 connections, 500-order seed): `GET /api/menu` p95 1 ms and `POST /api/orders` p95 40 ms (run-level median), zero 5xx. Raw runs, the summary and the run transcript are in [`nfr05/`](nfr05/README.md); R-04 hardening and the deployed-build measurement stay in Sprint 3. The earlier 2026-11-10 baseline cited a commit hash that does not exist in the repository, which is why it was re-run rather than re-cited.
 - **The unit, integration and Playwright suites were last run at `4a37e95`**, the commit this pack documents (backend 85 passed, frontend 36 passed, 6 journeys passed). The screenshots were captured one documentation commit earlier at `9d8e7cb`; no runtime code changed between the two.
 - **No separate order-confirmation screen.** The application navigates straight to the order detail after a successful POST, so `F-03-order-detail.png` is the confirmation evidence.
 - **The login screenshot covers invalid credentials**, not the 400 field-validation state; that path is covered by TEST-04.

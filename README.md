@@ -133,7 +133,7 @@ Playwright (TEST-09) reads the same two variables from `backend/.env`, so log in
 | **End-to-end** | `npm run e2e` | Playwright journeys: TEST-09, TEST-12, TEST-29, TEST-41, TEST-42, plus the AC-21/AC-30 stale-cart journey |
 | **Type check** | `npm run typecheck` | `tsc --noEmit` across both workspaces |
 | **Production build** | `npm run build` | Backend `tsc` emit and Vite bundle |
-| **Load benchmark** | `npm run bench:nfr05` | NFR-05 / LOAD-01: autocannon against `GET /api/menu` and `POST /api/orders`, 20 connections for 30 s per endpoint, 5 runs each. Needs the built API on port 3100 (`PORT=3100 node dist/server.js`) and the benchmark seed (`npm run db:seed -- --with-perf-orders`, 500 orders plus a high-stock order-test item). Evidence is written to `docs/evidence/nfr05/` |
+| **Load benchmark** | `npm run bench:nfr05` | NFR-05 / LOAD-01: autocannon against `GET /api/menu` and `POST /api/orders`, 20 connections for 30 s per endpoint, 5 runs each. Needs the built API on port 3100 (`PORT=3100 node dist/server.js`) and the benchmark seed (`npm run db:seed --workspace=backend -- --with-perf-orders`, 500 orders plus a high-stock order-test item; the flag must be passed to the backend workspace directly, because the root `db:seed` wrapper does not forward it). Evidence is written to `docs/evidence/nfr05/` |
 
 Test counts from the latest recorded run (`4a37e95`): **85 backend tests in 16 files**, **36 frontend tests in 8 files**, and **6 Playwright journeys** — all passing. The per-feature statements of the 46 traceability tests are in [`docs/traceability.md`](docs/traceability.md), and the raw output is indexed in [`docs/evidence/README.md`](docs/evidence/README.md).
 
