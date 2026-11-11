@@ -4,7 +4,7 @@
 |---|---|
 | Document | `docs/evidence/README.md` |
 | Sprint | 1 (Deliverable 1) |
-| Version | 1.2 |
+| Version | 1.3 |
 | Date | 2026-11-11 |
 | Related | `docs/traceability.md`, `docs/sprints/sprint-1/features.md` §6. The assembled Word file is produced from these sources and submitted outside this repository. |
 
@@ -14,6 +14,7 @@
 | 1.0 | 2026-11-07 | Initial evidence pack index: screenshots, red/green logs, derived documents | Deliverable 1, Part F |
 | 1.1 | 2026-11-11 | NFR-05 baseline re-measured at `5c3f984`; the earlier baseline cited a commit hash that does not exist in the repository | Pre-submission audit (Issue #18) |
 | 1.2 | 2026-11-11 | Full test, E2E and build run recorded at `5c3f984`; the `4a37e95` logs are kept and marked superseded | The submitted revision must be the one the suites ran on (Issue #18) |
+| 1.3 | 2026-11-11 | Replaced the "AI-use declaration not included" note with a pointer to the new declaration in `github-workflow.md` §6 | Deliverable 1 §4.2 requires a brief AI-use declaration (Issue #18) |
 
 This directory holds the evidence that the Sprint 1 requirements were met by running the product, not by assertion. File names carry the feature or responsibility they support (`F-01` to `F-04`, `R-01`), and terminal logs carry the tested commit hash in their file name.
 
@@ -98,7 +99,7 @@ These are disclosed rather than hidden; they belong to the team/Lab 5 and Sprint
 - **No separate order-confirmation screen.** The application navigates straight to the order detail after a successful POST, so `F-03-order-detail.png` is the confirmation evidence.
 - **The login screenshot covers invalid credentials**, not the 400 field-validation state; that path is covered by TEST-04.
 - **Release tag `sprint-1-v1.0`** from the contract has not been created yet.
-- **Contribution table and AI-use declaration** are team-authored statements and are not generated here.
+- **Contribution table and AI-use declaration.** The AI-use declaration is in [`github-workflow.md`](github-workflow.md) §6; the contribution table is team-authored and is not generated here.
 - **Deliverable format is DOCX**, not PDF, as required by the submission; export to PDF from Word if the receiving site requires PDF. The assembled file and the scripts that build it are not tracked in Git and are submitted outside this repository.
 
 ## 7. Integrity

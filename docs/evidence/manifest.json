@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "generated": "2026-11-11",
   "revisions": [
     {
@@ -16,6 +16,11 @@
       "version": 4,
       "date": "2026-11-11",
       "change": "Full test, E2E and build run recorded at 5c3f984; the 4a37e95 logs are marked superseded"
+    },
+    {
+      "version": 5,
+      "date": "2026-11-11",
+      "change": "AI-use declaration added in docs/evidence/github-workflow.md section 6; the manifest gap now points to it"
     }
   ],
   "screenshots": [
@@ -309,6 +314,6 @@
     "The login screenshot covers invalid credentials, not the 400 field-validation state asserted by TEST-04.",
     "The release tag sprint-1-v1.0 has not been created.",
     "The assembled Word deliverable and its build scripts are not tracked here; the file is submitted outside this repository. The Markdown sources are the tracked record.",
-    "The contribution table and AI-use declaration are team-authored statements and are not included in the generated document."
+    "The AI-use declaration is in docs/evidence/github-workflow.md section 6; items inferred from repository evidence are marked [CONFIRM] and the remaining rows are placeholders for the students to complete. The contribution table is team-authored."
   ]
 }

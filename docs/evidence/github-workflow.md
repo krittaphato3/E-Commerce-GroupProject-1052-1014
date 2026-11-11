@@ -137,7 +137,30 @@ Screenshots cannot be produced by the documentation tooling; these must be captu
 
 Each screenshot should be labelled with the Issue/PR number, the branch, the author, the reviewer and the merge commit, so it matches the tables above.
 
-## 6. How to audit this
+## 6. AI-use declaration
+
+Scope: this section answers `reference/project_deliverable_1_v1.pdf` §4.2 — which AI tools were used, what they assisted with, and how the students verified the output. Every item marked **[CONFIRM]** was inferred from repository evidence only and must be confirmed or corrected by the authors before submission; the `to be filled` rows are placeholders for tools and tasks that leave no trace in Git.
+
+### 6.1 What the repository actually shows
+
+| Evidence | Where | What it shows |
+|---|---|---|
+| Commit trailer `🤖 Generated with Codebuff` with `Co-Authored-By: Codebuff <noreply@codebuff.com>` | 6 commits: `e78cb7f`, `8398fe2`, `05a4f08`, `f222daa`, `097da41`, `0c3e82e` (`git log --grep='Generated with Codebuff'`) | Codebuff assisted while the F-01 red tests, the F-01 backend implementation, the F-01 UI and the F-01 evidence document were produced |
+| No other AI tool, model or vendor is named in any tracked file (grep for `AI-use`, `ChatGPT`, `Claude`, `Copilot`, `Codebuff`, `AI agent`) | repository | No other tool's use is recorded anywhere in the repository |
+| Definition of Done item 10 | `docs/sprints/sprint-1/features.md` §2 | Completion must be shown by output the team produced by running the product, not by an AI statement |
+| CI workflow `.github/workflows/ci.yml`, PR #17 review | repository / GitHub | The test suites are run by automation and were checked by the reviewer (see §4.2) |
+
+### 6.2 Tool, tasks and verification
+
+| Tool | Tasks assisted | Which Issues/PRs | How output was verified | Student |
+|---|---|---|---|---|
+| Codebuff **[CONFIRM]** | Tests-first work for F-01, the F-01 implementation and UI (`e78cb7f`, `8398fe2`, `05a4f08`, `f222daa`, `097da41`, `0c3e82e`) **[CONFIRM]** | GitHub Issue #3 (contract ISSUE-2, F-01), PR #10 | **[CONFIRM]** the F-01 tests those commits introduce are executed and passing in `docs/evidence/F-01-green-full-f222daa.txt` and again in the `5c3f984` run (`docs/evidence/R-01-green-tests-5c3f984.txt`); PR #10 was reviewed and approved by the teammate (§2). Any further hand-checking by the students is not recorded in the repository and must be stated by them. | **[CONFIRM]** |
+| to be filled | to be filled | to be filled | to be filled | to be filled |
+| to be filled | to be filled | to be filled | to be filled | to be filled |
+
+Rule this table follows: nothing is claimed as reviewed or verified by the students unless the repository shows it — a merged, reviewed pull request or a recorded passing test run. Everything else is left for the authors.
+
+## 7. How to audit this
 
 ```bash
 gh pr list --state all --base sprint-1-staging --json number,title,headRefName,author,mergedAt,mergeCommit
