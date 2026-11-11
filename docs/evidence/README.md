@@ -4,7 +4,7 @@
 |---|---|
 | Document | `docs/evidence/README.md` |
 | Sprint | 1 (Deliverable 1) |
-| Version | 1.1 |
+| Version | 1.2 |
 | Date | 2026-11-11 |
 | Related | `docs/traceability.md`, `docs/sprints/sprint-1/features.md` §6. The assembled Word file is produced from these sources and submitted outside this repository. |
 
@@ -13,6 +13,7 @@
 |---|---|---|---|
 | 1.0 | 2026-11-07 | Initial evidence pack index: screenshots, red/green logs, derived documents | Deliverable 1, Part F |
 | 1.1 | 2026-11-11 | NFR-05 baseline re-measured at `5c3f984`; the earlier baseline cited a commit hash that does not exist in the repository | Pre-submission audit (Issue #18) |
+| 1.2 | 2026-11-11 | Full test, E2E and build run recorded at `5c3f984`; the `4a37e95` logs are kept and marked superseded | The submitted revision must be the one the suites ran on (Issue #18) |
 
 This directory holds the evidence that the Sprint 1 requirements were met by running the product, not by assertion. File names carry the feature or responsibility they support (`F-01` to `F-04`, `R-01`), and terminal logs carry the tested commit hash in their file name.
 
@@ -52,11 +53,11 @@ Every feature was seen failing before it passed. The file names record the commi
 | F-01 Authentication and session | `F-01-red-full-8398fe2.txt`, `F-01-red-TEST-06-05a4f08.txt`, `F-01-red-TEST-09-retroactive-60b5e57.txt` | `F-01-green-full-f222daa.txt` (backend 30 passed, frontend 1 passed), `F-01-green-TEST-06-f222daa.txt` | `F-01-e2e-097da41.txt` (1 journey passed) |
 | F-02 Menu, F-03 Order submission | `F-02-F-03-red-140c030.txt` | `F-02-F-03-green-tests-0f3c649.txt` (backend 69 passed, frontend 22 passed) | `F-02-F-03-green-e2e-0f3c649.txt` (3 journeys passed) |
 | F-04 Operator acceptance | `F-04-red-c04ca45.txt` | `F-04-green-tests-37cf31f.txt` (backend 82 passed, frontend 36 passed), `F-04-TEST-40-mutation-37cf31f.txt` | `F-04-green-e2e-37cf31f.txt` (5 journeys passed) |
-| R-01 Access control | `R-01-red-TEST-43-d7792c8.txt` | `R-01-green-TEST-43-8f42cbd.txt`, `R-01-green-tests-4a37e95.txt` (backend 85 passed, frontend 36 passed) | `R-01-green-e2e-4a37e95.txt` (6 journeys passed) |
+| R-01 Access control | `R-01-red-TEST-43-d7792c8.txt` | `R-01-green-TEST-43-8f42cbd.txt`, `R-01-green-tests-5c3f984.txt` (backend 85 passed, frontend 36 passed) | `R-01-green-e2e-5c3f984.txt` (6 journeys passed) |
 
-Supporting logs: `F-01-build-097da41.txt`, `F-01-typecheck-097da41.txt`, `F-01-test-097da41.txt`, `F-01-logout-401-097da41.txt`, `F-02-F-03-green-build-0f3c649.txt`, `F-04-green-build-*.txt`, `F-04-green-e2e-*.txt`, `R-01-green-build-4a37e95.txt`.
+Supporting logs: `F-01-build-097da41.txt`, `F-01-typecheck-097da41.txt`, `F-01-test-097da41.txt`, `F-01-logout-401-097da41.txt`, `F-02-F-03-green-build-0f3c649.txt`, `F-04-green-build-*.txt`, `F-04-green-e2e-*.txt`, `R-01-green-build-5c3f984.txt`.
 
-The R-01 row supersedes the earlier `c8fd8fc` runs (`R-01-green-tests-c8fd8fc.txt`, `R-01-green-e2e-c8fd8fc.txt`, `R-01-green-build-c8fd8fc.txt`), which are kept for history. The current logs were produced at `4a37e95`, the commit this pack documents, after the Playwright specs last changed in `9d8e7cb`.
+The R-01 row supersedes the earlier `c8fd8fc` runs (`R-01-green-tests-c8fd8fc.txt`, `R-01-green-e2e-c8fd8fc.txt`, `R-01-green-build-c8fd8fc.txt`), which are kept for history. The current logs were produced at `5c3f984`, the release-candidate commit this pack documents. The earlier `4a37e95` logs (`R-01-green-tests-4a37e95.txt`, `R-01-green-e2e-4a37e95.txt`, `R-01-green-build-4a37e95.txt`) are kept for history and are **superseded** by the `5c3f984` set.
 
 Commands used for every run:
 
@@ -93,7 +94,7 @@ CAPTURE_EVIDENCE=1 npm run e2e
 These are disclosed rather than hidden; they belong to the team/Lab 5 and Sprint 2–3 work:
 
 - **NFR-05 load benchmark (autocannon) has a recorded Sprint 1 baseline.** LOAD-01 was re-measured at `5c3f984` on 2026-11-11 (5 runs × 30 s per endpoint at 20 connections, 500-order seed): `GET /api/menu` p95 1 ms and `POST /api/orders` p95 40 ms (run-level median), zero 5xx. Raw runs, the summary and the run transcript are in [`nfr05/`](nfr05/README.md); R-04 hardening and the deployed-build measurement stay in Sprint 3. The earlier 2026-11-10 baseline cited a commit hash that does not exist in the repository, which is why it was re-run rather than re-cited.
-- **The unit, integration and Playwright suites were last run at `4a37e95`**, the commit this pack documents (backend 85 passed, frontend 36 passed, 6 journeys passed). The screenshots were captured one documentation commit earlier at `9d8e7cb`; no runtime code changed between the two.
+- **The unit, integration and Playwright suites were re-run at `5c3f984`** from a clean working tree (backend 85 passed in 16 files, frontend 36 passed in 8 files, 6 Playwright journeys passed, build and typecheck exit 0, no failures and no skipped tests). The screenshots were captured at `9d8e7cb`, before the later documentation and benchmark-harness commits.
 - **No separate order-confirmation screen.** The application navigates straight to the order detail after a successful POST, so `F-03-order-detail.png` is the confirmation evidence.
 - **The login screenshot covers invalid credentials**, not the 400 field-validation state; that path is covered by TEST-04.
 - **Release tag `sprint-1-v1.0`** from the contract has not been created yet.
