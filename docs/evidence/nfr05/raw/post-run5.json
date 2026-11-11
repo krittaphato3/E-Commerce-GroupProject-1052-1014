@@ -9,19 +9,19 @@
     "durationSeconds": 30,
     "connections": 20,
     "requests": {
-      "total": 6679,
-      "averagePerSecond": 222.6
+      "total": 33758,
+      "averagePerSecond": 1125.3
     },
     "latencyMs": {
-      "p50": 30,
-      "p95": 311,
-      "p99": 493,
-      "mean": 89,
-      "max": 913
+      "p50": 13,
+      "p95": 47,
+      "p99": 72,
+      "mean": 17.3,
+      "max": 204
     },
-    "throughputBytesPerSecond": 183166.2,
+    "throughputBytesPerSecond": 929470.3,
     "statusCodes": {
-      "201": 6679
+      "201": 33758
     },
     "non2xx": 0,
     "fiveHundreds": 0,
@@ -31,12 +31,12 @@
     "resets": 0
   },
   "raw": {
-    "latencies": "HISTFAAAAZJ4nDVNUW7bMAxlnmmGUVRWUDXV0AzXMALXMIoiCIaha4t+dP870L53g51oF9kRdoZByUYSJB/fI9n/+HlDhBci2hBRSxfbXMp9+I+v0u/Dn/13Lt+iIWVBzEGl90Jd9pySgWNUF1IQS54tJhMfxui7IXOaiu+WZSjdmocyHd3TeujX0+vT8rjM8/j6/D4e19N8enwbj89rN38e3o+HpYzTp+Myr29rPjxMeXoo3XLo+76sZRrm0s99H1IoZYjjPAyl5BKShZSzZQ7ZfAyphGghZJ9DKl3qnI8+5RSSE2/BvBQJPnoL0dfggODUazRNZqKiwas3Lwx4c07MHGcRx9FMoV5QOfPGzolTURYRYXG1qiqUoMziCAYnpMqszCxgsJCCWEnUAcTMUDBDzj0zAczcgtnRZYXBTApRrhSAekCBpjIA0FbI2NZdKLGcB3RxrrnBv6bGDg3qvxZCIMH2LNxynaNFC+C6Xm+w46oGbnGHPQjtWdugwQ7bM2LwPa6wwx5fcYdr7PARX/ABvzb4C3MvIoE=",
-    "requests": "HISTFAAAADJ4nJNpmSzMwMAgwMDAwMjAwMDMAAGMYJLfyQHGn8rMJMnCxMTCwMHCxcXBwgQAZEAC2w==",
-    "throughput": "HISTFAAAAD54nJNpmSzMwMAgzcDAwMjAwMDMAAEgtrhH2QsGGH9jCyPTRkYWTiZuJk4WcQ5OFm4uTi5uDk4WTiYA1D8Ftw==",
-    "totalCompletedRequests": 6679,
-    "totalRequests": 6699,
-    "totalBytes": 5496817,
+    "latencies": "HISTFAAAAOZ4nJNpmSzMwMBwjIGBgZGBgYGVAQIYIZS6AJwvM4VzC98a0T9SBxT7lO/J75K6JvFAZJXQOqE3/Df49/Cd4n3De4TnGNcarhbOJs4z7LfYvrHtYWtj+8B6inUV6zqWZSxTWA4x32NexfyN6Q/THaZtTAeYJjE1ML1ivMJ4gvEQ4ynGdYx7GGcxTmCsmsCYU5cTEZMWZ+dmZ6Sno2ckJyOjIqajIKYiJyEhIiPGJiIkwMchwsHHxsHHxcfMxsLBxcTCwMTEwsTGxsLCwsDEwsTMxMTMwgQlGFiYWFiYWRSZ/JkA6sEz7Q==",
+    "requests": "HISTFAAAAFF4nDWHMQ5AQBQF35+1+dVGsVEhsrdQilbpFO7hBgqncxdBTDGZ6fYjSxolmaSgD3tdz9P/V6JnQBQSLQsNp7GxksEJQIREJFQZR/jT3EmpBdU=",
+    "throughput": "HISTFAAAAFp4nDXHoQ2AMBgF4fdfIaSiClGDadAERZBYJsJgSRigO2BYjA2whBBOfddsuZY0STJJTl+v47xc+j8fRs+AYyTSsdJyG6exGwkRKBHCIyKeqkgEHOE1DyBLCRw=",
+    "totalCompletedRequests": 33758,
+    "totalRequests": 33778,
+    "totalBytes": 27884108,
     "samples": 30,
     "errors": 0,
     "timeouts": 0,
@@ -44,15 +44,15 @@
     "non2xx": 0,
     "statusCodeStats": {
       "201": {
-        "count": 6679
+        "count": 33758
       }
     },
     "resets": 0,
-    "duration": 30.01,
-    "start": "2026-11-10T06:26:32.637Z",
-    "finish": "2026-11-10T06:27:02.649Z",
+    "duration": 30,
+    "start": "2026-11-11T12:17:29.165Z",
+    "finish": "2026-11-11T12:17:59.168Z",
     "1xx": 0,
-    "2xx": 6679,
+    "2xx": 33758,
     "3xx": 0,
     "4xx": 0,
     "5xx": 0

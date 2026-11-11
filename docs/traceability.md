@@ -3,8 +3,8 @@
 | Item | Value |
 |---|---|
 | Document | `docs/traceability.md` |
-| Version | 1.15 |
-| Date | 2026-11-07 |
+| Version | 1.18 |
+| Date | 2026-11-11 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md` |
 
 ### Revision history
@@ -24,8 +24,11 @@
 | 1.11 | 2026-11-07 | Update F-04 verification results: red test evidence at a614473; follow-up review fixes PASS at c680623 (UI fix green), 8fe7793 (TEST-40 race barrier & mutation check), 162b413 (types), with updated green evidence files | Review fixes for Issue #6 (F-04) |
 | 1.12 | 2026-11-07 | TEST-40 restored to 10 iterations with barrier synchronization and verified PASS against real PostgreSQL at 37cf31f | Verification of TEST-40 contract compliance |
 | 1.13 | 2026-11-07 | Record R-01 verification results: TEST-43 red at d7792c8 and green at 8f42cbd; mark BR-08, NFR-01 and NFR-02 PASS; add CHG-02 for the Omazon display brand rename | Verification of Issue #3 (R-01, AC-43/TEST-43) and the display brand rename |
-| 1.15 | 2026-11-10 | Record LOAD-01 at `f0255a6`: NFR-05 measured with 5 runs × 30 s per endpoint at 20 connections on the 500-order seed — `GET /api/menu` p95 2 ms, `POST /api/orders` p95 304 ms (run-level median; p90 312.2 ms, worst 313 ms), zero 5xx — and mark NFR-05 `PASS` with the evidence folder `docs/evidence/nfr05/` | Early Sprint 1 baseline for NFR-05 (Issue #15); R-04 hardening and the deployed-build measurement stay in Sprint 3 |
 | 1.14 | 2026-11-07 | Deliverable 1 finalisation: TEST-20 is named explicitly in the FR-05 actual-test cell; the TEST-45 and TEST-46 version cells cite the commit that introduced the tests (`c215549`) instead of a branch name | Evidence pack and document assembly (Issue #7) |
+| 1.15 | 2026-11-10 | A LOAD-01 baseline was recorded for NFR-05 with 5 runs × 30 s per endpoint at 20 connections on the 500-order seed, citing a commit hash that does not exist in the repository | Early Sprint 1 baseline for NFR-05 (Issue #15); R-04 hardening and the deployed-build measurement stay in Sprint 3 |
+| 1.16 | 2026-11-11 | LOAD-01 re-measured at `5c3f984` because the hash cited in 1.15 does not exist in the repository: `GET /api/menu` p95 1 ms at 16,640.3 req/s, `POST /api/orders` p95 40 ms (p90 45 ms, worst 47 ms) at 1,255.1 req/s, zero 5xx — NFR-05 stays `PASS` and `docs/evidence/nfr05/` now carries the run transcript `run-log-5c3f984.txt` | Pre-submission audit: a result that cannot be tied to a revision is not evidence (Issue #18) |
+| 1.17 | 2026-11-11 | §5 states the Sprint 1 local baseline for NFR-05 (p95 1 ms and p95 40 ms, zero 5xx at `5c3f984`) and that re-verification on the deployed system is planned for Sprint 3, replacing the statement that NFR-05 was not measurable; the revision rows now read 1.14, 1.15, 1.16, 1.17 in order | §3 marked NFR-05 `PASS` while §5 said it was not measurable, which contradicted the evidence (pre-submission audit, Issue #18) |
+| 1.18 | 2026-11-11 | Full suite re-run on `5c3f984` from a clean working tree: backend 85 passed in 16 files, frontend 36 passed in 8 files, 6 Playwright journeys passed, build and typecheck exit 0, no failures and no skipped tests; the logs are `docs/evidence/R-01-green-tests-5c3f984.txt`, `R-01-green-e2e-5c3f984.txt` and `R-01-green-build-5c3f984.txt` | The recorded suite results were tied to `4a37e95`, which is not the revision being submitted (pre-submission audit, Issue #18) |
 
 ### How to use this file
 - Sprint 1 test IDs follow the rule **TEST-nn verifies AC-nn** (for example TEST-24 verifies AC-24).
@@ -83,7 +86,7 @@
 | NFR-02 | R-01 | 1, extended 2 and 3 | 403 for wrong role or non-owner on every protected route (AC-43, AC-27, AC-37, AC-38) | TEST-43, 27, 37, 38 | backend/tests/orders.access.test.ts::TEST-27; backend/tests/orders.operator.test.ts::TEST-37, ::TEST-38; backend/tests/routes.access.test.ts::TEST-43 | PASS | 140c030, c04ca45, d7792c8 (red); 0f3c649, 6d1d2f7, 8f42cbd (green) |
 | NFR-03 | F-01 | 1 | bcrypt hash stored; hash never returned (AC-08) | TEST-08 | backend/tests/auth.test.ts::TEST-08; backend/src/services/password.test.ts::TEST-08 | PASS | 8398fe2 (red), f222daa (green), 2022899 (explicit `/me` field projection) |
 | NFR-04 | F-01 | 1 | 8-hour expiry (AC-07); logout invalidates at once (AC-06) | TEST-06, 07 | backend/tests/auth.test.ts::TEST-06, ::TEST-07 | PASS | 8398fe2 (red; TEST-06 reworked in 05a4f08), f222daa (green), 6e68bee (expired session deletion on lookup & startup) |
-| NFR-05 | R-04 | 3 | p95 ≤ 500 ms and zero 5xx responses for `GET /api/menu` and `POST /api/orders`, measured at 20 concurrent connections for 30 s per endpoint, database seeded with 500 orders plus an order-test item with enough stock for the whole run (NFR-05) | LOAD-01: autocannon script, raw output and tested commit saved (Sprint 3 baseline recorded in Sprint 1) | LOAD-01: `backend/benchmarks/nfr05-load.js` — 5 runs × 30 s per endpoint at 20 connections; `docs/evidence/nfr05/summary.json` and `raw/`. `GET /api/menu` p50 2 ms / p95 2 ms / p99 4-5 ms at 8,208.6 req/s; `POST /api/orders` p50 30-68 ms / p95 292-313 ms / p99 460-503 ms at 221.3 req/s; zero 5xx in both | PASS | f0255a6 (measured 2026-11-10) |
+| NFR-05 | R-04 | 3 | p95 ≤ 500 ms and zero 5xx responses for `GET /api/menu` and `POST /api/orders`, measured at 20 concurrent connections for 30 s per endpoint, database seeded with 500 orders plus an order-test item with enough stock for the whole run (NFR-05) | LOAD-01: autocannon script, raw output and tested commit saved (Sprint 3 baseline recorded in Sprint 1) | LOAD-01: `backend/benchmarks/nfr05-load.js` — 5 runs × 30 s per endpoint at 20 connections; `docs/evidence/nfr05/summary.json`, `raw/` and `run-log-5c3f984.txt`. `GET /api/menu` p50 1 ms / p95 1 ms / p99 3-4 ms at 16,640.3 req/s; `POST /api/orders` p50 10-13 ms / p95 37-47 ms / p99 56-72 ms at 1,255.1 req/s; zero 5xx in both | PASS | 5c3f984 (measured 2026-11-11) |
 | NFR-06 | R-05 | 2 | Order survives restart and redeploy (post-deployment check) | CHECK-01 (Sprint 2) | | NOT RUN | |
 | NFR-07 | R-02 | 1 | Standard error shape; no stack trace (AC-04, AC-44) | TEST-04, 44 | backend/tests/auth.test.ts::TEST-04; backend/tests/error.test.ts::TEST-44 | PASS | f222daa, 83f0337 (TEST-04); 9de7923 (TEST-44) |
 | NFR-08 | R-03 | 1 | Fresh clone in 8 commands or fewer; seed repeatable (AC-45) | TEST-45 | backend/tests/seed.test.ts::TEST-45 | PASS | c215549 |
@@ -106,7 +109,7 @@ Total Sprint 1 AC and tests: 46 each (one test per AC; some tests contain severa
 |---|---|---|
 | Requirements with no feature or responsibility | None | — |
 | Sprint 2 and 3 requirements without AC or tests | Expected: contracts not yet written | AC and STS are written before implementation of each sprint |
-| NFR-05, NFR-06, NFR-10, NFR-11 | Not measurable until later sprints | Allocated to Sprints 2 and 3 |
+| NFR-05, NFR-06, NFR-10, NFR-11 | NFR-05: a Sprint 1 local baseline is measured and recorded — `GET /api/menu` p95 1 ms and `POST /api/orders` p95 40 ms with zero 5xx at 20 connections for 30 s per endpoint (`5c3f984`). NFR-06, NFR-10 and NFR-11 remain not measurable until their sprints | NFR-05 re-verification on the deployed system is planned for Sprint 3, which is the sprint allocation in `docs/srs.md` (R-04 hardening plus the deployed-build measurement). NFR-06 and NFR-11 are Sprint 2 and 3 checks; NFR-10 is the Sprint 2 coverage report. |
 | BR-06 full transition table | Only `PENDING → ACCEPTED` is built in Sprint 1 | Remaining transitions are covered in F-06, F-08, F-09, F-12 contracts |
 
 ## 6. Approved changes log

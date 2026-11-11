@@ -1,6 +1,28 @@
 {
-  "version": 2,
-  "generated": "2026-11-07",
+  "version": 5,
+  "generated": "2026-11-11",
+  "revisions": [
+    {
+      "version": 2,
+      "date": "2026-11-07",
+      "change": "Initial manifest: 14 screenshots, 14 logs, known gaps"
+    },
+    {
+      "version": 3,
+      "date": "2026-11-11",
+      "change": "NFR-05 baseline re-measured at 5c3f984 because the earlier cited hash does not exist in the repository"
+    },
+    {
+      "version": 4,
+      "date": "2026-11-11",
+      "change": "Full test, E2E and build run recorded at 5c3f984; the 4a37e95 logs are marked superseded"
+    },
+    {
+      "version": 5,
+      "date": "2026-11-11",
+      "change": "AI-use declaration added in docs/evidence/github-workflow.md section 6; the manifest gap now points to it"
+    }
+  ],
   "screenshots": [
     {
       "id": "E-01",
@@ -268,30 +290,30 @@
       "id": "L-13",
       "feature": "R-01",
       "state": "GREEN",
-      "commit": "4a37e95",
+      "commit": "5c3f984",
       "command": "npm test",
       "summary": "backend 85 passed (16 files); frontend 36 passed (8 files)",
-      "file": "R-01-green-tests-4a37e95.txt",
+      "file": "R-01-green-tests-5c3f984.txt",
       "embed": true
     },
     {
       "id": "L-14",
       "feature": "R-01",
       "state": "GREEN",
-      "commit": "4a37e95",
+      "commit": "5c3f984",
       "command": "npm run e2e",
       "summary": "6 Playwright journeys passed",
-      "file": "R-01-green-e2e-4a37e95.txt",
+      "file": "R-01-green-e2e-5c3f984.txt",
       "embed": true
     }
   ],
   "gaps": [
-    "NFR-05 load benchmark ran early as a Sprint 1 baseline at f0255a6 (5 runs x 30 s per endpoint, 20 connections, 500-order seed): GET /api/menu p95 2 ms, POST /api/orders p95 304 ms, zero 5xx; raw output is in nfr05/. R-04 hardening and the deployed-build measurement stay in Sprint 3.",
-    "The unit, integration and Playwright suites were last run at 4a37e95 (the commit this evidence pack documents). The screenshots were captured one documentation commit earlier, at 9d8e7cb; no runtime code changed between the two.",
+    "NFR-05 load benchmark (LOAD-01) was re-measured at 5c3f984 on 2026-11-11 after the earlier record cited a commit hash that does not exist in the repository: 5 runs x 30 s per endpoint at 20 connections on the 500-order seed; GET /api/menu p95 1 ms, POST /api/orders p95 40 ms, zero 5xx; raw output, summary and run-log-5c3f984.txt are in nfr05/. R-04 hardening and the deployed-build measurement stay in Sprint 3.",
+    "The unit, integration and Playwright suites were re-run at 5c3f984 from a clean working tree (backend 85 passed in 16 files, frontend 36 passed in 8 files, 6 Playwright journeys passed, build and typecheck exit 0, no failures and no skipped tests). The 4a37e95 logs are kept and marked superseded. The screenshots were captured at 9d8e7cb, before the later documentation and benchmark-harness commits.",
     "No distinct order-confirmation screen exists: the SPA navigates straight to the order detail after a 201, so E-07 is the confirmation evidence.",
     "The login screenshot covers invalid credentials, not the 400 field-validation state asserted by TEST-04.",
     "The release tag sprint-1-v1.0 has not been created.",
     "The assembled Word deliverable and its build scripts are not tracked here; the file is submitted outside this repository. The Markdown sources are the tracked record.",
-    "The contribution table and AI-use declaration are team-authored statements and are not included in the generated document."
+    "The AI-use declaration is in docs/evidence/github-workflow.md section 6; items inferred from repository evidence are marked [CONFIRM] and the remaining rows are placeholders for the students to complete. The contribution table is team-authored."
   ]
 }

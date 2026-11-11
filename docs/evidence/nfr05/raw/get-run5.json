@@ -9,19 +9,19 @@
     "durationSeconds": 30,
     "connections": 20,
     "requests": {
-      "total": 246259,
-      "averagePerSecond": 8208.6
+      "total": 469058,
+      "averagePerSecond": 15729.6
     },
     "latencyMs": {
-      "p50": 2,
-      "p95": 2,
-      "p99": 5,
-      "mean": 2.1,
-      "max": 6
+      "p50": 1,
+      "p95": 1,
+      "p99": 4,
+      "mean": 0.9,
+      "max": 51
     },
-    "throughputBytesPerSecond": 14356899.7,
+    "throughputBytesPerSecond": 27526877.9,
     "statusCodes": {
-      "200": 246259
+      "200": 469058
     },
     "non2xx": 0,
     "fiveHundreds": 0,
@@ -31,12 +31,12 @@
     "resets": 0
   },
   "raw": {
-    "latencies": "HISTFAAAAC14nJNpmSzMwMDAy8DAwMjAwMDKAAGMEEpdAM5fYfJup8wE/k1JZ9SdAHEkBxo=",
-    "requests": "HISTFAAAADt4nJNpmSzMwMAgy8DAwMjAwMDMAAGMYJLfyQHGv2jPxM7EzsTEzMTEwsQAptnYmNlYWFiY2JkAl5EDZQ==",
-    "throughput": "HISTFAAAAEF4nJNpmSzMwMCgzMDAwMjAwMDMAAEgtrhH2QsGGL/xNSMTOxMrExMDExMLiGRmYmJgY2FiZQFxmZiY+JkA7okE+Q==",
-    "totalCompletedRequests": 246259,
-    "totalRequests": 246279,
-    "totalBytes": 430706991,
+    "latencies": "HISTFAAAAE54nJNpmSzMwMCgw8DAwMjAwMDKAAGMEEpdAMa/soiz77HunvQXCTdsz7E9YW5husM4gfEGY5CPmpWaggKLCI+QAgePBhcri7oGABzYDy8=",
+    "requests": "HISTFAAAAFR4nDWKMQqAMBTFXlOLiJRPKU56AY/gJoKg93J3cPQU3lBRzBAIpNuOLGmQ5CR5fbjXNo1/nwu74/IkxIwn0EJkJVGRoacgUGIYgYhR0zz3DV17Bhs=",
+    "throughput": "HISTFAAAAFV4nDWHMQ5AQBQF3458IiJbbLENUShcgUrrRBK9GzidG2glDiCIKSYz1boFSb0kJynRx9Nxmg/9v1+OhRM8YkAYEXJGPBke2hTDKCle1wQ6Gm7aJghW",
+    "totalCompletedRequests": 469058,
+    "totalRequests": 469078,
+    "totalBytes": 820851500,
     "samples": 30,
     "errors": 0,
     "timeouts": 0,
@@ -44,15 +44,15 @@
     "non2xx": 0,
     "statusCodeStats": {
       "200": {
-        "count": 246259
+        "count": 469058
       }
     },
     "resets": 0,
-    "duration": 30,
-    "start": "2026-11-10T06:23:57.234Z",
-    "finish": "2026-11-10T06:24:27.236Z",
+    "duration": 29.82,
+    "start": "2026-11-11T12:14:54.261Z",
+    "finish": "2026-11-11T12:15:24.077Z",
     "1xx": 0,
-    "2xx": 246259,
+    "2xx": 469058,
     "3xx": 0,
     "4xx": 0,
     "5xx": 0
