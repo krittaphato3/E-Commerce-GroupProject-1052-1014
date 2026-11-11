@@ -98,9 +98,9 @@ Verdict: **PASS**. Both endpoints hold p95 ≤ 500 ms and produced zero 5xx resp
 runs.
 
 **Superseded run.** An earlier baseline recorded on 2026-11-10 reported
-`GET /api/menu` p95 2 ms and `POST /api/orders` p95 304 ms on a Windows machine, citing commit
-`f0255a6`. That commit does not exist in the repository, so the numbers could not be tied to a
-revision and were re-measured at `5c3f984` instead. The replacement run above is the recorded
+`GET /api/menu` p95 2 ms and `POST /api/orders` p95 304 ms on a Windows machine, but it cited a
+commit hash that does not resolve in the repository. The numbers could therefore not be tied to a
+revision, so the benchmark was re-measured at `5c3f984` instead. The replacement run above is the recorded
 baseline; the difference in write-path latency (304 ms → 40 ms) follows from the different machine
 and the same `fsync=on`/`synchronous_commit=on` settings, not from an application change.
 
