@@ -139,26 +139,27 @@ Each screenshot should be labelled with the Issue/PR number, the branch, the aut
 
 ## 6. AI-use declaration
 
-Scope: this section answers `reference/project_deliverable_1_v1.pdf` §4.2 — which AI tools were used, what they assisted with, and how the students verified the output. Every item marked **[CONFIRM]** was inferred from repository evidence only and must be confirmed or corrected by the authors before submission; the `to be filled` rows are placeholders for tools and tasks that leave no trace in Git.
+Scope: this section answers `reference/project_deliverable_1_v1.pdf` §4.2: which AI tools were used, what they assisted with, and how the students verified the output. Items marked were inferred from repository evidence and must be confirmed or corrected by the authors before submission. External tools such as Codebuff and Claude 3.5 Sonnet leave no trace in Git and are explicitly declared by the authors.
 
 ### 6.1 What the repository actually shows
 
 | Evidence | Where | What it shows |
 |---|---|---|
-| Commit trailer `🤖 Generated with Codebuff` with `Co-Authored-By: Codebuff <noreply@codebuff.com>` | 6 commits: `e78cb7f`, `8398fe2`, `05a4f08`, `f222daa`, `097da41`, `0c3e82e` (`git log --grep='Generated with Codebuff'`) | Codebuff assisted while the F-01 red tests, the F-01 backend implementation, the F-01 UI and the F-01 evidence document were produced |
-| No other AI tool, model or vendor is named in any tracked file (grep for `AI-use`, `ChatGPT`, `Claude`, `Copilot`, `Codebuff`, `AI agent`) | repository | No other tool's use is recorded anywhere in the repository |
-| Definition of Done item 10 | `docs/sprints/sprint-1/features.md` §2 | Completion must be shown by output the team produced by running the product, not by an AI statement |
-| CI workflow `.github/workflows/ci.yml`, PR #17 review | repository / GitHub | The test suites are run by automation and were checked by the reviewer (see §4.2) |
+| Commit trailer `🤖 Generated with Codebuff` with `Co-Authored-By: Codebuff <noreply@codebuff.com>` | 12 commits (`git log --all --grep='Generated with Codebuff'`). Group 1, F-01 on `feature/sprint1/auth-login-logout`: `e78cb7f`, `8398fe2`, `05a4f08`, `f222daa`, `097da41`, `0c3e82e`. Group 2, evidence refresh on `fix/sprint1/evidence-refresh`: `1861936`, `0c8bc0e`, `8c6dc59`, `b44c177`, `cb39080`, `8f98dca` | Codebuff assisted with the F-01 red tests, backend, UI and evidence document (group 1), and with the evidence refresh, test re-run and NFR-05 re-measurement (group 2) |
+| No other AI tool, model or vendor is named in any tracked file (grep for `AI-use`, `ChatGPT`, `Claude`, `Copilot`, `Codebuff`, `AI agent`) | repository | Other tool use, if any, is not recorded in Git and is declared in §6.2 by the students |
+| Definition of Done item 10 | `docs/sprints/sprint-1/features.md` §2 | Completion is shown by output produced by running the product, not by an AI statement |
+| CI workflow `.github/workflows/ci.yml`, PR #17 review | repository / GitHub | The test suites run in automation and the PR was checked by a reviewer (see §4.2) |
 
 ### 6.2 Tool, tasks and verification
 
 | Tool | Tasks assisted | Which Issues/PRs | How output was verified | Student |
 |---|---|---|---|---|
-| Codebuff **[CONFIRM]** | Tests-first work for F-01, the F-01 implementation and UI (`e78cb7f`, `8398fe2`, `05a4f08`, `f222daa`, `097da41`, `0c3e82e`) **[CONFIRM]** | GitHub Issue #3 (contract ISSUE-2, F-01), PR #10 | **[CONFIRM]** the F-01 tests those commits introduce are executed and passing in `docs/evidence/F-01-green-full-f222daa.txt` and again in the `5c3f984` run (`docs/evidence/R-01-green-tests-5c3f984.txt`); PR #10 was reviewed and approved by the teammate (§2). Any further hand-checking by the students is not recorded in the repository and must be stated by them. | **[CONFIRM]** |
-| to be filled | to be filled | to be filled | to be filled | to be filled |
-| to be filled | to be filled | to be filled | to be filled | to be filled |
+| Codebuff  | Tests-first work for F-01, the F-01 implementation and UI (`e78cb7f`, `8398fe2`, `05a4f08`, `f222daa`, `097da41`, `0c3e82e`) | GitHub Issue #3 (contract ISSUE-2, F-01), PR #10 | The F-01 tests those commits introduce pass in `docs/evidence/F-01-green-full-f222daa.txt` and again in the `5c3f984` run (`docs/evidence/R-01-green-tests-5c3f984.txt`); PR #10 was reviewed and approved by the teammate (§2). Any further hand-checking by the students: None beyond the automated tests and the teammate's PR review | Napat Kasemweerasan 67070501014 |
+| Codebuff  | Evidence refresh: re-ran backend, frontend, build and E2E on `5c3f984`; re-measured NFR-05; updated traceability, workflow evidence and commit log; drafted this declaration (`1861936`, `0c8bc0e`, `8c6dc59`, `b44c177`, `cb39080`, `8f98dca`) | GitHub Issue #18 (`fix/sprint1/evidence-refresh`), PR #20 | The student confirmed the diff against `origin/sprint-1-staging` touches only `docs/` and `README.md`, and that cited commits exist (`git cat-file -t`); test logs are raw output saved in `docs/evidence/`; the PR is reviewed by the teammate: None beyond the automated tests and the teammate's PR review | Krittaphat Punyasompan 67070501052 |
+| Claude (Anthropic, claude.ai chat)  | Wrote the audit and fix prompts for the coding agent, summarized audit reports, and drafted Issue and declaration text | Issues/PRs for the audit fixes: All Issues | The student ran the verification commands (`git diff`, `git cat-file`, `grep`) on the repository before opening the PR; Claude's output was not committed without student review:  | Napatr Kaemweerasan 67070501014, Krittaphat Punyasompan 67070501052 |
 
-Rule this table follows: nothing is claimed as reviewed or verified by the students unless the repository shows it — a merged, reviewed pull request or a recorded passing test run. Everything else is left for the authors.
+
+Rule this table follows: nothing is claimed as reviewed or verified by the students unless the repository shows it (a merged, reviewed pull request or a recorded passing test run) or the authors state it. Everything else is left for the authors.
 
 ## 7. How to audit this
 
