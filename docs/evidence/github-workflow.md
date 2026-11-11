@@ -23,15 +23,15 @@ GitHub issue numbers are sequential in this repository; the contract's `ISSUE-n`
 
 | Contract issue | Feature / responsibility | GitHub issue | Branch | PR | Author | Reviewed by | Merged by | Merged | Merge commit |
 |---|---|---|---|---|---|---|---|---|---|
-| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
-| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
-| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
-| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
-| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
-| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
-| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
-| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
-| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
+| — | Specification baseline | #1 | `feature/specification-docs`, `feature/sprint1/spec-docs-setup` | [#8](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/8) | napatsun | krittaphato3 (approved) | krittaphato3 | 2026-11-05 | `addbc0e` |
+| ISSUE-1 | R-03 Scaffold, schema, seed | #2 | `feature/sprint1/scaffold-db-seed` | [#9](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/9) | krittaphato3 | napatsun (changes requested, then approved) | napatsun | 2026-11-06 | `60b5e57` |
+| ISSUE-2 | F-01 Authentication and session | #3 | `feature/sprint1/auth-login-logout` | [#10](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/10) | napatsun | krittaphato3 (approved) | krittaphato3 | 2026-11-06 | `9e1a0ab` |
+| ISSUE-4, ISSUE-5 | F-02 Menu, F-03 Order submission | #4 | `feature/sprint1/menu-and-place-order` | [#11](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/11) | krittaphato3 | napatsun (approved) | napatsun | 2026-11-07 | `9495000` |
+| ISSUE-6 | F-04 Operator list and acceptance | #5 | `feature/sprint1/operator-accept-order` | [#12](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/12) | napatsun | krittaphato3 (approved) | krittaphato3 | 2026-11-07 | `30b0f12` |
+| ISSUE-3 | R-01 Access control, TEST-43, E2E journeys | #6 | `feature/sprint1/access-and-e2e-tests` | [#13](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/13) | napatsun | krittaphato3 (approved) | krittaphato3 | 2026-11-07 | `b7f1ed8` |
+| — | README and evidence pack (Deliverable 1 Part F) | #7 | `feature/sprint1/evidence-readme-pdf` | [#14](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/14) | krittaphato3 | napatsun (changes requested, then approved) | napatsun | 2026-11-10 | `47813f7` |
+| — | NFR-05 / LOAD-01 benchmark, R-04 baseline | #15 | `fix/sprint1/docs-loadbenchmark-fix` | [#17](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/17) | krittaphato3 | napatsun (approved, non-blocking comments) | napatsun | 2026-11-10 | `5c3f984` |
+| — | Documentation-vs-code audit corrections | #16 | `fix/sprint1/docs-loadbenchmark-fix` | [#17](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/17) | krittaphato3 | napatsun (approved, non-blocking comments) | napatsun | 2026-11-10 | `5c3f984` |
 | — | Evidence refresh and dangling-hash fix | #18 | `fix/sprint1/evidence-refresh` | to be opened | napatsun | to be assigned | — | — | — |
 | — | Release: `sprint-1-staging` → `main` | — | `sprint-1-staging` | **to be filled after merge** | — | to be assigned | — | — | — |
 
@@ -74,69 +74,16 @@ Counts are roles, not line counts; the repository history is the source of truth
 | Member (GitHub) | Implemented | Reviewed | Merged |
 |---|---|---|---|
 | napatsun (Sun) | F-01 authentication (PR #10), F-04 operator acceptance (PR #12), R-01 route registry and TEST-43 (PR #13), E2E journeys, specification baseline (PR #8) | PR #9 (blocking findings, then approval), PR #11, PR #14 (blocking findings, then approval), PR #17 | PR #9, PR #11, PR #14, PR #17 |
-| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
+| krittaphato3 | R-03 scaffold, schema and seed (PR #9), F-02 menu and F-03 order submission (PR #11), README and evidence pack (PR #14), NFR-05 benchmark and audit corrections (PR #17) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
 
 Both members authored at least two issues and reviewed the other's pull requests, which satisfies the pairing rule in `docs/sprints/sprint-1/features.md` §4.
-
-
 
 ## 4. Review evidence
 
 Two completed Issues with their pull requests, as required by `reference/project_deliverable_1_v1.pdf` §4.2. Quotes are verbatim; Thai comments are left untranslated deliberately so the original review text can be checked against GitHub.
 
-### 4.1 PR #8 — Specification baseline
-| Item | Value |
-|---|---|
-| Feature / contract | Specification baseline |
-| Branch | `feature/specification-docs` |
-| Author | napatsun |
-| Reviewer | krittaphato3 |
-| Review state | APPROVED |
-| Merge commit | `addbc0e` |
+### 4.1 Issue #7 — README and evidence pack (PR #14)
 
-Excerpt 1 — krittaphato3, review of PR #8 ([PR #8](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/8)):
-> ... (Placeholder: Needs review evidence from the actual PR #8 comment) ...
-
-### 4.2 PR #10 — F-01 Authentication and session
-| Item | Value |
-|---|---|
-| Feature / contract | F-01 Authentication and session |
-| Branch | `feature/sprint1/auth-login-logout` |
-| Author | napatsun |
-| Reviewer | krittaphato3 |
-| Review state | APPROVED |
-| Merge commit | `9e1a0ab` |
-
-Excerpt 1 — krittaphato3, review of PR #10 ([PR #10](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/10)):
-> ... (Placeholder: Needs review evidence from the actual PR #10 comment) ...
-
-### 4.3 PR #12 — F-04 Operator list and acceptance
-| Item | Value |
-|---|---|
-| Feature / contract | F-04 Operator list and acceptance |
-| Branch | `feature/sprint1/operator-accept-order` |
-| Author | napatsun |
-| Reviewer | krittaphato3 |
-| Review state | APPROVED |
-| Merge commit | `30b0f12` |
-
-Excerpt 1 — krittaphato3, review of PR #12 ([PR #12](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/12)):
-> ... (Placeholder: Needs review evidence from the actual PR #12 comment) ...
-
-### 4.4 PR #13 — R-01 Access control
-| Item | Value |
-|---|---|
-| Feature / contract | R-01 Access control, TEST-43, E2E journeys |
-| Branch | `feature/sprint1/access-and-e2e-tests` |
-| Author | napatsun |
-| Reviewer | krittaphato3 |
-| Review state | APPROVED |
-| Merge commit | `b7f1ed8` |
-
-Excerpt 1 — krittaphato3, review of PR #13 ([PR #13](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/13)):
-> ... (Placeholder: Needs review evidence from the actual PR #13 comment) ...
-
-### 4.5 Issue #7 — README and evidence pack (PR #14)
 | Item | Value |
 |---|---|
 | Feature / contract | Deliverable 1 Part F: `docs/evidence/` index, README, manifest |
@@ -147,13 +94,18 @@ Excerpt 1 — krittaphato3, review of PR #13 ([PR #13](https://github.com/kritta
 | Merge commit | `47813f7` into `sprint-1-staging` |
 
 Excerpt 1 — napatsun, review of 2026-11-07 ([PR #14](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/14)):
+
 > เนื้อหา evidence ทำได้ดีมาก แต่มี 2 เรื่องที่ต้องแก้ครับคุณโอโซน
 > **Blocking 1** : PR description เขียนถึงไฟล์ที่ไม่ได้อยู่ใน commit จริง
 
 Excerpt 2 — krittaphato3, author's reply of 2026-11-07 ([PR #14](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/14)):
+
 > ตรวจแล้วครับ ทุกข้อถูกต้องทั้งหมด แก้ตามที่แนะนำแล้วใน `8315279` + `afe4961`
 
-### 4.6 Issues #15 and #16 — NFR-05 baseline and audit corrections (PR #17)
+The blocking finding was resolved by two follow-up commits, and the reviewer recorded `APPROVED` on 2026-11-10 before the merge. The same thread later documents two force-pushes to `4d00f27` and `9d8e7cb` (reword, then revert) and why the revert was chosen; that discussion is in the PR timeline.
+
+### 4.2 Issues #15 and #16 — NFR-05 baseline and audit corrections (PR #17)
+
 | Item | Value |
 |---|---|
 | Feature / contract | NFR-05, LOAD-01, R-04 (Sprint 1 baseline); documentation audit |
@@ -164,21 +116,14 @@ Excerpt 2 — krittaphato3, author's reply of 2026-11-07 ([PR #14](https://githu
 | Merge commit | `5c3f984` into `sprint-1-staging` |
 
 Excerpt 1 — napatsun, review of 2026-11-10 ([PR #17](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/17)):
+
 > ตรวจครบทั้ง 3 commits (`5fbcb7a`, `f5dcf54`, `f5caa04`) — 23 ไฟล์ (+1,861/−29) ปิด #16 และ #15 CI ("Unit, integration and E2E") ผ่าน
 
-### 4.7 Issue #18 — Evidence refresh and dangling-hash fix (PR #20)
-| Item | Value |
-|---|---|
-| Feature / contract | Evidence refresh, dangling hash fix |
-| Branch | `fix/sprint1/evidence-refresh` |
-| Author | krittaphato3 |
-| Reviewer | napatsun |
-| Review state | Pending |
-| Merge commit | to be merged |
+Excerpt 2 — the same review, checking one audit correction against the code ([PR #17](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/17)):
 
-Excerpt 1 — napatsun, review of 2026-11-11 ([PR #20](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/20)):
-> ... (Placeholder: Needs review evidence from the actual PR #20 comment once napatsun reviews it) ...
+> | 1 | `features.md` §11: `docker compose up -d db` → `up -d` | `docker-compose.yml` มี service เดียวชื่อ `postgres` (container `campusbites-postgres`) — ไม่มี `db` จริง คำสั่งเดิมถึงจะ fail |
 
+The reviewer verified each documentation correction against the repository rather than accepting the description, which is the specific check required by the handout.
 
 ## 5. Screenshots to capture manually (TODO — team task, not yet done)
 
@@ -215,10 +160,6 @@ Scope: this section answers `reference/project_deliverable_1_v1.pdf` §4.2: whic
 
 
 Rule this table follows: nothing is claimed as reviewed or verified by the students unless the repository shows it (a merged, reviewed pull request or a recorded passing test run) or the authors state it. Everything else is left for the authors.
-
-
-### 6.3 AI Use Declaration
-All code and documentation produced for this project, specifically for tasks assigned to me, was generated with the assistance of Gemini 3.8 Flash High running on Omniroute with the Deepseek Harness. I have reviewed all output, ensuring it aligns with the project's requirements, issue history, and my previous contributions, avoiding any duplication of efforts or content.
 
 ## 7. How to audit this
 
