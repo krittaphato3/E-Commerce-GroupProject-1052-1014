@@ -6,8 +6,8 @@
 | Sprint | 1 (due with Deliverable 1, 8 Nov 2026) |
 | Staging branch | `sprint-1-staging` |
 | Release tag (planned) | `sprint-1-v1.0` |
-| Version | 1.8 |
-| Date | 2026-11-10 |
+| Version | 1.9 |
+| Date | 2026-11-11 |
 | Related | `docs/srs.md`, `docs/features.md` (whole-product inventory), `docs/traceability.md`, `docs/sprints/plan.md`, `docs/system-sds.md` |
 
 ## Revision history (contract set)
@@ -22,6 +22,7 @@
 | 1.6 | 2026-11-07 | F-04 Contract revision: AC-42 / TEST-42 asserts in-place 403 Forbidden alert rather than redirect per DEC-23 (Option A); F-03 POST /api/orders adds `Location: /api/orders/:id` header (Follow-up 3); Menu UI caps quantity at Math.min(10, stockQty) (Follow-up 5) | Feature F-04 implementation alignment and follow-up defect resolutions |
 | 1.7 | 2026-11-07 | R-01 contract version 1.1: the route registry is implemented in `backend/src/routes/registry.ts` with `guardsFor`, `mountRouter`, `extractExpressRoutes` and `findUnregisteredRoutes`; §11 gains its own revision row; the document titles use the Omazon display name | Record the R-01 implementation shape and the display brand rename (DEC-24, DEC-25) |
 | 1.8 | 2026-11-10 | §11 corrected against the shipped configuration: the compose command uses the real `postgres` service, the setup list is the README's 8 commands with `dev:backend` and `dev:frontend` in two terminals, `GET /api/health` documents its literal `1.0.0` version, and the planned test files are `error.test.ts` and `constraints.test.ts` | Documentation audit: a reader following §11 hit a compose service that does not exist and a root `dev` script that does not exist (Issue #16) |
+| 1.9 | 2026-11-11 | §4 gains a footnote on planned versus actual branch and issue names | Pre-submission audit: the branch names planned here differ from the branches actually used |
 
 Each contract below keeps its own revision history. Log every change there with a reason; do not rewrite earlier entries.
 
@@ -82,6 +83,8 @@ A feature is **done** only when all items are true and the evidence is retained:
 | ISSUE-6 | F-04 Operator acceptance | `feature/F-04-operator-acceptance` | Teammate |
 
 Pair the work so that both students author at least two Issues and review the others; record who authored and who reviewed in each PR.
+
+> **Planned versus actual names.** The branch names and `ISSUE-n` labels in this table are the ones planned before implementation. The branches actually used, the GitHub issue number behind each `ISSUE-n` label, and every merged PR are recorded in [`docs/evidence/github-workflow.md`](../../evidence/github-workflow.md) §1 and §1.1; read that table when auditing, not this one.
 
 ---
 
