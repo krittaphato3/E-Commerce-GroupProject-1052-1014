@@ -141,6 +141,59 @@ Excerpt 1 — napatsun, review of 2026-11-11 ([PR #20](https://github.com/kritta
 
 > ... (Placeholder: Needs review evidence from the actual PR #20 comment once napatsun reviews it) ...
 
+
+### 4.4 PR #8 — Specification baseline
+| Item | Value |
+|---|---|
+| Feature / contract | Specification baseline |
+| Branch | `feature/specification-docs` |
+| Author | napatsun |
+| Reviewer | krittaphato3 |
+| Review state | APPROVED |
+| Merge commit | `addbc0e` |
+
+Excerpt 1 — krittaphato3, review of PR #8 ([PR #8](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/8)):
+> ... (Placeholder: Needs review evidence from the actual PR #8 comment) ...
+
+### 4.5 PR #10 — F-01 Authentication and session
+| Item | Value |
+|---|---|
+| Feature / contract | F-01 Authentication and session |
+| Branch | `feature/sprint1/auth-login-logout` |
+| Author | napatsun |
+| Reviewer | krittaphato3 |
+| Review state | APPROVED |
+| Merge commit | `9e1a0ab` |
+
+Excerpt 1 — krittaphato3, review of PR #10 ([PR #10](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/10)):
+> ... (Placeholder: Needs review evidence from the actual PR #10 comment) ...
+
+### 4.6 PR #12 — F-04 Operator list and acceptance
+| Item | Value |
+|---|---|
+| Feature / contract | F-04 Operator list and acceptance |
+| Branch | `feature/sprint1/operator-accept-order` |
+| Author | napatsun |
+| Reviewer | krittaphato3 |
+| Review state | APPROVED |
+| Merge commit | `30b0f12` |
+
+Excerpt 1 — krittaphato3, review of PR #12 ([PR #12](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/12)):
+> ... (Placeholder: Needs review evidence from the actual PR #12 comment) ...
+
+### 4.7 PR #13 — R-01 Access control
+| Item | Value |
+|---|---|
+| Feature / contract | R-01 Access control, TEST-43, E2E journeys |
+| Branch | `feature/sprint1/access-and-e2e-tests` |
+| Author | napatsun |
+| Reviewer | krittaphato3 |
+| Review state | APPROVED |
+| Merge commit | `b7f1ed8` |
+
+Excerpt 1 — krittaphato3, review of PR #13 ([PR #13](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/13)):
+> ... (Placeholder: Needs review evidence from the actual PR #13 comment) ...
+
 ## 5. Screenshots to capture manually (TODO — team task, not yet done)
 
 Screenshots cannot be produced by the documentation tooling; these must be captured from GitHub by a team member and inserted into Part F of the PDF:
