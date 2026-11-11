@@ -125,6 +125,22 @@ Excerpt 2 — the same review, checking one audit correction against the code ([
 
 The reviewer verified each documentation correction against the repository rather than accepting the description, which is the specific check required by the handout.
 
+
+### 4.3 Issue #18 — Evidence refresh and dangling-hash fix (PR #20)
+
+| Item | Value |
+|---|---|
+| Feature / contract | Evidence refresh, dangling hash fix |
+| Branch | `fix/sprint1/evidence-refresh` |
+| Author | krittaphato3 |
+| Reviewer | napatsun |
+| Review state | Pending |
+| Merge commit | to be merged |
+
+Excerpt 1 — napatsun, review of 2026-11-11 ([PR #20](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/20)):
+
+> ... (Placeholder: Needs review evidence from the actual PR #20 comment once napatsun reviews it) ...
+
 ## 5. Screenshots to capture manually (TODO — team task, not yet done)
 
 Screenshots cannot be produced by the documentation tooling; these must be captured from GitHub by a team member and inserted into Part F of the PDF:
