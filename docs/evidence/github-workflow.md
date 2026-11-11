@@ -23,15 +23,15 @@ GitHub issue numbers are sequential in this repository; the contract's `ISSUE-n`
 
 | Contract issue | Feature / responsibility | GitHub issue | Branch | PR | Author | Reviewed by | Merged by | Merged | Merge commit |
 |---|---|---|---|---|---|---|---|---|---|
-| — | Specification baseline | #1 | `feature/specification-docs`, `feature/sprint1/spec-docs-setup` | [#8](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/8) | napatsun | krittaphato3 (approved) | krittaphato3 | 2026-11-05 | `addbc0e` |
-| ISSUE-1 | R-03 Scaffold, schema, seed | #2 | `feature/sprint1/scaffold-db-seed` | [#9](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/9) | krittaphato3 | napatsun (changes requested, then approved) | napatsun | 2026-11-06 | `60b5e57` |
-| ISSUE-2 | F-01 Authentication and session | #3 | `feature/sprint1/auth-login-logout` | [#10](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/10) | napatsun | krittaphato3 (approved) | krittaphato3 | 2026-11-06 | `9e1a0ab` |
-| ISSUE-4, ISSUE-5 | F-02 Menu, F-03 Order submission | #4 | `feature/sprint1/menu-and-place-order` | [#11](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/11) | krittaphato3 | napatsun (approved) | napatsun | 2026-11-07 | `9495000` |
-| ISSUE-6 | F-04 Operator list and acceptance | #5 | `feature/sprint1/operator-accept-order` | [#12](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/12) | napatsun | krittaphato3 (approved) | krittaphato3 | 2026-11-07 | `30b0f12` |
-| ISSUE-3 | R-01 Access control, TEST-43, E2E journeys | #6 | `feature/sprint1/access-and-e2e-tests` | [#13](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/13) | napatsun | krittaphato3 (approved) | krittaphato3 | 2026-11-07 | `b7f1ed8` |
-| — | README and evidence pack (Deliverable 1 Part F) | #7 | `feature/sprint1/evidence-readme-pdf` | [#14](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/14) | krittaphato3 | napatsun (changes requested, then approved) | napatsun | 2026-11-10 | `47813f7` |
-| — | NFR-05 / LOAD-01 benchmark, R-04 baseline | #15 | `fix/sprint1/docs-loadbenchmark-fix` | [#17](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/17) | krittaphato3 | napatsun (approved, non-blocking comments) | napatsun | 2026-11-10 | `5c3f984` |
-| — | Documentation-vs-code audit corrections | #16 | `fix/sprint1/docs-loadbenchmark-fix` | [#17](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/17) | krittaphato3 | napatsun (approved, non-blocking comments) | napatsun | 2026-11-10 | `5c3f984` |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
 | — | Evidence refresh and dangling-hash fix | #18 | `fix/sprint1/evidence-refresh` | to be opened | napatsun | to be assigned | — | — | — |
 | — | Release: `sprint-1-staging` → `main` | — | `sprint-1-staging` | **to be filled after merge** | — | to be assigned | — | — | — |
 
@@ -74,7 +74,7 @@ Counts are roles, not line counts; the repository history is the source of truth
 | Member (GitHub) | Implemented | Reviewed | Merged |
 |---|---|---|---|
 | napatsun (Sun) | F-01 authentication (PR #10), F-04 operator acceptance (PR #12), R-01 route registry and TEST-43 (PR #13), E2E journeys, specification baseline (PR #8) | PR #9 (blocking findings, then approval), PR #11, PR #14 (blocking findings, then approval), PR #17 | PR #9, PR #11, PR #14, PR #17 |
-| krittaphato3 | R-03 scaffold, schema and seed (PR #9), F-02 menu and F-03 order submission (PR #11), README and evidence pack (PR #14), NFR-05 benchmark and audit corrections (PR #17) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
 
 Both members authored at least two issues and reviewed the other's pull requests, which satisfies the pairing rule in `docs/sprints/sprint-1/features.md` §4.
 
@@ -117,7 +117,7 @@ Counts are roles, not line counts; the repository history is the source of truth
 | Member (GitHub) | Implemented | Reviewed | Merged |
 |---|---|---|---|
 | napatsun (Sun) | F-01 authentication (PR #10), F-04 operator acceptance (PR #12), R-01 route registry and TEST-43 (PR #13), E2E journeys, specification baseline (PR #8) | PR #9 (blocking findings, then approval), PR #11, PR #14 (blocking findings, then approval), PR #17 | PR #9, PR #11, PR #14, PR #17 |
-| krittaphato3 | R-03 scaffold, schema and seed (PR #9), F-02 menu and F-03 order submission (PR #11), README and evidence pack (PR #14), NFR-05 benchmark and audit corrections (PR #17) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
 
 Both members authored at least two issues and reviewed the other's pull requests, which satisfies the pairing rule in `docs/sprints/sprint-1/features.md` §4.
 
@@ -133,7 +133,7 @@ Two completed Issues with their pull requests, as required by `reference/project
 | Feature / contract | Specification baseline |
 | Branch | `feature/specification-docs` |
 | Author | napatsun |
-| Reviewer | krittaphato3 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
 | Review state | APPROVED |
 | Merge commit | `addbc0e` |
 
@@ -148,7 +148,7 @@ Excerpt 1 — krittaphato3, review of PR #8 ([PR #8](https://github.com/krittaph
 | Feature / contract | F-01 Authentication and session |
 | Branch | `feature/sprint1/auth-login-logout` |
 | Author | napatsun |
-| Reviewer | krittaphato3 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
 | Review state | APPROVED |
 | Merge commit | `9e1a0ab` |
 
@@ -177,7 +177,7 @@ Rule this table follows: nothing is claimed as reviewed or verified by the stude
 | Feature / contract | F-04 Operator list and acceptance |
 | Branch | `feature/sprint1/operator-accept-order` |
 | Author | napatsun |
-| Reviewer | krittaphato3 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
 | Review state | APPROVED |
 | Merge commit | `30b0f12` |
 
@@ -192,7 +192,7 @@ Excerpt 1 — krittaphato3, review of PR #12 ([PR #12](https://github.com/kritta
 | Feature / contract | R-01 Access control, TEST-43, E2E journeys |
 | Branch | `feature/sprint1/access-and-e2e-tests` |
 | Author | napatsun |
-| Reviewer | krittaphato3 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
 | Review state | APPROVED |
 | Merge commit | `b7f1ed8` |
 
@@ -223,7 +223,7 @@ Scope: this section answers `reference/project_deliverable_1_v1.pdf` §4.2: whic
 |---|---|
 | Feature / contract | Deliverable 1 Part F: `docs/evidence/` index, README, manifest |
 | Branch | `feature/sprint1/evidence-readme-pdf` |
-| Author | krittaphato3 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
 | Reviewer | napatsun |
 | Review states | `COMMENTED` 2026-11-07, then `APPROVED` 2026-11-10 |
 | Merge commit | `47813f7` into `sprint-1-staging` |
@@ -247,7 +247,7 @@ The blocking finding was resolved by two follow-up commits, and the reviewer rec
 |---|---|
 | Feature / contract | NFR-05, LOAD-01, R-04 (Sprint 1 baseline); documentation audit |
 | Branch | `fix/sprint1/docs-loadbenchmark-fix` |
-| Author | krittaphato3 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
 | Reviewer | napatsun |
 | Review state | `APPROVED` 2026-11-10, with non-blocking comments |
 | Merge commit | `5c3f984` into `sprint-1-staging` |
@@ -282,7 +282,7 @@ The reviewer verified each documentation correction against the repository rathe
 |---|---|
 | Feature / contract | Evidence refresh, dangling hash fix |
 | Branch | `fix/sprint1/evidence-refresh` |
-| Author | krittaphato3 |
+| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
 | Reviewer | napatsun |
 | Review state | Pending |
 | Merge commit | to be merged |
