@@ -155,7 +155,7 @@ Scope: this section answers `reference/project_deliverable_1_v1.pdf` §4.2: whic
 | Tool | Tasks assisted | Which Issues/PRs | How output was verified | Student |
 |---|---|---|---|---|
 | Codebuff  | Tests-first work for F-01, the F-01 implementation and UI (`e78cb7f`, `8398fe2`, `05a4f08`, `f222daa`, `097da41`, `0c3e82e`) | GitHub Issue #3 (contract ISSUE-2, F-01), PR #10 | The F-01 tests those commits introduce pass in `docs/evidence/F-01-green-full-f222daa.txt` and again in the `5c3f984` run (`docs/evidence/R-01-green-tests-5c3f984.txt`); PR #10 was reviewed and approved by the teammate (§2). Any further hand-checking by the students: None beyond the automated tests and the teammate's PR review | Napat Kasemweerasan 67070501014 |
-| Codebuff  | Evidence refresh: re-ran backend, frontend, build and E2E on `5c3f984`; re-measured NFR-05; updated traceability, workflow evidence and commit log; drafted this declaration (`1861936`, `0c8bc0e`, `8c6dc59`, `b44c177`, `cb39080`, `8f98dca`) | GitHub Issue #18 (`fix/sprint1/evidence-refresh`), PR #20 | The student confirmed the diff against `origin/sprint-1-staging` touches only `docs/` and `README.md`, and that cited commits exist (`git cat-file -t`); test logs are raw output saved in `docs/evidence/`; the PR is reviewed by the teammate: None beyond the automated tests and the teammate's PR review | Krittaphat Punyasompan 67070501052 |
+| Deepseek Harness  | Evidence refresh: re-ran backend, frontend, build and E2E on `5c3f984`; re-measured NFR-05; updated traceability, workflow evidence and commit log; drafted this declaration (`1861936`, `0c8bc0e`, `8c6dc59`, `b44c177`, `cb39080`, `8f98dca`) | GitHub Issue #18 (`fix/sprint1/evidence-refresh`), PR #20 | The student confirmed the diff against `origin/sprint-1-staging` touches only `docs/` and `README.md`, and that cited commits exist (`git cat-file -t`); test logs are raw output saved in `docs/evidence/`; the PR is reviewed by the teammate: None beyond the automated tests and the teammate's PR review | Krittaphat Punyasompan 67070501052 |
 | Claude (Anthropic, claude.ai chat)  | Wrote the audit and fix prompts for the coding agent, summarized audit reports, and drafted Issue and declaration text | Issues/PRs for the audit fixes: All Issues | The student ran the verification commands (`git diff`, `git cat-file`, `grep`) on the repository before opening the PR; Claude's output was not committed without student review:  | Napatr Kaemweerasan 67070501014, Krittaphat Punyasompan 67070501052 |
 
 
@@ -164,7 +164,6 @@ Rule this table follows: nothing is claimed as reviewed or verified by the stude
 
 ### 6.3 AI Use Declaration
 All code and documentation produced for this project, specifically for tasks assigned to me, was generated with the assistance of Gemini 3.8 Flash High running on Omniroute with the Deepseek Harness. I have reviewed all output, ensuring it aligns with the project's requirements, issue history, and my previous contributions, avoiding any duplication of efforts or content.
-
 ## 7. How to audit this
 
 ```bash
