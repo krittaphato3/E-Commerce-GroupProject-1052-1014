@@ -78,52 +78,107 @@ Counts are roles, not line counts; the repository history is the source of truth
 
 Both members authored at least two issues and reviewed the other's pull requests, which satisfies the pairing rule in `docs/sprints/sprint-1/features.md` §4.
 
+
+
 ## 4. Review evidence
 
 Two completed Issues with their pull requests, as required by `reference/project_deliverable_1_v1.pdf` §4.2. Quotes are verbatim; Thai comments are left untranslated deliberately so the original review text can be checked against GitHub.
 
-### 4.1 Issue #7 — README and evidence pack (PR #14)
+### 4.1 PR #8 — Specification baseline
+| Item | Value |
+|---|---|
+| Feature / contract | Specification baseline |
+| Branch | `feature/specification-docs` |
+| Author | napatsun |
+| Reviewer | krittaphato3 |
+| Review state | APPROVED |
+| Merge commit | `addbc0e` |
 
+Excerpt 1 — krittaphato3, review of PR #8 ([PR #8](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/8)):
+> ... (Placeholder: Needs review evidence from the actual PR #8 comment) ...
+
+### 4.2 PR #10 — F-01 Authentication and session
+| Item | Value |
+|---|---|
+| Feature / contract | F-01 Authentication and session |
+| Branch | `feature/sprint1/auth-login-logout` |
+| Author | napatsun |
+| Reviewer | krittaphato3 |
+| Review state | APPROVED |
+| Merge commit | `9e1a0ab` |
+
+Excerpt 1 — krittaphato3, review of PR #10 ([PR #10](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/10)):
+> ... (Placeholder: Needs review evidence from the actual PR #10 comment) ...
+
+### 4.3 PR #12 — F-04 Operator list and acceptance
+| Item | Value |
+|---|---|
+| Feature / contract | F-04 Operator list and acceptance |
+| Branch | `feature/sprint1/operator-accept-order` |
+| Author | napatsun |
+| Reviewer | krittaphato3 |
+| Review state | APPROVED |
+| Merge commit | `30b0f12` |
+
+Excerpt 1 — krittaphato3, review of PR #12 ([PR #12](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/12)):
+> ... (Placeholder: Needs review evidence from the actual PR #12 comment) ...
+
+### 4.4 PR #13 — R-01 Access control
+| Item | Value |
+|---|---|
+| Feature / contract | R-01 Access control, TEST-43, E2E journeys |
+| Branch | `feature/sprint1/access-and-e2e-tests` |
+| Author | napatsun |
+| Reviewer | krittaphato3 |
+| Review state | APPROVED |
+| Merge commit | `b7f1ed8` |
+
+Excerpt 1 — krittaphato3, review of PR #13 ([PR #13](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/13)):
+> ... (Placeholder: Needs review evidence from the actual PR #13 comment) ...
+
+### 4.5 Issue #7 — README and evidence pack (PR #14)
 | Item | Value |
 |---|---|
 | Feature / contract | Deliverable 1 Part F: `docs/evidence/` index, README, manifest |
 | Branch | `feature/sprint1/evidence-readme-pdf` |
-| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
+| Author | krittaphato3 |
 | Reviewer | napatsun |
 | Review states | `COMMENTED` 2026-11-07, then `APPROVED` 2026-11-10 |
 | Merge commit | `47813f7` into `sprint-1-staging` |
 
 Excerpt 1 — napatsun, review of 2026-11-07 ([PR #14](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/14)):
-
 > เนื้อหา evidence ทำได้ดีมาก แต่มี 2 เรื่องที่ต้องแก้ครับคุณโอโซน
 > **Blocking 1** : PR description เขียนถึงไฟล์ที่ไม่ได้อยู่ใน commit จริง
 
 Excerpt 2 — krittaphato3, author's reply of 2026-11-07 ([PR #14](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/14)):
-
 > ตรวจแล้วครับ ทุกข้อถูกต้องทั้งหมด แก้ตามที่แนะนำแล้วใน `8315279` + `afe4961`
 
-The blocking finding was resolved by two follow-up commits, and the reviewer recorded `APPROVED` on 2026-11-10 before the merge. The same thread later documents two force-pushes to `4d00f27` and `9d8e7cb` (reword, then revert) and why the revert was chosen; that discussion is in the PR timeline.
-
-### 4.2 Issues #15 and #16 — NFR-05 baseline and audit corrections (PR #17)
-
+### 4.6 Issues #15 and #16 — NFR-05 baseline and audit corrections (PR #17)
 | Item | Value |
 |---|---|
 | Feature / contract | NFR-05, LOAD-01, R-04 (Sprint 1 baseline); documentation audit |
 | Branch | `fix/sprint1/docs-loadbenchmark-fix` |
-| krittaphato3 | R-03 scaffold (Prisma, migrations, seed, PR #9), F-02/F-03 API (Menu, Order submission, PR #11), README/Evidence pack assembly (PR #14), NFR-05 benchmark/audit (PR #17), Evidence refresh/dangling hash fix (PR #20) | PR #8, PR #10, PR #12, PR #13 | PR #8, PR #10, PR #12, PR #13 |
+| Author | krittaphato3 |
 | Reviewer | napatsun |
 | Review state | `APPROVED` 2026-11-10, with non-blocking comments |
 | Merge commit | `5c3f984` into `sprint-1-staging` |
 
 Excerpt 1 — napatsun, review of 2026-11-10 ([PR #17](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/17)):
-
 > ตรวจครบทั้ง 3 commits (`5fbcb7a`, `f5dcf54`, `f5caa04`) — 23 ไฟล์ (+1,861/−29) ปิด #16 และ #15 CI ("Unit, integration and E2E") ผ่าน
 
-Excerpt 2 — the same review, checking one audit correction against the code ([PR #17](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/17)):
+### 4.7 Issue #18 — Evidence refresh and dangling-hash fix (PR #20)
+| Item | Value |
+|---|---|
+| Feature / contract | Evidence refresh, dangling hash fix |
+| Branch | `fix/sprint1/evidence-refresh` |
+| Author | krittaphato3 |
+| Reviewer | napatsun |
+| Review state | Pending |
+| Merge commit | to be merged |
 
-> | 1 | `features.md` §11: `docker compose up -d db` → `up -d` | `docker-compose.yml` มี service เดียวชื่อ `postgres` (container `campusbites-postgres`) — ไม่มี `db` จริง คำสั่งเดิมถึงจะ fail |
+Excerpt 1 — napatsun, review of 2026-11-11 ([PR #20](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/20)):
+> ... (Placeholder: Needs review evidence from the actual PR #20 comment once napatsun reviews it) ...
 
-The reviewer verified each documentation correction against the repository rather than accepting the description, which is the specific check required by the handout.
 
 ## 5. Screenshots to capture manually (TODO — team task, not yet done)
 
