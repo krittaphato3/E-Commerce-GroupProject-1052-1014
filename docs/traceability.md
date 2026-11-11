@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/traceability.md` |
-| Version | 1.16 |
+| Version | 1.17 |
 | Date | 2026-11-11 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md` |
 
@@ -27,6 +27,7 @@
 | 1.14 | 2026-11-07 | Deliverable 1 finalisation: TEST-20 is named explicitly in the FR-05 actual-test cell; the TEST-45 and TEST-46 version cells cite the commit that introduced the tests (`c215549`) instead of a branch name | Evidence pack and document assembly (Issue #7) |
 | 1.15 | 2026-11-10 | A LOAD-01 baseline was recorded for NFR-05 with 5 runs × 30 s per endpoint at 20 connections on the 500-order seed, citing commit `f0255a6` | Early Sprint 1 baseline for NFR-05 (Issue #15); R-04 hardening and the deployed-build measurement stay in Sprint 3 |
 | 1.16 | 2026-11-11 | LOAD-01 re-measured at `5c3f984` because the hash cited in 1.15 does not exist in the repository: `GET /api/menu` p95 1 ms at 16,640.3 req/s, `POST /api/orders` p95 40 ms (p90 45 ms, worst 47 ms) at 1,255.1 req/s, zero 5xx — NFR-05 stays `PASS` and `docs/evidence/nfr05/` now carries the run transcript `run-log-5c3f984.txt` | Pre-submission audit: a result that cannot be tied to a revision is not evidence (Issue #18) |
+| 1.17 | 2026-11-11 | §5 states the Sprint 1 local baseline for NFR-05 (p95 1 ms and p95 40 ms, zero 5xx at `5c3f984`) and that re-verification on the deployed system is planned for Sprint 3, replacing the statement that NFR-05 was not measurable; the revision rows now read 1.14, 1.15, 1.16, 1.17 in order | §3 marked NFR-05 `PASS` while §5 said it was not measurable, which contradicted the evidence (pre-submission audit, Issue #18) |
 
 ### How to use this file
 - Sprint 1 test IDs follow the rule **TEST-nn verifies AC-nn** (for example TEST-24 verifies AC-24).
@@ -107,7 +108,7 @@ Total Sprint 1 AC and tests: 46 each (one test per AC; some tests contain severa
 |---|---|---|
 | Requirements with no feature or responsibility | None | — |
 | Sprint 2 and 3 requirements without AC or tests | Expected: contracts not yet written | AC and STS are written before implementation of each sprint |
-| NFR-05, NFR-06, NFR-10, NFR-11 | Not measurable until later sprints | Allocated to Sprints 2 and 3 |
+| NFR-05, NFR-06, NFR-10, NFR-11 | NFR-05: a Sprint 1 local baseline is measured and recorded — `GET /api/menu` p95 1 ms and `POST /api/orders` p95 40 ms with zero 5xx at 20 connections for 30 s per endpoint (`5c3f984`). NFR-06, NFR-10 and NFR-11 remain not measurable until their sprints | NFR-05 re-verification on the deployed system is planned for Sprint 3, which is the sprint allocation in `docs/srs.md` (R-04 hardening plus the deployed-build measurement). NFR-06 and NFR-11 are Sprint 2 and 3 checks; NFR-10 is the Sprint 2 coverage report. |
 | BR-06 full transition table | Only `PENDING → ACCEPTED` is built in Sprint 1 | Remaining transitions are covered in F-06, F-08, F-09, F-12 contracts |
 
 ## 6. Approved changes log
