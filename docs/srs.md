@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/srs.md` |
-| Version | 1.11 |
+| Version | 1.12 |
 | Date | 2026-11-12 |
 | Course / Theme | CPE 334, Semester 1/2026 — Theme 4: E-Commerce or Ordering System |
 | Student 1 | Krittaphat Panyasomphan (67070501052) |
@@ -25,6 +25,7 @@
 | 1.9 | 2026-11-07 | Both | DEC-26 amended: `globalSetup` (`db:reset:test`) is the single owner of E2E migrations, the `_test` guard is shared by `playwright.config.ts` and `globalSetup` through `frontend/e2e/testDatabase.ts`, and `.github/workflows/ci.yml` runs the suites sequentially. DEC-27 amended: the 409 journey prepares its own sold-out state at run time instead of relying on Playwright's spec-file order. README gained a leftover-port troubleshooting note and a Sprint 2 “Known Limitations” section for the route registry. No requirement, AC, TEST or contract wording changed. | Non-blocking PR review follow-ups: E2E robustness, CI, and cleanup |
 | 1.10 | 2026-11-12 | Both | FR-03 identity now lists `email` as well as id, display name and role | FR-03 contradicted AC-01 and the F-01 contract, which both return `email` (PR #20 review) |
 | 1.11 | 2026-11-12 | Both | §9 note on issue numbering now says that `docs/sprints/sprint-1/features.md` §4 carries the actual GitHub issue, branch and PR beside the planned branch names | The note still said the §4 table was left unchanged, which stopped being true once the actual names were added (PR #20 review) |
+| 1.12 | 2026-11-12 | Both | §6 records the Sprint 1 NFR-05 result with the same wording as the traceability matrix, `PASS (S1 baseline)`, and states that it is a single-host local measurement | The matrix, this document and the submitted PDF must not describe the same result in different terms (PR #20 review round 3) |
 
 ---
 
@@ -111,6 +112,8 @@ Real payment gateway or card data; delivery; multiple shops or branches; self-re
 | NFR-09 | Usability | Every list or data screen has loading, empty and error states. | UI component tests + manual checklist | Partly 1, complete 3 |
 | NFR-10 | Test quality | At least 85% line coverage on the service layer (business rules). | Vitest coverage report | 2 |
 | NFR-11 | Brute-force protection | After 5 consecutive failed logins for one email within 15 minutes, further attempts return 429 for 15 minutes. | API test with fake clock | 3 |
+
+**NFR-05 wording used everywhere.** The Sprint 1 measurement is recorded as **`PASS (S1 baseline)`** in `docs/traceability.md` §3 (with the footnote giving the environment) and must use that same wording in this document, the traceability matrix and the submitted PDF. It is a single-host local baseline — the API and the load generator on the same Apple M4 machine with PostgreSQL in Docker, not a deployed measurement; the deployed re-measurement is the Sprint 3 R-04 work.
 
 ## 7. Order lifecycle
 

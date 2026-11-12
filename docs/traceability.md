@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/traceability.md` |
-| Version | 1.20 |
+| Version | 1.21 |
 | Date | 2026-11-12 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md` |
 
@@ -31,6 +31,7 @@
 | 1.18 | 2026-11-11 | Full suite re-run on `5c3f984` from a clean working tree: backend 85 passed in 16 files, frontend 36 passed in 8 files, 6 Playwright journeys passed, build and typecheck exit 0, no failures and no skipped tests; the logs are `docs/evidence/R-01-green-tests-5c3f984.txt`, `R-01-green-e2e-5c3f984.txt` and `R-01-green-build-5c3f984.txt` | The recorded suite results were tied to `4a37e95`, which is not the revision being submitted (pre-submission audit, Issue #18) |
 | 1.19 | 2026-11-12 | FR-04 also cites the TEST-12 component test; FR-05 no longer cites TEST-17 (that test verifies AC-17, which is FR-06); FR-09 marks `OperatorOrders.test.tsx` as supporting component tests because the file has no TEST-nn names; BR-13 and NFR-08 explain why their version cells cite `c215549` only; NFR-05 and NFR-09 carry footnotes; NFR-08 cites the fresh-clone check recorded at `0b2f7d5` | PR #20 review: remove cross-references that do not match the tests, and attach the missing manual evidence for TEST-45 |
 | 1.20 | 2026-11-12 | NFR-05 records `PASS (S1 baseline)` with p95 40 ms as the run median and 37–47 ms as the run range, matching `docs/evidence/nfr05/summary.json`; the Result vocabulary now allows a scope qualifier so a Sprint 1 baseline is not read as a completed Sprint 3 requirement; FR-04 cites the AC-12 component test as a case without a TEST-nn ID | PR #20 review round 2: a Sprint 3 requirement showed an unqualified `PASS`, the p95 figures in §3 and §5 differed in form, and `TEST-12-ish` is not a real test ID |
+| 1.21 | 2026-11-12 | New §4.1 separates the five red-then-green pairs the Definition of Done actually requires from the feature-level red suites, and states that TEST-09's red run is retroactive; new §4.2 records that AC-42 / TEST-42 is a UI-navigation check and that access control is proven by AC-37 / AC-38 (TEST-37, TEST-38) | Review round 3: the Version cells implied every row had a first-failure pair, and the AC-42 row did not say where the security is actually proven (PR #20 review) |
 
 ### How to use this file
 - Sprint 1 test IDs follow the rule **TEST-nn verifies AC-nn** (for example TEST-24 verifies AC-24).
@@ -108,6 +109,24 @@
 | 10–13 | F-02 | 32–42 | F-04 | | |
 
 Total Sprint 1 AC and tests: 46 each (one test per AC; some tests contain several assertions).
+
+### 4.1 Which rows have a genuine red-then-green pair
+The Definition of Done (item 4 in `docs/sprints/sprint-1/features.md` §2) requires a seen-failing-then-passing pair for **five** tests only, as listed in the feature DoDs (§7, §9, §10, §11):
+
+| Test | Red | Green | Where the DoD requires it |
+|---|---|---|---|
+| TEST-06 (logout invalidates the session) | `8398fe2` (also `05a4f08`) | `f222daa` | F-01 DoD |
+| TEST-24 (concurrent last unit) | `140c030` | `0f3c649` | F-03 DoD |
+| TEST-35 (invalid transition) | `c04ca45`, `a614473` | `6d1d2f7` | F-04 DoD |
+| TEST-40 (double accept) | `c04ca45`, `a614473` | `37cf31f` | F-04 DoD |
+| TEST-43 (route access sweep) | `d7792c8` | `8f42cbd` | R-01 DoD (`§11`) |
+
+Where a Version cell also shows a red commit for another test (for example `140c030` on FR-04, or `c04ca45` on FR-08), that is the feature-level red suite: the test failed on the unfixed code, but the DoD does not require a separate red commit for it.
+
+**TEST-09 is retroactive.** Its red run at `60b5e57` (kept in `9ec70cb`) was created after TEST-09 had already passed at `097da41`, so it is not a genuine first failure and it is not counted as TDD evidence. F-01's DoD evidence rests on TEST-06; TEST-09's own proof is the passing E2E log at `097da41`.
+
+### 4.2 AC-42 / TEST-42 is a UI-navigation check
+TEST-42 asserts that a Customer opening `/operator/orders` sees the in-place 403 alert and no operator table. That is a rendering requirement (CHG-01 / DEC-23 Option A), not a security control: the actual access control is enforced by the API and proven by AC-37 and AC-38 (`TEST-37` in `backend/tests/orders.operator.test.ts`, `TEST-38` in `backend/tests/orders.access.test.ts`), and every protected route is swept by AC-43 (`TEST-43`).
 
 ## 5. Coverage gaps
 

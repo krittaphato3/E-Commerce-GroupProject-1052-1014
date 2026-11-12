@@ -4,7 +4,7 @@
 |---|---|
 | Document | `docs/evidence/README.md` |
 | Sprint | 1 (Deliverable 1) |
-| Version | 1.5 |
+| Version | 1.6 |
 | Date | 2026-11-12 |
 | Related | `docs/traceability.md`, `docs/sprints/sprint-1/features.md` §6. The assembled Word file is produced from these sources and submitted outside this repository. |
 
@@ -17,12 +17,13 @@
 | 1.3 | 2026-11-11 | Replaced the "AI-use declaration not included" note with a pointer to the new declaration in `github-workflow.md` §6 | Deliverable 1 §4.2 requires a brief AI-use declaration (Issue #18) |
 | 1.4 | 2026-11-12 | Added the NFR-08 / TEST-45 manual fresh-clone check (`NFR-08-fresh-clone-0b2f7d5.txt` and `.png`) | The contract requires the manual quickstart part to be recorded, and no such file existed (PR #20 review) |
 | 1.5 | 2026-11-12 | §6 states that `git diff --stat 9d8e7cb..5c3f984 -- backend/src` is empty, so the demo set captured at `9d8e7cb` is still the code under test | The screenshots are a commit earlier than the tested revision and the pack did not say whether the application code had changed in between (PR #20 review) |
+| 1.6 | 2026-11-12 | §1 no longer claims a "seven flows" requirement and groups the rows by the Part F demos instead; the DOCX statement now matches the handout (a PDF is what gets submitted, the `.docx` is the working file); §4 and §6 state that `manifest.json` is a curated selection, not an inventory of every file | Review round 3: the handout defines three demo categories rather than seven flows, it requires PDF rather than DOCX, and the manifest's 15 entries were read as the full evidence set (PR #20 review) |
 
 This directory holds the evidence that the Sprint 1 requirements were met by running the product, not by assertion. File names carry the feature or responsibility they support (`F-01` to `F-04`, `R-01`), and terminal logs carry the tested commit hash in their file name.
 
 ## 1. Screenshot evidence — required flows
 
-The seven flows required by the Sprint 1 deliverable, captured from the running application:
+The flows for Part F of the deliverable, captured from the running application. The row numbers group them by the three demo categories in `docs/sprints/sprint-1/features.md` §6 (demo 1 normal journey, demo 2 rule rejection, demo 3 access control); they are not a count required by the handout:
 
 | # | Required flow | AC | File | What the screenshot shows |
 |---|---|---|---|---|
@@ -79,6 +80,7 @@ npm run build
 
 | File | Contents |
 |---|---|
+| `manifest.json` | A **curated selection** of the evidence: 15 screenshots and 15 log files in a captioned order. It is not an inventory — this directory holds 56 `.png`/`.txt` files in total, including superseded and supporting runs that are kept for history |
 | `test-excerpts.md` | Annotated excerpts of TEST-24 (concurrent last unit) and TEST-27 (cross-customer access), the two test excerpts required by the contract §6 |
 | `github-workflow.md` | Issue → PR chains, authors, reviewers and merge points for Sprint 1 |
 | `sprint-1-commit-log.txt` | Commit history of `sprint-1-staging`, showing contracts before implementation |
@@ -102,11 +104,12 @@ These are disclosed rather than hidden; they belong to the team/Lab 5 and Sprint
 
 - **NFR-05 load benchmark (autocannon) has a recorded Sprint 1 baseline.** LOAD-01 was re-measured at `5c3f984` on 2026-11-11 (5 runs × 30 s per endpoint at 20 connections, 500-order seed): `GET /api/menu` p95 1 ms and `POST /api/orders` p95 40 ms (run-level median), zero 5xx. Raw runs, the summary and the run transcript are in [`nfr05/`](nfr05/README.md); R-04 hardening and the deployed-build measurement stay in Sprint 3. The earlier 2026-11-10 baseline cited a commit hash that does not exist in the repository, which is why it was re-run rather than re-cited.
 - **The unit, integration and Playwright suites were re-run at `5c3f984`** from a clean working tree (backend 85 passed in 16 files, frontend 36 passed in 8 files, 6 Playwright journeys passed, build and typecheck exit 0, no failures and no skipped tests). The screenshots were captured at `9d8e7cb`, before the later documentation and benchmark-harness commits: `git diff --stat 9d8e7cb..5c3f984 -- backend/src` is empty, so no application code changed between the demo set and the tested revision. The only files that changed in that range are `docs/` (including the benchmark evidence), `README.md`, `.gitignore`, the `backend/benchmarks` harness and the `package.json`, `backend/package.json` and `package-lock.json` entries that add the benchmark script; no file under `backend/src`, `backend/prisma`, `backend/tests`, `frontend/src` or `frontend/e2e` changed.
+- **`manifest.json` is a curated selection.** It lists 15 screenshots and 15 logs in presentation order; the directory contains more files (superseded runs such as `*4a37e95.txt`, mutation checks, per-test red logs) that are kept for history rather than listed.
 - **No separate order-confirmation screen.** The application navigates straight to the order detail after a successful POST, so `F-03-order-detail.png` is the confirmation evidence.
 - **The login screenshot covers invalid credentials**, not the 400 field-validation state; that path is covered by TEST-04.
 - **Release tag `sprint-1-v1.0`** from the contract has not been created yet.
 - **Contribution table and AI-use declaration.** The AI-use declaration is in [`github-workflow.md`](github-workflow.md) §6; the contribution table is team-authored and is not generated here.
-- **Deliverable format is DOCX**, not PDF, as required by the submission; export to PDF from Word if the receiving site requires PDF. The assembled file and the scripts that build it are not tracked in Git and are submitted outside this repository.
+- **Deliverable format is PDF.** The handout requires the submitted document as a PDF; the pack is assembled locally (the working file is a `.docx`) and exported to PDF. The assembled file and the scripts that build it are not tracked in Git and are submitted outside this repository.
 
 ## 7. Integrity
 

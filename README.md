@@ -1,6 +1,6 @@
 # Omazon — Online Food Ordering Platform
 
-Omazon is an online food ordering platform designed for a university canteen, supporting role-based authentication, real-time menu management, atomic ordering with inventory guarantees, and order fulfillment workflows.
+Omazon is an online food ordering platform designed for a university canteen, supporting role-based authentication, a menu that shows live stock availability, atomic ordering with inventory guarantees, and an operator order-acceptance workflow.
 
 > Order numbers keep the `CB-` prefix by design (along with technical identifiers such as `cb_session` and `@campusbites.test` seed addresses) — see DEC-25 in [`docs/srs.md`](docs/srs.md).
 
@@ -196,8 +196,7 @@ Get-NetTCPConnection -LocalPort 3100,5174 |
 │   └── tests/            # Supertest & Vitest integration test suite
 ├── frontend/             # React 18 + TypeScript + Vite + Bootstrap 5 SPA
 │   ├── e2e/              # Playwright journeys and the evidence screenshot helper
-│   ├── src/              # Pages, components, routing
-│   └── tests/            # Component and unit tests
+│   └── src/              # Pages, components, routing, and their unit/component tests (*.test.tsx)
 └── docs/                 # SRS, System SDS, Feature contracts, Traceability matrix
     └── evidence/         # Sprint 1 screenshots, terminal logs and their index
 ```
@@ -228,7 +227,7 @@ Get-NetTCPConnection -LocalPort 3100,5174 |
 | [`docs/traceability.md`](docs/traceability.md) | Requirement → AC → test → result matrix for all 46 Sprint 1 tests |
 | [`docs/evidence/README.md`](docs/evidence/README.md) | Evidence pack index: screenshots, red/green logs, workflow evidence |
 
-The Word deliverable is assembled locally from these Markdown sources and submitted outside this repository; it is **not** part of GitHub. The `docs/deliverable-1/` folder (the assembled `.docx` and the scripts that build it) is Git-ignored on purpose, so the Markdown files above remain the tracked, reviewable record.
+The deliverable document is assembled locally from these Markdown sources and submitted outside this repository; it is **not** part of GitHub. The handout requires the submitted file as a **PDF**, so the assembled document is exported to PDF before submission. The `docs/deliverable-1/` folder (the working `.docx` and the scripts that build it) is Git-ignored on purpose, so the Markdown files above remain the tracked, reviewable record.
 
 ---
 

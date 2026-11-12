@@ -1,6 +1,7 @@
 {
-  "version": 6,
+  "version": 7,
   "generated": "2026-11-12",
+  "selectionNote": "This manifest is a curated selection, not an inventory: it lists 15 screenshots and 15 log files in presentation order. docs/evidence/ holds more files (56 .png/.txt in total) including superseded runs, per-test red logs and mutation checks that are kept for history.",
   "revisions": [
     {
       "version": 1,
@@ -31,6 +32,11 @@
       "version": 6,
       "date": "2026-11-12",
       "change": "Added the missing revision 1 entry, added the NFR-08 fresh-clone check (E-15, L-15), and replaced the stale [CONFIRM]/placeholder gap note with the current AI-use declaration pointer"
+    },
+    {
+      "version": 7,
+      "date": "2026-11-12",
+      "change": "Added selectionNote: the 15 screenshots and 15 logs are a curated selection, while docs/evidence/ holds 56 image/log files including superseded and supporting runs"
     }
   ],
   "screenshots": [
