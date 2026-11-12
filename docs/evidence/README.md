@@ -4,8 +4,8 @@
 |---|---|
 | Document | `docs/evidence/README.md` |
 | Sprint | 1 (Deliverable 1) |
-| Version | 1.3 |
-| Date | 2026-11-11 |
+| Version | 1.4 |
+| Date | 2026-11-12 |
 | Related | `docs/traceability.md`, `docs/sprints/sprint-1/features.md` §6. The assembled Word file is produced from these sources and submitted outside this repository. |
 
 ### Revision history
@@ -15,6 +15,7 @@
 | 1.1 | 2026-11-11 | NFR-05 baseline re-measured at `5c3f984`; the earlier baseline cited a commit hash that does not exist in the repository | Pre-submission audit (Issue #18) |
 | 1.2 | 2026-11-11 | Full test, E2E and build run recorded at `5c3f984`; the `4a37e95` logs are kept and marked superseded | The submitted revision must be the one the suites ran on (Issue #18) |
 | 1.3 | 2026-11-11 | Replaced the "AI-use declaration not included" note with a pointer to the new declaration in `github-workflow.md` §6 | Deliverable 1 §4.2 requires a brief AI-use declaration (Issue #18) |
+| 1.4 | 2026-11-12 | Added the NFR-08 / TEST-45 manual fresh-clone check (`NFR-08-fresh-clone-0b2f7d5.txt` and `.png`) | The contract requires the manual quickstart part to be recorded, and no such file existed (PR #20 review) |
 
 This directory holds the evidence that the Sprint 1 requirements were met by running the product, not by assertion. File names carry the feature or responsibility they support (`F-01` to `F-04`, `R-01`), and terminal logs carry the tested commit hash in their file name.
 
@@ -68,6 +69,10 @@ npm run e2e       # Playwright journeys on ports 3100 / 5174
 npm run typecheck
 npm run build
 ```
+
+### 3.1 Manual check — fresh clone (NFR-08 / TEST-45)
+
+`NFR-08-fresh-clone-0b2f7d5.txt` records the manual part of TEST-45: a clone of `fix/sprint1/evidence-refresh` at `0b2f7d5` into an empty directory, followed by the eight README quickstart commands in order. Both migrations applied, the seed exited 0, the suite passed (backend 85/85 in 16 files, frontend 36/36 in 8 files), `GET /api/health` returned 200 and the SPA login page returned 200. `NFR-08-fresh-clone-0b2f7d5.png` is the login page of that cloned instance. The run used Windows, Node.js v26.13.0, Docker 29.9.2 and `postgres:16-alpine`.
 
 ## 4. Derived evidence documents
 

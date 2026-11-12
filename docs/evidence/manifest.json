@@ -1,11 +1,16 @@
 {
-  "version": 5,
-  "generated": "2026-11-11",
+  "version": 6,
+  "generated": "2026-11-12",
   "revisions": [
+    {
+      "version": 1,
+      "date": "2026-11-07",
+      "change": "Initial manifest: 14 screenshots, no logs array and no revision log"
+    },
     {
       "version": 2,
       "date": "2026-11-07",
-      "change": "Initial manifest: 14 screenshots, 14 logs, known gaps"
+      "change": "First structured manifest: 14 screenshots, 14 logs, known gaps; revision log started"
     },
     {
       "version": 3,
@@ -21,6 +26,11 @@
       "version": 5,
       "date": "2026-11-11",
       "change": "AI-use declaration added in docs/evidence/github-workflow.md section 6; the manifest gap now points to it"
+    },
+    {
+      "version": 6,
+      "date": "2026-11-12",
+      "change": "Added the missing revision 1 entry, added the NFR-08 fresh-clone check (E-15, L-15), and replaced the stale [CONFIRM]/placeholder gap note with the current AI-use declaration pointer"
     }
   ],
   "screenshots": [
@@ -163,6 +173,16 @@
       "file": "F-01-after-logout-login.png",
       "caption": "After logout the session cookie is cleared and the browser is back at the empty login form.",
       "note": "The screenshot is byte-identical to E-01 by design: both are the same empty login form, captured with animations disabled. TEST-06 supplies the proof that the session is really gone - it asserts the old cookie is rejected with 401 and that the browser URL is /login."
+    },
+    {
+      "id": "E-15",
+      "flow": "Fresh-clone quickstart (NFR-08 manual check)",
+      "ac": "AC-45, TEST-45",
+      "captured": "2026-11-12",
+      "commit": "0b2f7d5",
+      "file": "NFR-08-fresh-clone-0b2f7d5.png",
+      "caption": "The login page of the application started from a fresh clone after the eight README quickstart commands.",
+      "note": "The companion terminal transcript is NFR-08-fresh-clone-0b2f7d5.txt: migrations applied, seed exit 0, backend 85/85 and frontend 36/36 passed, API health 200."
     }
   ],
   "logs": [
@@ -305,6 +325,16 @@
       "summary": "6 Playwright journeys passed",
       "file": "R-01-green-e2e-5c3f984.txt",
       "embed": true
+    },
+    {
+      "id": "L-15",
+      "feature": "R-03 (NFR-08 / TEST-45 manual part)",
+      "state": "MANUAL CHECK",
+      "commit": "0b2f7d5",
+      "command": "git clone <branch> then the eight README quickstart commands",
+      "summary": "Fresh clone: migrations applied, seed exit 0, backend 85/85 passed, frontend 36/36 passed, API health 200, login page 200",
+      "file": "NFR-08-fresh-clone-0b2f7d5.txt",
+      "embed": false
     }
   ],
   "gaps": [
@@ -314,6 +344,6 @@
     "The login screenshot covers invalid credentials, not the 400 field-validation state asserted by TEST-04.",
     "The release tag sprint-1-v1.0 has not been created.",
     "The assembled Word deliverable and its build scripts are not tracked here; the file is submitted outside this repository. The Markdown sources are the tracked record.",
-    "The AI-use declaration is in docs/evidence/github-workflow.md section 6; items inferred from repository evidence are marked [CONFIRM] and the remaining rows are placeholders for the students to complete. The contribution table is team-authored."
+    "The AI-use declaration is in docs/evidence/github-workflow.md section 6 and is confirmed by both authors. The contribution table is team-authored."
   ]
 }

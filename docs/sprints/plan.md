@@ -3,8 +3,8 @@
 | Item | Value |
 |---|---|
 | Document | `docs/sprints/plan.md` |
-| Version | 1.2 |
-| Date | 2026-11-03 |
+| Version | 1.3 |
+| Date | 2026-11-12 |
 | Related | `docs/features.md`, `docs/traceability.md` |
 
 ### Revision history
@@ -13,6 +13,7 @@
 | 1.0 | 2026-11-03 | Initial plan | Deliverable 1 |
 | 1.1 | 2026-11-05 | Sprint 1 feasibility counts corrected to six tables and ten endpoints | Audit corrections: match the System SDS data model and endpoint summary |
 | 1.2 | 2026-11-07 | Document title uses the Omazon display name | Display brand rename (DEC-25); no sprint content changed |
+| 1.3 | 2026-11-12 | §2 "Not in Sprint 1" now distinguishes the lightweight Sprint 1 CI workflow from the full CI/CD and deployment work, and the completion outcome says "46 test IDs" rather than "46 planned tests" | `.github/workflows/ci.yml` already runs on Sprint 1 pull requests, so the previous "CI/CD not in Sprint 1" wording was inaccurate; the 46 is the number of TEST-nn IDs (PR #20 review) |
 
 ## 1. Overview
 
@@ -32,8 +33,8 @@ The three sprints together cover FR-01 to FR-17, BR-01 to BR-15 and NFR-01 to NF
 | Features | F-01 Authentication, F-02 Menu browsing, F-03 Order submission and customer views, F-04 Operator list and acceptance |
 | Responsibilities | R-01 Access control, R-02 Validation and errors, R-03 Setup, migrations, seed |
 | Dependencies | R-03 first (schema, seed), then F-01, then F-02, then F-03, then F-04. R-01 and R-02 are built with F-01 and extended by each feature |
-| Completion outcome | On `main` with a tag: a customer logs in, orders two items, sees the saved order; an operator logs in and accepts it; the customer sees `ACCEPTED`. Rule rejections (unavailable item, invalid quantity, invalid transition) and access restrictions (anonymous, wrong role, other customer's order) are tested through the API. 46 AC with 46 planned tests. Local setup documented |
-| Not in Sprint 1 | Catalog editing, cancellation, payment, fulfilment, reject, search, reports, Docker, CI/CD, GCP (Lab 5) |
+| Completion outcome | On `main` with a tag: a customer logs in, orders two items, sees the saved order; an operator logs in and accepts it; the customer sees `ACCEPTED`. Rule rejections (unavailable item, invalid quantity, invalid transition) and access restrictions (anonymous, wrong role, other customer's order) are tested through the API. 46 AC with 46 test IDs. Local setup documented |
+| Not in Sprint 1 | Catalog editing, cancellation, payment, fulfilment, reject, search, reports, Docker, GCP deployment (Lab 5). A lightweight CI workflow (`.github/workflows/ci.yml`: install, unit/integration tests, E2E) does run on Sprint 1 pull requests; the full CI/CD and deployment pipeline is R-05 in Sprint 2 |
 
 ### Why Sprint 1 is feasible
 - Four features, one data flow, two roles, six tables.

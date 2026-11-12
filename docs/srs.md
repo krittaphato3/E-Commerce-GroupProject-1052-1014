@@ -3,8 +3,8 @@
 | Item | Value |
 |---|---|
 | Document | `docs/srs.md` |
-| Version | 1.9 |
-| Date | 2026-11-07 |
+| Version | 1.10 |
+| Date | 2026-11-12 |
 | Course / Theme | CPE 334, Semester 1/2026 — Theme 4: E-Commerce or Ordering System |
 | Student 1 | Krittaphat Panyasomphan (67070501052) |
 | Student 2 | Napat Kasemweerasan (67070501014) |
@@ -23,6 +23,7 @@
 | 1.7 | 2026-11-07 | Both | Added §9.1 decision entry DEC-23 for F-04 contract revision (AC-42 / TEST-42 in-place 403 alert per DEC-23 Option A), POST /api/orders Location header, and Menu UI quantity capping by stockQty | Record decisions and contract revisions taken for F-04 (Issue #6) |
 | 1.8 | 2026-11-07 | Both | Rename user-facing brand display name and document titles to Omazon; add §9.1 decision entries DEC-24 (R-01 route registry and Express 5 route extraction), DEC-25 (Omazon display rename scope and the technical identifiers kept), DEC-26 (Playwright E2E isolated on TEST_DATABASE_URL with a globalSetup reset and serial workers), and DEC-27 (separate 409 ITEM_UNAVAILABLE E2E test for AC-21 and AC-30) | Complete Issue #3 (R-01, AC-43/TEST-43) and the display brand rename |
 | 1.9 | 2026-11-07 | Both | DEC-26 amended: `globalSetup` (`db:reset:test`) is the single owner of E2E migrations, the `_test` guard is shared by `playwright.config.ts` and `globalSetup` through `frontend/e2e/testDatabase.ts`, and `.github/workflows/ci.yml` runs the suites sequentially. DEC-27 amended: the 409 journey prepares its own sold-out state at run time instead of relying on Playwright's spec-file order. README gained a leftover-port troubleshooting note and a Sprint 2 “Known Limitations” section for the route registry. No requirement, AC, TEST or contract wording changed. | Non-blocking PR review follow-ups: E2E robustness, CI, and cleanup |
+| 1.10 | 2026-11-12 | Both | FR-03 identity now lists `email` as well as id, display name and role | FR-03 contradicted AC-01 and the F-01 contract, which both return `email` (PR #20 review) |
 
 ---
 
@@ -58,7 +59,7 @@ Real payment gateway or card data; delivery; multiple shops or branches; self-re
 |---|---|---|---|
 | FR-01 | A user can log in with email and password. Valid credentials start a session; invalid credentials are rejected with a generic error that does not reveal whether the email exists. | All | 1 |
 | FR-02 | A logged-in user can log out. The session is unusable immediately afterwards. | All | 1 |
-| FR-03 | The system returns the identity (id, display name, role) of the logged-in user. Anonymous requests are rejected. | All | 1 |
+| FR-03 | The system returns the identity (id, email, display name, role) of the logged-in user. Anonymous requests are rejected. | All | 1 |
 | FR-04 | Any visitor can view the menu: name, description, price in THB, and whether each item is currently available. | Anonymous, Customer, Operator | 1 |
 | FR-05 | A Customer can submit an order with one or more menu items, quantities and an optional pickup note. The order is saved as `PENDING` and `UNPAID` with a server-calculated total. | Customer | 1 |
 | FR-06 | A Customer can open the detail of their own order: items, unit prices, line totals, total, status, payment status and status history. | Customer | 1 |

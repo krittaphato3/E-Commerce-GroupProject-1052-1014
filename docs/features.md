@@ -3,8 +3,8 @@
 | Item | Value |
 |---|---|
 | Document | `docs/features.md` |
-| Version | 1.3 |
-| Date | 2026-11-03 |
+| Version | 1.4 |
+| Date | 2026-11-12 |
 | Related | `docs/srs.md`, `docs/traceability.md`, `docs/sprints/plan.md`, `docs/sprints/sprint-1/features.md` (Sprint 1 contracts) |
 
 ### Revision history
@@ -14,6 +14,7 @@
 | 1.1 | 2026-11-05 | BR-02 split between F-02 (defines) and F-03 (enforces, AC-11/AC-21/AC-22); R-04 states the full NFR-05 load-test parameters; coverage wording defers verification gaps to traceability §5; approved-changes cross-reference corrected to §6 | Audit corrections: remove the BR-02 ambiguity and make NFR-05 verifiable |
 | 1.2 | 2026-11-05 | Removed BR-13 from F-03: order submission does not enforce the catalog price/stock bounds, which belong to F-05 API validation and the R-03 DB checks | Align F-03 with the traceability matrix; F-03 enforces BR-02 and BR-05, not BR-13 |
 | 1.3 | 2026-11-07 | Document title uses the Omazon display name | Display brand rename (DEC-25); no requirement, feature or sprint content changed |
+| 1.4 | 2026-11-12 | §4 approved scope changes now lists CHG-01 and CHG-02 instead of "None yet" | The cell contradicted `docs/traceability.md` §6, which already records both changes (PR #20 review) |
 
 ## 1. Features
 
@@ -59,4 +60,4 @@
 | BR-01 to BR-15 each map to at least one feature | Yes |
 | NFR-01 to NFR-11 each map to a feature or responsibility | Yes |
 | Uncovered requirements | No requirement lacks a feature; verification gaps are listed in traceability §5. |
-| Approved scope changes | None yet (see `docs/traceability.md`, section 6) |
+| Approved scope changes | Two, both recorded in `docs/traceability.md` §6: CHG-01 (AC-42 / TEST-42 render an in-place 403 alert instead of redirecting, DEC-23) and CHG-02 (Omazon display brand rename, DEC-25) |
