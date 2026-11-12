@@ -4,7 +4,7 @@
 |---|---|
 | Document | `docs/evidence/README.md` |
 | Sprint | 1 (Deliverable 1) |
-| Version | 1.4 |
+| Version | 1.5 |
 | Date | 2026-11-12 |
 | Related | `docs/traceability.md`, `docs/sprints/sprint-1/features.md` §6. The assembled Word file is produced from these sources and submitted outside this repository. |
 
@@ -16,6 +16,7 @@
 | 1.2 | 2026-11-11 | Full test, E2E and build run recorded at `5c3f984`; the `4a37e95` logs are kept and marked superseded | The submitted revision must be the one the suites ran on (Issue #18) |
 | 1.3 | 2026-11-11 | Replaced the "AI-use declaration not included" note with a pointer to the new declaration in `github-workflow.md` §6 | Deliverable 1 §4.2 requires a brief AI-use declaration (Issue #18) |
 | 1.4 | 2026-11-12 | Added the NFR-08 / TEST-45 manual fresh-clone check (`NFR-08-fresh-clone-0b2f7d5.txt` and `.png`) | The contract requires the manual quickstart part to be recorded, and no such file existed (PR #20 review) |
+| 1.5 | 2026-11-12 | §6 states that `git diff --stat 9d8e7cb..5c3f984 -- backend/src` is empty, so the demo set captured at `9d8e7cb` is still the code under test | The screenshots are a commit earlier than the tested revision and the pack did not say whether the application code had changed in between (PR #20 review) |
 
 This directory holds the evidence that the Sprint 1 requirements were met by running the product, not by assertion. File names carry the feature or responsibility they support (`F-01` to `F-04`, `R-01`), and terminal logs carry the tested commit hash in their file name.
 
@@ -100,7 +101,7 @@ CAPTURE_EVIDENCE=1 npm run e2e
 These are disclosed rather than hidden; they belong to the team/Lab 5 and Sprint 2–3 work:
 
 - **NFR-05 load benchmark (autocannon) has a recorded Sprint 1 baseline.** LOAD-01 was re-measured at `5c3f984` on 2026-11-11 (5 runs × 30 s per endpoint at 20 connections, 500-order seed): `GET /api/menu` p95 1 ms and `POST /api/orders` p95 40 ms (run-level median), zero 5xx. Raw runs, the summary and the run transcript are in [`nfr05/`](nfr05/README.md); R-04 hardening and the deployed-build measurement stay in Sprint 3. The earlier 2026-11-10 baseline cited a commit hash that does not exist in the repository, which is why it was re-run rather than re-cited.
-- **The unit, integration and Playwright suites were re-run at `5c3f984`** from a clean working tree (backend 85 passed in 16 files, frontend 36 passed in 8 files, 6 Playwright journeys passed, build and typecheck exit 0, no failures and no skipped tests). The screenshots were captured at `9d8e7cb`, before the later documentation and benchmark-harness commits.
+- **The unit, integration and Playwright suites were re-run at `5c3f984`** from a clean working tree (backend 85 passed in 16 files, frontend 36 passed in 8 files, 6 Playwright journeys passed, build and typecheck exit 0, no failures and no skipped tests). The screenshots were captured at `9d8e7cb`, before the later documentation and benchmark-harness commits: `git diff --stat 9d8e7cb..5c3f984 -- backend/src` is empty, so no application code changed between the demo set and the tested revision. The only files that changed in that range are `docs/` (including the benchmark evidence), `README.md`, `.gitignore`, the `backend/benchmarks` harness and the `package.json`, `backend/package.json` and `package-lock.json` entries that add the benchmark script; no file under `backend/src`, `backend/prisma`, `backend/tests`, `frontend/src` or `frontend/e2e` changed.
 - **No separate order-confirmation screen.** The application navigates straight to the order detail after a successful POST, so `F-03-order-detail.png` is the confirmation evidence.
 - **The login screenshot covers invalid credentials**, not the 400 field-validation state; that path is covered by TEST-04.
 - **Release tag `sprint-1-v1.0`** from the contract has not been created yet.

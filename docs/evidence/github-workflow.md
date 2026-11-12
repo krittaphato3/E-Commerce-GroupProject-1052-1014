@@ -4,8 +4,8 @@
 |---|---|
 | Document | `docs/evidence/github-workflow.md` |
 | Sprint | 1 (Deliverable 1, Part F) |
-| Version | 1.2 |
-| Date | 2026-11-11 |
+| Version | 1.3 |
+| Date | 2026-11-12 |
 | Source | GitHub pull requests and reviews for `krittaphato3/E-Commerce-GroupProject-1052-1014` |
 | Related | `docs/sprints/sprint-1/features.md` §2 (Definition of Done), §4 |
 
@@ -15,6 +15,7 @@
 | 1.0 | 2026-11-07 | Initial workflow evidence: PR #8 to #13 chain, review detail, contribution summary | Deliverable 1, Part F |
 | 1.1 | 2026-11-11 | Added PR #14 and PR #17 with their Issues, branches, reviewers and merge commits; added the contract `ISSUE-n` to GitHub `#n` mapping table; added §4 review evidence for two completed Issues; added the release PR placeholder and the manual screenshot TODO list | Pre-submission audit: the workflow evidence stopped at PR #13 and had no review excerpts |
 | 1.2 | 2026-11-11 | Added §4.2 review evidence for krittaphato3 covering PR #8, PR #10, PR #12, and PR #13; updated §6 AI-use declaration to include Gemini 3.8 Flash High (ZCode) for Krittaphat Panyasomphan (67070501052) | Deliverable 1 requirements: complete two-way peer review evidence and comprehensive AI-use declaration |
+| 1.3 | 2026-11-12 | §4 states which PR pairs are the review evidence and moves PR #12 and PR #13 to §4.3 as approvals without specific findings; PR #11 is disclosed as having no review comment; the §1 and §1.1 rows for Issue #18 now name PR #20 and its author instead of "to be opened" / "to be assigned" | Review round 2 found approvals quoted as review detail and a stale placeholder row in the chain table (PR #20 review) |
 
 Sprint 1 work went through feature branches cut from `sprint-1-staging`, a reviewed pull request per issue, and a merge into staging. No author approved their own pull request.
 
@@ -33,7 +34,7 @@ GitHub issue numbers are sequential in this repository; the contract's `ISSUE-n`
 | — | README and evidence pack (Deliverable 1 Part F) | #7 | `feature/sprint1/evidence-readme-pdf` | [#14](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/14) | krittaphato3 | napatsun (changes requested, then approved) | napatsun | 2026-11-10 | `47813f7` |
 | — | NFR-05 / LOAD-01 benchmark, R-04 baseline | #15 | `fix/sprint1/docs-loadbenchmark-fix` | [#17](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/17) | krittaphato3 | napatsun (approved, non-blocking comments) | napatsun | 2026-11-10 | `5c3f984` |
 | — | Documentation-vs-code audit corrections | #16 | `fix/sprint1/docs-loadbenchmark-fix` | [#17](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/17) | krittaphato3 | napatsun (approved, non-blocking comments) | napatsun | 2026-11-10 | `5c3f984` |
-| — | Evidence refresh and dangling-hash fix | #18 | `fix/sprint1/evidence-refresh` | to be opened | napatsun | to be assigned | — | — | — |
+| — | Evidence refresh and dangling-hash fix | #18 | `fix/sprint1/evidence-refresh` | [#20](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/20) | krittaphato3 | napatsun (changes requested, re-review pending) | — | — | — |
 | — | Release: `sprint-1-staging` → `main` | — | `sprint-1-staging` | **to be filled after merge** | — | to be assigned | — | — | — |
 
 PR #17 closed both #15 and #16 in one reviewed increment: its three commits are `5fbcb7a` (the six audit corrections), `f5dcf54` (the autocannon harness) and `f5caa04` (the recorded NFR-05 baseline).
@@ -52,7 +53,7 @@ PR #17 closed both #15 and #16 in one reviewed increment: its three commits are 
 | — | #7 | README and evidence pack (PR #14) |
 | — | #15 | NFR-05 / LOAD-01 load benchmark |
 | — | #16 | Documentation-vs-code audit corrections (PR #17) |
-| — | #18 | Evidence refresh and dangling-hash fix (this branch) |
+| — | #18 | Evidence refresh and dangling-hash fix (PR #20) |
 
 GitHub issues #7, #15, #16 and #18 have no contract `ISSUE-n` label because they are post-contract delivery and documentation work, not Sprint 1 feature slices.
 
@@ -82,6 +83,10 @@ Both members authored at least two issues and reviewed the other's pull requests
 ## 4. Review evidence
 
 Completed Issues with their pull requests demonstrating two-way peer review between both team members, as required by `reference/project_deliverable_1_v1.pdf` §4.2. Quotes are verbatim; Thai comments are left untranslated deliberately so the original review text can be checked against GitHub.
+
+**Pairs used as the review evidence.** The two-way peer review rests on four pull requests that carry specific review comments and the author's replies: napatsun reviewing krittaphato3's work in PR #14 (§4.1.1) and PR #17 (§4.1.2), and krittaphato3 reviewing napatsun's work in PR #8 (§4.2.1) and PR #10 (§4.2.2). The excerpts below are the review text those PRs actually contain; no review was added or rewritten after the fact.
+
+**Not counted as review evidence.** PR #11 and PR #12 add no specific finding: PR #11 carries no review comment, and PR #12 was approved with a one-line message. PR #13 was also approved with a one-line message that names no specific check. Their verbatim text is kept in §4.3 for completeness and the gap is disclosed in §5.
 
 ### 4.1 Reviews by napatsun (reviewed krittaphato3's PRs)
 
@@ -202,7 +207,13 @@ Excerpt 3 — krittaphato3, approval review of 2026-11-06 ([PR #10](https://gith
 
 > ผ่านครับ ดีมาก
 
-#### 4.2.3 Issue #5 — F-04 Operator list and acceptance (PR #12)
+### 4.3 Approvals without specific review findings
+
+These pull requests were approved, but the approval message names no specific finding and the PRs therefore cannot serve as review evidence. The text is reproduced unchanged; nothing was added to them.
+
+- **PR #11 (F-02, F-03).** Approved with no review comment on the conversation thread.
+
+#### 4.3.1 Issue #5 — F-04 Operator list and acceptance (PR #12)
 
 | Item | Value |
 |---|---|
@@ -217,9 +228,9 @@ Excerpt 1 — krittaphato3, review of 2026-11-07 ([PR #12](https://github.com/kr
 
 > เรียบร้อยครับ ทำได้ดีมาก ไม่มีข้อติ
 
-The review verified order state machine transitions (`PLACED` → `ACCEPTED`), operator-only role authorization, and mutation testing (`TEST-40`).
+The approval records the merge state only; the state machine, role guard and `TEST-40` findings themselves are in `docs/traceability.md` and the test logs, not in this comment.
 
-#### 4.2.4 Issue #6 — R-01 Access control, TEST-43, E2E journeys (PR #13)
+#### 4.3.2 Issue #6 — R-01 Access control, TEST-43, E2E journeys (PR #13)
 
 | Item | Value |
 |---|---|
@@ -234,11 +245,13 @@ Excerpt 1 — krittaphato3, review of 2026-11-07 ([PR #13](https://github.com/kr
 
 > จากที่ดู test ทั้งหมด ผ่าน และครบถ้วนดีมากครับ ผ่านครับ
 
-The reviewer verified the central route access registry against the requirements matrix, confirmed the `TEST-43` automated access control sweep across all routes, and verified the complete Playwright E2E journey.
+The approval states that the suites passed; the coverage claims for the route registry and the Playwright journeys are evidenced by `docs/traceability.md` and the logs in this directory, not by this comment.
 
 ## 5. Screenshots to capture manually (TODO — team task, not yet done)
 
 Screenshots cannot be produced by the documentation tooling; these must be captured from GitHub by a team member and inserted into Part F of the PDF:
+
+- **Known limitation — review content.** PR #11 (F-02/F-03) has no review comment, and PR #12 (F-04) and PR #13 (R-01) were approved with one-line messages that name no specific finding. The two-way review evidence therefore rests on PR #14 and PR #17 (napatsun reviewing krittaphato3) and on PR #8 and PR #10 (krittaphato3 reviewing napatsun), as stated at the start of §4. Those two pairs are the ones to screenshot for the handout's two review examples.
 
 - [ ] **TODO — final project board.** The GitHub Project board in its final Sprint 1 state, showing every Sprint 1 Issue in `Done`.
 - [ ] **TODO — Issue #7 and PR #14.** The PR #14 conversation showing the review of 2026-11-07 and the approval of 2026-11-10, with the branch name and the merge into `sprint-1-staging` visible.

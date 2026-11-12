@@ -6,7 +6,7 @@
 | Sprint | 1 (due with Deliverable 1, 8 Nov 2026) |
 | Staging branch | `sprint-1-staging` |
 | Release tag (planned) | `sprint-1-v1.0` |
-| Version | 1.10 |
+| Version | 1.11 |
 | Date | 2026-11-12 |
 | Related | `docs/srs.md`, `docs/features.md` (whole-product inventory), `docs/traceability.md`, `docs/sprints/plan.md`, `docs/system-sds.md` |
 
@@ -24,6 +24,7 @@
 | 1.8 | 2026-11-10 | §11 corrected against the shipped configuration: the compose command uses the real `postgres` service, the setup list is the README's 8 commands with `dev:backend` and `dev:frontend` in two terminals, `GET /api/health` documents its literal `1.0.0` version, and the planned test files are `error.test.ts` and `constraints.test.ts` | Documentation audit: a reader following §11 hit a compose service that does not exist and a root `dev` script that does not exist (Issue #16) |
 | 1.9 | 2026-11-11 | §4 gains a footnote on planned versus actual branch and issue names | Pre-submission audit: the branch names planned here differ from the branches actually used |
 | 1.10 | 2026-11-12 | §3 and the contract-index total now say "test IDs" instead of "tests" and record the executed case counts; TEST-12 notes its component-level supporting test | The count of 46 is the number of TEST-nn IDs, while the executed suite at `5c3f984` runs 85 backend, 36 frontend and 6 Playwright cases (PR #20 review) |
+| 1.11 | 2026-11-12 | §4 keeps the planned branch names and adds the actual GitHub issue, branch and pull request for each contract issue | The planned names were never created, so the table read as if those branches existed (PR #20 review) |
 
 Each contract below keeps its own revision history. Log every change there with a reason; do not rewrite earlier entries.
 
@@ -76,18 +77,18 @@ The 46 is the number of test IDs, not the number of executed cases. At `5c3f984`
 
 ## 4. Planned Issues and branches
 
-| Issue | Feature | Branch | Reviewer |
-|---|---|---|---|
-| ISSUE-1 | R-03 Setup, schema, seed | `feature/R-03-setup-seed` | Teammate |
-| ISSUE-2 | F-01 Authentication | `feature/F-01-authentication` | Teammate |
-| ISSUE-3 | R-01, R-02 Access control and errors | `feature/R-01-R-02-access-errors` | Teammate |
-| ISSUE-4 | F-02 Menu | `feature/F-02-menu-browsing` | Teammate |
-| ISSUE-5 | F-03 Order submission | `feature/F-03-order-submission` | Teammate |
-| ISSUE-6 | F-04 Operator acceptance | `feature/F-04-operator-acceptance` | Teammate |
+| Contract issue | Feature | Planned branch | Actual GitHub issue | Actual branch | PR | Reviewer |
+|---|---|---|---|---|---|---|
+| ISSUE-1 | R-03 Setup, schema, seed | `feature/R-03-setup-seed` | #2 | `feature/sprint1/scaffold-db-seed` | [#9](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/9) | napatsun |
+| ISSUE-2 | F-01 Authentication | `feature/F-01-authentication` | #3 | `feature/sprint1/auth-login-logout` | [#10](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/10) | krittaphato3 |
+| ISSUE-3 | R-01, R-02 Access control and errors | `feature/R-01-R-02-access-errors` | #6 | `feature/sprint1/access-and-e2e-tests` | [#13](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/13) | krittaphato3 |
+| ISSUE-4 | F-02 Menu browsing | `feature/F-02-menu-browsing` | #4 | `feature/sprint1/menu-and-place-order` | [#11](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/11) | napatsun |
+| ISSUE-5 | F-03 Order submission | `feature/F-03-order-submission` | #4 | `feature/sprint1/menu-and-place-order` | [#11](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/11) | napatsun |
+| ISSUE-6 | F-04 Operator acceptance | `feature/F-04-operator-acceptance` | #5 | `feature/sprint1/operator-accept-order` | [#12](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/12) | krittaphato3 |
 
-Pair the work so that both students author at least two Issues and review the others; record who authored and who reviewed in each PR.
+Pair the work so that both students author at least two Issues and review the others; record who authored and who reviewed in each PR. In the set above krittaphato3 authored ISSUE-1, ISSUE-4/ISSUE-5 and reviewed ISSUE-2, ISSUE-3, ISSUE-6; napatsun authored ISSUE-2, ISSUE-3, ISSUE-6 and reviewed ISSUE-1, ISSUE-4/ISSUE-5.
 
-> **Planned versus actual names.** The branch names and `ISSUE-n` labels in this table are the ones planned before implementation. The branches actually used, the GitHub issue number behind each `ISSUE-n` label, and every merged PR are recorded in [`docs/evidence/github-workflow.md`](../../evidence/github-workflow.md) §1 and §1.1; read that table when auditing, not this one.
+> **Planned versus actual names.** The "Planned branch" column keeps the names written before implementation, as the contract baseline; none of those branches exists in the repository. The "Actual" columns are the GitHub issue, branch and pull request each contract issue was actually delivered under. The full Issue → PR chain with authors, reviewers and merge commits is in [`docs/evidence/github-workflow.md`](../../evidence/github-workflow.md) §1 and §1.1.
 
 ---
 

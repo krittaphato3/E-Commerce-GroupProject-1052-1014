@@ -16,7 +16,7 @@ Omazon is an online food ordering platform designed for a university canteen, su
 | **Frontend** | React 18, TypeScript, Vite 6, Bootstrap 5 | Single-page application with role-based routing |
 | **Authentication** | Server-side sessions, `bcryptjs`, httpOnly cookie `cb_session` | 8-hour session lifetime (`SESSION_TTL_HOURS`) |
 | **Validation** | zod | Strict schemas; unknown fields are rejected, not ignored |
-| **Tests** | Vitest, Supertest, Testing Library, Playwright | 46 Sprint 1 tests across unit, integration, UI and E2E levels |
+| **Tests** | Vitest, Supertest, Testing Library, Playwright | 46 Sprint 1 test IDs across unit, integration, UI and E2E levels (85 backend, 36 frontend and 6 Playwright cases at `5c3f984`) |
 | **CI** | GitHub Actions | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs unit, integration and E2E sequentially |
 
 ---
@@ -73,6 +73,8 @@ npm run dev:frontend
 ```
 
 Steps 7 and 8 stay in the foreground; open <http://localhost:5173> and log in with a seeded account below. NFR-08 verifies this sequence on a fresh clone; the seed step is additionally covered by TEST-45.
+
+`backend/.env` arrives with the placeholder passwords `change-me-local`, and those values are fine for local development only. To use your own passwords, edit `SEED_CUSTOMER_PASSWORD` and `SEED_OPERATOR_PASSWORD` in `backend/.env` after step 1 and before step 5; it is an edit, so the sequence stays at eight commands. Anything seeded before you change them must be re-seeded (`npm run db:seed`) to pick up the new value.
 
 ---
 
