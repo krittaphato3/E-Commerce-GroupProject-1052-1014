@@ -1,8 +1,8 @@
 # Sprint 1 commit history — sprint-1-staging
 
 Branch: sprint-1-staging
-HEAD at capture: b7f1ed8
-Captured: 2026-11-07
+HEAD at capture: 5c3f984
+Captured: 2026-11-11
 Command: git log --reverse --date=short --pretty=format:'%h %ad %an %s' sprint-1-staging
 
 This is the reviewer-facing view of the contracts-before-implementation order required by
@@ -84,3 +84,15 @@ f58fa67 2026-11-07 napatsun refactor(registry): derive ALL_ROLES from the Prisma
 669c680 2026-11-07 napatsun test(db): pin the three _test database-guard copies together with a sync test
 2d11381 2026-11-07 napatsun docs(brand): note that the CB- order-number prefix stays by design (DEC-25)
 b7f1ed8 2026-11-07 krittaphato3 Merge pull request #13 from krittaphato3/feature/sprint1/access-and-e2e-tests
+4d00f27 2026-11-07 krittaphato3 docs(deliverable-1): assemble the Sprint 1 Word deliverable and evidence pack
+9d8e7cb 2026-11-07 krittaphato3 test(e2e): capture the Sprint 1 evidence screenshots at the right moments
+c2352e7 2026-11-07 krittaphato3 docs(deliverable-1): complete the Sprint 1 deliverable with verified evidence
+ccef625 2026-11-07 krittaphato3 docs(deliverable-1): keep the generated Word file out of version control
+4a37e95 2026-11-07 krittaphato3 docs(deliverable-1): ignore the local deliverable working folder
+8315279 2026-11-07 krittaphato3 docs(deliverable-1): correct the evidence pack and keep the Word file out of Git
+afe4961 2026-11-07 krittaphato3 docs(deliverable-1): state that the Word file is submitted outside the repo
+47813f7 2026-11-10 Sun Merge pull request #14 from krittaphato3/feature/sprint1/evidence-readme-pdf
+5fbcb7a 2026-11-10 krittaphato3 docs(sprint-1): correct six doc-vs-code inconsistencies from the Sprint 1 audit
+f5dcf54 2026-11-10 krittaphato3 build(bench): add the NFR-05 autocannon harness
+f5caa04 2026-11-10 krittaphato3 docs(evidence): record the NFR-05 load benchmark baseline
+5c3f984 2026-11-10 Sun Merge pull request #17 from krittaphato3/fix/sprint1/docs-loadbenchmark-fix

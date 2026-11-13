@@ -68,7 +68,7 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: frontend
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: End-to-end tests
         # globalSetup migrates, truncates and re-seeds the test database.

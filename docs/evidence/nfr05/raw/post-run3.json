@@ -9,19 +9,19 @@
     "durationSeconds": 30,
     "connections": 20,
     "requests": {
-      "total": 6672,
-      "averagePerSecond": 222.3
+      "total": 37652,
+      "averagePerSecond": 1255.1
     },
     "latencyMs": {
-      "p50": 61,
-      "p95": 304,
-      "p99": 478,
-      "mean": 89.1,
-      "max": 1045
+      "p50": 11,
+      "p95": 40,
+      "p99": 61,
+      "mean": 15.4,
+      "max": 128
     },
-    "throughputBytesPerSecond": 182974.2,
+    "throughputBytesPerSecond": 1035826.9,
     "statusCodes": {
-      "201": 6672
+      "201": 37652
     },
     "non2xx": 0,
     "fiveHundreds": 0,
@@ -31,12 +31,12 @@
     "resets": 0
   },
   "raw": {
-    "latencies": "HISTFAAAAZh4nDVOwWobQQyV376V1cl4GCbLdNm47nbZboMbXBOMWUIOpoecQ6G59Bv6EYVeeu6t39EPDOO0kkBPek8PrX/+vhTBTkQWIlLLSyxe2of4f17hz7u/F0+pe2yVTYCENVWnDuaiqWWvLkSo+kRrfbbhuI5u2nZ5exz8fr/P3e1xDvvT6XCYv2ymu9Mpnx4f5uv5abre3s3jw3Q/7g6f583mer4/7OfbfrdrpmEs4Hiz7aduyv1Nu+62fpOGfjOmcZND3w1Nm/s25b6Lue9Tm8ahi23b+H4dfIo5W4q+s9B4H1JKwTeNDzE6r9E30bfBHH1wDU19DuZjcLFpVJIDXWrMu+BUjTClRtOgHpYAp87UFHQ0VaU5JyQVgHqqkRYVUKOoUrVQRJGRrI2kGAkSKqqAAGYwlDApjqwAsmgAiELgCSql2AoUZVWKQGVaF4oVsWSNCjVBKexZUgMVpSQEPN+dfz0DQY2yX2KJijUrvgZWeIUlL1GdqYpY4c2/4QorfMPVGV1A8Alf8R1v8R74scBH/FrgGfMlJQY=",
-    "requests": "HISTFAAAAC14nJNpmSzMwMDAzcDAwMjAwMDMAAGMYJLfyQHGX8vMxMrEwiHAxsMFAFYfAto=",
-    "throughput": "HISTFAAAADV4nJNpmSzMwMAgxMDAwMjAwMDMAAEgtrhH2QsGGP90KyOTIRMnCycHtwAnGzcPJxcAm3kFFA==",
-    "totalCompletedRequests": 6672,
-    "totalRequests": 6692,
-    "totalBytes": 5491056,
+    "latencies": "HISTFAAAAMt4nJNpmSzMwMCwjIGBgZGBgYGVAQIYIZS6AJwvMo9rj9AX0QbZTQbXdPap/FO6J3tJ/I7IDOEO4S1CewRm8V/ibeP5wv2J6w/nOs45nB84lrFPYe9ia2N7xfqB5QrLIZYfzJuYlzB/YzrCdI7pFNMmpg+MzxjvMC5gXMO4gHEfYxdjTRdjXVFEjJOXj52WjpWTmY6ChIaMgIyIEo+AmIyIkAAfBxcbDwsHExMHExMbCxsLCxMDBwMLGxMTExMzEzMTCxOTKBMA79svlg==",
+    "requests": "HISTFAAAAEd4nD2JywmAUBAD5826eJIHerUND97E2uzAmuzLHxpIhiTjtg/ABBQgeFWerOvy9aN3tmoahvxGs0lvhvmMpna213kC8TkDrQ==",
+    "throughput": "HISTFAAAAE94nJNpmSzMwMBgxsDAwMjAwMDMAAEgtrhH2QsGGP/1WkamdCZhJmYmViZ+JlYmViZ2JmYQZmGF0GCSgYmdiZ2JhZWFlYmTiYGJCQB5hwYB",
+    "totalCompletedRequests": 37652,
+    "totalRequests": 37672,
+    "totalBytes": 31074806,
     "samples": 30,
     "errors": 0,
     "timeouts": 0,
@@ -44,15 +44,15 @@
     "non2xx": 0,
     "statusCodeStats": {
       "201": {
-        "count": 6672
+        "count": 37652
       }
     },
     "resets": 0,
-    "duration": 30.01,
-    "start": "2026-11-10T06:25:32.486Z",
-    "finish": "2026-11-10T06:26:02.494Z",
+    "duration": 30,
+    "start": "2026-11-11T12:16:29.128Z",
+    "finish": "2026-11-11T12:16:59.130Z",
     "1xx": 0,
-    "2xx": 6672,
+    "2xx": 37652,
     "3xx": 0,
     "4xx": 0,
     "5xx": 0

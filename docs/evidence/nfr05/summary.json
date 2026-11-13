@@ -1,9 +1,9 @@
 {
   "requirement": "NFR-05 / LOAD-01",
-  "testedAt": "2026-11-10T06:27:02.671Z",
+  "testedAt": "2026-11-11T12:17:59.193Z",
   "baseUrl": "http://localhost:3100",
-  "node": "v26.13.0",
-  "platform": "win32 x64",
+  "node": "v24.14.0",
+  "platform": "darwin arm64",
   "autocannon": "9.0.0",
   "configuration": {
     "connections": 20,
@@ -11,7 +11,7 @@
     "runsPerEndpoint": 5,
     "warmupSeconds": 5,
     "perfItem": {
-      "id": 8,
+      "id": 50,
       "name": "Order Test Item (NFR-05)",
       "stockProvisionedPerRun": 5000000
     }
@@ -20,45 +20,45 @@
     "users": 4,
     "menuItems": 8,
     "orders": 500,
-    "orderItems": 500
+    "orderItems": 507
   },
   "rowsAfterRun": {
     "users": 4,
     "menuItems": 8,
-    "orders": 34561,
-    "orderItems": 34562
+    "orders": 194879,
+    "orderItems": 194897
   },
   "perEndpoint": {
     "GET /api/menu": {
       "runs": 5,
       "p95": {
-        "median": 2,
-        "p90": 2,
-        "worst": 2
+        "median": 1,
+        "p90": 1,
+        "worst": 1
       },
       "requestsPerSecond": {
-        "median": 8208.6,
-        "p90": 8335.2
+        "median": 16640.3,
+        "p90": 18032.6
       },
       "fiveHundreds": 0,
       "statusCodes": {
-        "200": 1234512
+        "200": 2543984
       }
     },
     "POST /api/orders": {
       "runs": 5,
       "p95": {
-        "median": 304,
-        "p90": 312.2,
-        "worst": 313
+        "median": 40,
+        "p90": 45,
+        "worst": 47
       },
       "requestsPerSecond": {
-        "median": 221.3,
-        "p90": 222.5
+        "median": 1255.1,
+        "p90": 1341.4
       },
       "fiveHundreds": 0,
       "statusCodes": {
-        "201": 32918
+        "201": 187810
       }
     }
   },
@@ -70,19 +70,19 @@
       "durationSeconds": 30,
       "connections": 20,
       "requests": {
-        "total": 248229,
-        "averagePerSecond": 8274.3
+        "total": 548520,
+        "averagePerSecond": 18284
       },
       "latencyMs": {
-        "p50": 2,
-        "p95": 2,
-        "p99": 4,
-        "mean": 2.1,
-        "max": 7
+        "p50": 1,
+        "p95": 1,
+        "p99": 3,
+        "mean": 0.7,
+        "max": 21
       },
-      "throughputBytesPerSecond": 14471750.7,
+      "throughputBytesPerSecond": 31997000,
       "statusCodes": {
-        "200": 248229
+        "200": 548520
       },
       "non2xx": 0,
       "fiveHundreds": 0,
@@ -97,19 +97,19 @@
       "durationSeconds": 30,
       "connections": 20,
       "requests": {
-        "total": 243393,
-        "averagePerSecond": 8113.1
+        "total": 529662,
+        "averagePerSecond": 17655.4
       },
       "latencyMs": {
-        "p50": 2,
-        "p95": 2,
-        "p99": 4,
-        "mean": 2.1,
-        "max": 6
+        "p50": 1,
+        "p95": 1,
+        "p99": 3,
+        "mean": 0.7,
+        "max": 22
       },
-      "throughputBytesPerSecond": 14189811.9,
+      "throughputBytesPerSecond": 30896950,
       "statusCodes": {
-        "200": 243393
+        "200": 529662
       },
       "non2xx": 0,
       "fiveHundreds": 0,
@@ -124,19 +124,19 @@
       "durationSeconds": 30,
       "connections": 20,
       "requests": {
-        "total": 251275,
-        "averagePerSecond": 8375.8
+        "total": 497534,
+        "averagePerSecond": 16578.9
       },
       "latencyMs": {
-        "p50": 2,
-        "p95": 2,
-        "p99": 4,
-        "mean": 1.9,
-        "max": 7
+        "p50": 1,
+        "p95": 1,
+        "p99": 3,
+        "mean": 0.8,
+        "max": 19
       },
-      "throughputBytesPerSecond": 14649332.5,
+      "throughputBytesPerSecond": 29013145.6,
       "statusCodes": {
-        "200": 251275
+        "200": 497534
       },
       "non2xx": 0,
       "fiveHundreds": 0,
@@ -151,19 +151,19 @@
       "durationSeconds": 30,
       "connections": 20,
       "requests": {
-        "total": 245356,
-        "averagePerSecond": 8178.5
+        "total": 499210,
+        "averagePerSecond": 16640.3
       },
       "latencyMs": {
-        "p50": 2,
-        "p95": 2,
-        "p99": 5,
-        "mean": 2.1,
-        "max": 6
+        "p50": 1,
+        "p95": 1,
+        "p99": 3,
+        "mean": 0.9,
+        "max": 16
       },
-      "throughputBytesPerSecond": 14304254.8,
+      "throughputBytesPerSecond": 29120583.3,
       "statusCodes": {
-        "200": 245356
+        "200": 499210
       },
       "non2xx": 0,
       "fiveHundreds": 0,
@@ -178,19 +178,19 @@
       "durationSeconds": 30,
       "connections": 20,
       "requests": {
-        "total": 246259,
-        "averagePerSecond": 8208.6
+        "total": 469058,
+        "averagePerSecond": 15729.6
       },
       "latencyMs": {
-        "p50": 2,
-        "p95": 2,
-        "p99": 5,
-        "mean": 2.1,
-        "max": 6
+        "p50": 1,
+        "p95": 1,
+        "p99": 4,
+        "mean": 0.9,
+        "max": 51
       },
-      "throughputBytesPerSecond": 14356899.7,
+      "throughputBytesPerSecond": 27526877.9,
       "statusCodes": {
-        "200": 246259
+        "200": 469058
       },
       "non2xx": 0,
       "fiveHundreds": 0,
@@ -205,19 +205,19 @@
       "durationSeconds": 30,
       "connections": 20,
       "requests": {
-        "total": 6362,
-        "averagePerSecond": 212
+        "total": 41070,
+        "averagePerSecond": 1368.5
       },
       "latencyMs": {
-        "p50": 59,
-        "p95": 313,
-        "p99": 503,
-        "mean": 93.2,
-        "max": 1286
+        "p50": 10,
+        "p95": 37,
+        "p99": 56,
+        "mean": 14.1,
+        "max": 123
       },
-      "throughputBytesPerSecond": 174048.7,
+      "throughputBytesPerSecond": 1127479,
       "statusCodes": {
-        "201": 6362
+        "201": 41070
       },
       "non2xx": 0,
       "fiveHundreds": 0,
@@ -232,19 +232,19 @@
       "durationSeconds": 30,
       "connections": 20,
       "requests": {
-        "total": 6565,
-        "averagePerSecond": 218.8
+        "total": 39035,
+        "averagePerSecond": 1300.7
       },
       "latencyMs": {
-        "p50": 59,
-        "p95": 300,
-        "p99": 492,
-        "mean": 90.5,
-        "max": 863
+        "p50": 11,
+        "p95": 39,
+        "p99": 60,
+        "mean": 14.9,
+        "max": 205
       },
-      "throughputBytesPerSecond": 179902.7,
+      "throughputBytesPerSecond": 1071804.1,
       "statusCodes": {
-        "201": 6565
+        "201": 39035
       },
       "non2xx": 0,
       "fiveHundreds": 0,
@@ -259,19 +259,19 @@
       "durationSeconds": 30,
       "connections": 20,
       "requests": {
-        "total": 6672,
-        "averagePerSecond": 222.3
+        "total": 37652,
+        "averagePerSecond": 1255.1
       },
       "latencyMs": {
-        "p50": 61,
-        "p95": 304,
-        "p99": 478,
-        "mean": 89.1,
-        "max": 1045
+        "p50": 11,
+        "p95": 40,
+        "p99": 61,
+        "mean": 15.4,
+        "max": 128
       },
-      "throughputBytesPerSecond": 182974.2,
+      "throughputBytesPerSecond": 1035826.9,
       "statusCodes": {
-        "201": 6672
+        "201": 37652
       },
       "non2xx": 0,
       "fiveHundreds": 0,
@@ -286,19 +286,19 @@
       "durationSeconds": 30,
       "connections": 20,
       "requests": {
-        "total": 6640,
-        "averagePerSecond": 221.3
+        "total": 36295,
+        "averagePerSecond": 1209.8
       },
       "latencyMs": {
-        "p50": 68,
-        "p95": 292,
-        "p99": 460,
-        "mean": 89.6,
-        "max": 1117
+        "p50": 12,
+        "p95": 42,
+        "p99": 64,
+        "mean": 16,
+        "max": 199
       },
-      "throughputBytesPerSecond": 182096.6,
+      "throughputBytesPerSecond": 999322.3,
       "statusCodes": {
-        "201": 6640
+        "201": 36295
       },
       "non2xx": 0,
       "fiveHundreds": 0,
@@ -313,19 +313,19 @@
       "durationSeconds": 30,
       "connections": 20,
       "requests": {
-        "total": 6679,
-        "averagePerSecond": 222.6
+        "total": 33758,
+        "averagePerSecond": 1125.3
       },
       "latencyMs": {
-        "p50": 30,
-        "p95": 311,
-        "p99": 493,
-        "mean": 89,
-        "max": 913
+        "p50": 13,
+        "p95": 47,
+        "p99": 72,
+        "mean": 17.3,
+        "max": 204
       },
-      "throughputBytesPerSecond": 183166.2,
+      "throughputBytesPerSecond": 929470.3,
       "statusCodes": {
-        "201": 6679
+        "201": 33758
       },
       "non2xx": 0,
       "fiveHundreds": 0,

@@ -1,0 +1,47 @@
+=== reset orders to the 500-order baseline ===
+ERROR:  relation "OrderStatusHistory" does not exist
+=== seed with perf orders (backend workspace direct) ===
+
+> campusbites-backend@1.0.0 db:seed
+> tsx prisma/seed.ts --with-perf-orders
+
+seed_exit=0
+ERROR:  relation "Order" does not exist
+LINE 1: select (select count(*) from "Order") as orders, (select cou...
+                                     ^
+ERROR:  relation "MenuItem" does not exist
+LINE 1: select id,name,"stockQty" from "MenuItem" where name like 'O...
+                                       ^
+=== api health ===
+{"status":"ok","version":"1.0.0"}
+=== bench ===
+
+> campusbites@1.0.0 bench:nfr05
+> npm run bench:nfr05 --workspace=backend
+
+
+> campusbites-backend@1.0.0 bench:nfr05
+> node benchmarks/nfr05-load.js
+
+
+GET /api/menu: warm-up 5s, then 5 x 30s at 20 connections
+  run 1: p50 1 ms | p95 1 ms | p99 3 ms | 18284 req/s | 5xx 0
+  run 2: p50 1 ms | p95 1 ms | p99 3 ms | 17655.4 req/s | 5xx 0
+  run 3: p50 1 ms | p95 1 ms | p99 3 ms | 16578.9 req/s | 5xx 0
+  run 4: p50 1 ms | p95 1 ms | p99 3 ms | 16640.3 req/s | 5xx 0
+  run 5: p50 1 ms | p95 1 ms | p99 4 ms | 15729.6 req/s | 5xx 0
+
+POST /api/orders: warm-up 5s, then 5 x 30s at 20 connections
+  run 1: p50 10 ms | p95 37 ms | p99 56 ms | 1368.5 req/s | 5xx 0
+  run 2: p50 11 ms | p95 39 ms | p99 60 ms | 1300.7 req/s | 5xx 0
+  run 3: p50 11 ms | p95 40 ms | p99 61 ms | 1255.1 req/s | 5xx 0
+  run 4: p50 12 ms | p95 42 ms | p99 64 ms | 1209.8 req/s | 5xx 0
+  run 5: p50 13 ms | p95 47 ms | p99 72 ms | 1125.3 req/s | 5xx 0
+
+=== Run-level summary ===
+GET /api/menu: p95 median 1 ms, p90 1 ms, worst 1 ms, 16640.3 req/s, 5xx 0, statuses {"200":2543984}
+POST /api/orders: p95 median 40 ms, p90 45 ms, worst 47 ms, 1255.1 req/s, 5xx 0, statuses {"201":187810}
+
+Seeded rows before: {"users":4,"menuItems":8,"orders":500,"orderItems":507}
+Verdict: PASS
+=== bench exit=0 ===

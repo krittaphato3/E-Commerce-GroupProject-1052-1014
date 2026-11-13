@@ -1,6 +1,6 @@
 # Omazon — Online Food Ordering Platform
 
-Omazon is an online food ordering platform designed for a university canteen, supporting role-based authentication, real-time menu management, atomic ordering with inventory guarantees, and order fulfillment workflows.
+Omazon is an online food ordering platform designed for a university canteen, supporting role-based authentication, a menu that shows live stock availability, atomic ordering with inventory guarantees, and an operator order-acceptance workflow.
 
 > Order numbers keep the `CB-` prefix by design (along with technical identifiers such as `cb_session` and `@campusbites.test` seed addresses) — see DEC-25 in [`docs/srs.md`](docs/srs.md).
 
@@ -16,7 +16,7 @@ Omazon is an online food ordering platform designed for a university canteen, su
 | **Frontend** | React 18, TypeScript, Vite 6, Bootstrap 5 | Single-page application with role-based routing |
 | **Authentication** | Server-side sessions, `bcryptjs`, httpOnly cookie `cb_session` | 8-hour session lifetime (`SESSION_TTL_HOURS`) |
 | **Validation** | zod | Strict schemas; unknown fields are rejected, not ignored |
-| **Tests** | Vitest, Supertest, Testing Library, Playwright | 46 Sprint 1 tests across unit, integration, UI and E2E levels |
+| **Tests** | Vitest, Supertest, Testing Library, Playwright | 46 Sprint 1 test IDs across unit, integration, UI and E2E levels (85 backend, 36 frontend and 6 Playwright cases at `5c3f984`) |
 | **CI** | GitHub Actions | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs unit, integration and E2E sequentially |
 
 ---
@@ -73,6 +73,8 @@ npm run dev:frontend
 ```
 
 Steps 7 and 8 stay in the foreground; open <http://localhost:5173> and log in with a seeded account below. NFR-08 verifies this sequence on a fresh clone; the seed step is additionally covered by TEST-45.
+
+`backend/.env` arrives with the placeholder passwords `change-me-local`, and those values are fine for local development only. To use your own passwords, edit `SEED_CUSTOMER_PASSWORD` and `SEED_OPERATOR_PASSWORD` in `backend/.env` after step 1 and before step 5; it is an edit, so the sequence stays at eight commands. Anything seeded before you change them must be re-seeded (`npm run db:seed`) to pick up the new value.
 
 ---
 
@@ -133,9 +135,9 @@ Playwright (TEST-09) reads the same two variables from `backend/.env`, so log in
 | **End-to-end** | `npm run e2e` | Playwright journeys: TEST-09, TEST-12, TEST-29, TEST-41, TEST-42, plus the AC-21/AC-30 stale-cart journey |
 | **Type check** | `npm run typecheck` | `tsc --noEmit` across both workspaces |
 | **Production build** | `npm run build` | Backend `tsc` emit and Vite bundle |
-| **Load benchmark** | `npm run bench:nfr05` | NFR-05 / LOAD-01: autocannon against `GET /api/menu` and `POST /api/orders`, 20 connections for 30 s per endpoint, 5 runs each. Needs the built API on port 3100 (`PORT=3100 node dist/server.js`) and the benchmark seed (`npm run db:seed -- --with-perf-orders`, 500 orders plus a high-stock order-test item). Evidence is written to `docs/evidence/nfr05/` |
+| **Load benchmark** | `npm run bench:nfr05` | NFR-05 / LOAD-01: autocannon against `GET /api/menu` and `POST /api/orders`, 20 connections for 30 s per endpoint, 5 runs each. Needs the built API on port 3100 (`PORT=3100 node dist/server.js`) and the benchmark seed (`npm run db:seed --workspace=backend -- --with-perf-orders`, 500 orders plus a high-stock order-test item; the flag must be passed to the backend workspace directly, because the root `db:seed` wrapper does not forward it). Evidence is written to `docs/evidence/nfr05/` |
 
-Test counts from the latest recorded run (`4a37e95`): **85 backend tests in 16 files**, **36 frontend tests in 8 files**, and **6 Playwright journeys** — all passing. The per-feature statements of the 46 traceability tests are in [`docs/traceability.md`](docs/traceability.md), and the raw output is indexed in [`docs/evidence/README.md`](docs/evidence/README.md).
+Test counts from the latest recorded run (`5c3f984`): **85 backend tests in 16 files**, **36 frontend tests in 8 files**, and **6 Playwright journeys** — all passing. The per-feature statements of the 46 traceability tests are in [`docs/traceability.md`](docs/traceability.md), and the raw output is indexed in [`docs/evidence/README.md`](docs/evidence/README.md).
 
 Notes:
 
@@ -194,8 +196,7 @@ Get-NetTCPConnection -LocalPort 3100,5174 |
 │   └── tests/            # Supertest & Vitest integration test suite
 ├── frontend/             # React 18 + TypeScript + Vite + Bootstrap 5 SPA
 │   ├── e2e/              # Playwright journeys and the evidence screenshot helper
-│   ├── src/              # Pages, components, routing
-│   └── tests/            # Component and unit tests
+│   └── src/              # Pages, components, routing, and their unit/component tests (*.test.tsx)
 └── docs/                 # SRS, System SDS, Feature contracts, Traceability matrix
     └── evidence/         # Sprint 1 screenshots, terminal logs and their index
 ```
@@ -226,7 +227,7 @@ Get-NetTCPConnection -LocalPort 3100,5174 |
 | [`docs/traceability.md`](docs/traceability.md) | Requirement → AC → test → result matrix for all 46 Sprint 1 tests |
 | [`docs/evidence/README.md`](docs/evidence/README.md) | Evidence pack index: screenshots, red/green logs, workflow evidence |
 
-The Word deliverable is assembled locally from these Markdown sources and submitted outside this repository; it is **not** part of GitHub. The `docs/deliverable-1/` folder (the assembled `.docx` and the scripts that build it) is Git-ignored on purpose, so the Markdown files above remain the tracked, reviewable record.
+The deliverable document is assembled locally from these Markdown sources and submitted outside this repository; it is **not** part of GitHub. The handout requires the submitted file as a **PDF**, so the assembled document is exported to PDF before submission. The `docs/deliverable-1/` folder (the working `.docx` and the scripts that build it) is Git-ignored on purpose, so the Markdown files above remain the tracked, reviewable record.
 
 ---
 

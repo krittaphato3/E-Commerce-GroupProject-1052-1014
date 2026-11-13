@@ -9,19 +9,19 @@
     "durationSeconds": 30,
     "connections": 20,
     "requests": {
-      "total": 6640,
-      "averagePerSecond": 221.3
+      "total": 36295,
+      "averagePerSecond": 1209.8
     },
     "latencyMs": {
-      "p50": 68,
-      "p95": 292,
-      "p99": 460,
-      "mean": 89.6,
-      "max": 1117
+      "p50": 12,
+      "p95": 42,
+      "p99": 64,
+      "mean": 16,
+      "max": 199
     },
-    "throughputBytesPerSecond": 182096.6,
+    "throughputBytesPerSecond": 999322.3,
     "statusCodes": {
-      "201": 6640
+      "201": 36295
     },
     "non2xx": 0,
     "fiveHundreds": 0,
@@ -31,12 +31,12 @@
     "resets": 0
   },
   "raw": {
-    "latencies": "HISTFAAAAZd4nDWPwYrbMBCGJ7/HE62qKFqtMGpwzeK6rjHpYoIJJoRQlsXk3hfoqU/SU6GnnvsCvfSl+iCtHDowDP83//xC5dcfD0R4S0QrIsrpVqvbeO/+643/8+bXq2+rsvrsNGxkbqIn1Qetdh5ivYaJQaQwAlFaOOxjcJfe2eGxiofL/qkex7rpru3+cJ3n8aU/nk/z8zS9nPv2Op+G8WN/Os5fztNlOj4Nw9QehmvXTs9NVY9dVQ1dXbfjrmvGJuxiG33TFS7E0sayKEIRi+Bd3UTfhmpXGlU0demDV48hlMFZq4wplHM6GOeNKdXOaG8MB+2N9tZZp53TVhlbgJViZhHtjFaitVJBG+2UiFEC0cJiWOlFWMfCOvmZLZOIkfR9EgMQQ1gYKYwhmkWEFZgVABbFkhYCBmdaCAokJIZAQLJQ6uVUiHOGQLIFM1IAC0maGZixTq+BE8mQXBkv13niSyJhmxY5mPMlhZInl0UI4QbzxUXIsOWE1ksY1rgDNlhjiw3ucY/X2OID3uHTP/Id+A38XOEv1FEmZg==",
-    "requests": "HISTFAAAADN4nJNpmSzMwMAgyMDAwMjAwMDMAAGMYJLfyQHGn8/MxMTEzcTAwsTGxcPBxMICAGbtAtg=",
-    "throughput": "HISTFAAAAD94nJNpmSzMwMAgw8DAwMjAwMDMAAEgtrhH2QsGGP9jCyMTJxM3UziTOAsnEycbNxcnDzcHJxM3CycLANf6Bag=",
-    "totalCompletedRequests": 6640,
-    "totalRequests": 6660,
-    "totalBytes": 5464720,
+    "latencies": "HISTFAAAAN14nJNpmSzMwMCwnYGBgZGBgYGVAQIYIZS6AJwv94ZjEf8FkWMyGzRmaP9QmaTYJX1FbJ3oEqETgk1CSwRu8d/j3cP7gHsN9znOXxwHOH6wf2DbwDaL7Q3rCtZTLC9YXrFcY37EPIX5FdMPpitMB5jmML1h7GD6wXiH8QbjLsYZjAsY5zD2MLYxpuUk+ER5hASZ2JjpGSlJacipychpiSgIiHEIcAlx8fHwcYmxCLCxsPAwsPCx8TAxMbFwsDEwMTFwsDAxsLAxMzGzMDAxM7GwM7EyJTJJMgEAo04x6g==",
+    "requests": "HISTFAAAAEh4nDXHsQmAMBQA0cv9xJQKqURXcAA7cS1bN3AY1xMUr3hw83k1YAESEHyl137f/r8HD5uro055ETWsmrHkIobNrhriA+9hBGo=",
+    "throughput": "HISTFAAAAFZ4nJNpmSzMwMBgzMDAwMjAwMDMAAEgtrhH2QsGGP/gKkam44xMikyxTNpMDEy6LN5MzExMDEzsTLxMDEwszEzcLJxMrEysTIpMDGy8TOxMzEwAlDgHPg==",
+    "totalCompletedRequests": 36295,
+    "totalRequests": 36315,
+    "totalBytes": 29979670,
     "samples": 30,
     "errors": 0,
     "timeouts": 0,
@@ -44,15 +44,15 @@
     "non2xx": 0,
     "statusCodeStats": {
       "201": {
-        "count": 6640
+        "count": 36295
       }
     },
     "resets": 0,
-    "duration": 30.01,
-    "start": "2026-11-10T06:26:02.577Z",
-    "finish": "2026-11-10T06:26:32.589Z",
+    "duration": 30,
+    "start": "2026-11-11T12:16:59.148Z",
+    "finish": "2026-11-11T12:17:29.150Z",
     "1xx": 0,
-    "2xx": 6640,
+    "2xx": 36295,
     "3xx": 0,
     "4xx": 0,
     "5xx": 0

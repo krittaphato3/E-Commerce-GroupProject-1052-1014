@@ -9,19 +9,19 @@
     "durationSeconds": 30,
     "connections": 20,
     "requests": {
-      "total": 251275,
-      "averagePerSecond": 8375.8
+      "total": 497534,
+      "averagePerSecond": 16578.9
     },
     "latencyMs": {
-      "p50": 2,
-      "p95": 2,
-      "p99": 4,
-      "mean": 1.9,
-      "max": 7
+      "p50": 1,
+      "p95": 1,
+      "p99": 3,
+      "mean": 0.8,
+      "max": 19
     },
-    "throughputBytesPerSecond": 14649332.5,
+    "throughputBytesPerSecond": 29013145.6,
     "statusCodes": {
-      "200": 251275
+      "200": 497534
     },
     "non2xx": 0,
     "fiveHundreds": 0,
@@ -31,12 +31,12 @@
     "resets": 0
   },
   "raw": {
-    "latencies": "HISTFAAAADF4nJNpmSzMwMAgwMDAwMjAwMDKAAGMEEpdAM6f8pBl2SaJGR4HQn8pdzAyAQCK0wgc",
-    "requests": "HISTFAAAAFF4nDWHsQmAQADE7nOKfCXPFyK6goWNnSCu4QAu4gZO4DwuJSgGEkh/nFnSJClIsj7C23pd/r9mMjstI6IjgTGxMCUJQ8WrYOA2kY2GBx+oBc0=",
-    "throughput": "HISTFAAAAFN4nDWHwQmAMBTFXvN/EU9FpHhxARdwBi8dwEWcwA1cskuIomIOIRn3o5c0SwqSTB9PD8tW9f9ZA4mVzITIdG4Y8XXCvMFbREQULqehkLkBnlcIHw==",
-    "totalCompletedRequests": 251275,
-    "totalRequests": 251295,
-    "totalBytes": 439479975,
+    "latencies": "HISTFAAAAEF4nJNpmSzMwMAgz8DAwMjAwMDKAAGMEEpdAMZftpJvxVydPenz6p8pXmLZxfyP8R5jWJECg5CUgIGIDBMASQcMsQ==",
+    "requests": "HISTFAAAAFB4nDXHMQqAMBAF0b+zCUGCBLHVOkewFUuvpZ2lZ7LyUoLiFA9m2M9e0iTJJLm+7LUs8//3ygaHcRktI5mGQiKGRCbiASeCIwAhKh0PXMwF8w==",
+    "throughput": "HISTFAAAAFZ4nDWHwQmAMBTFXtOW8vFQREQEwTmcQCfSBdzAIRxKvDuBZxExh5B061ZJGiQ5SV4fbzfTfOn/43acjoXdUdCSMDIlFjI1hoVXiEQERMQz0vMA72AIbQ==",
+    "totalCompletedRequests": 497534,
+    "totalRequests": 497554,
+    "totalBytes": 870684500,
     "samples": 30,
     "errors": 0,
     "timeouts": 0,
@@ -44,15 +44,15 @@
     "non2xx": 0,
     "statusCodeStats": {
       "200": {
-        "count": 251275
+        "count": 497534
       }
     },
     "resets": 0,
-    "duration": 30,
-    "start": "2026-11-10T06:22:57.226Z",
-    "finish": "2026-11-10T06:23:27.228Z",
+    "duration": 30.01,
+    "start": "2026-11-11T12:13:54.251Z",
+    "finish": "2026-11-11T12:14:24.256Z",
     "1xx": 0,
-    "2xx": 251275,
+    "2xx": 497534,
     "3xx": 0,
     "4xx": 0,
     "5xx": 0

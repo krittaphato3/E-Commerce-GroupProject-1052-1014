@@ -1,0 +1,350 @@
+﻿NFR-08 / TEST-45 - fresh-clone quickstart check (manual part)
+======================================================================
+Requirement : NFR-08 (reproducibility), AC-45, TEST-45 manual part
+Commit      : 0b2f7d52bf020b3e860ac41641703968cf9f8936 (fix/sprint1/evidence-refresh)
+Date        : 2026-11-12
+Machine     : Windows, Node.js v26.13.0, Docker 29.9.2, postgres:16-alpine
+Method      : git clone of the branch into an empty directory, then the eight
+              README quickstart commands in order, with no local state reused.
+              npm install was executed once in the run; the recorded transcript
+              re-ran it to capture the output and reported 'up to date'.
+Result      : PASS - migrations applied, seed exit 0, backend 85/85 passed,
+              frontend 36/36 passed, API health 200, SPA login page 200.
+Screenshot  : NFR-08-fresh-clone-0b2f7d5.png (login page of the cloned app)
+Note        : ANSI colour escapes and PowerShell native-command wrapper records
+              are removed; the command output is otherwise unchanged.
+
+=== STEP 0: fresh clone ===
+git clone --branch fix/sprint1/evidence-refresh --single-branch <repo> nfr08-clone
+HEAD = 0b2f7d52bf020b3e860ac41641703968cf9f8936
+
+=== STEP 2: docker compose up -d ===
+ 
+ Container campusbites-postgres Created 
+ Container campusbites-postgres Starting 
+ Container campusbites-postgres Started 
+exit=0
+
+
+=== STEP 3: npm install ===
+
+up to date, audited 348 packages in 1s
+
+78 packages are looking for funding
+  run `npm fund` for details
+
+9 vulnerabilities (3 moderate, 4 high, 2 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+npm warn install-scripts 5 packages have install scripts not yet covered by allowScripts:
+npm warn install-scripts   @prisma/client@6.19.3 (postinstall: node scripts/postinstall.js)
+npm warn install-scripts   @prisma/engines@6.19.3 (postinstall: node scripts/postinstall.js)
+npm warn install-scripts   esbuild@0.28.2 (postinstall: node install.js)
+npm warn install-scripts   prisma@6.19.3 (preinstall: node scripts/preinstall-entry.js)
+npm warn install-scripts   esbuild@0.25.12 (postinstall: node install.js)
+npm warn install-scripts
+npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+exit=0
+
+=== STEP 4: npm run db:migrate ===
+
+> campusbites@1.0.0 db:migrate
+> npm run db:migrate --workspace=backend
+
+
+> campusbites-backend@1.0.0 db:migrate
+> prisma migrate deploy
+
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to 
+a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "campusbites", schema "public" at "localhost:5432"
+
+2 migrations found in prisma/migrations
+
+Applying migration `20261105161538_0001_init`
+Applying migration `20261106090000_0002_index_hygiene`
+
+The following migration(s) have been applied:
+
+migrations/
+  ΓööΓöÇ 20261105161538_0001_init/
+    ΓööΓöÇ migration.sql
+  ΓööΓöÇ 20261106090000_0002_index_hygiene/
+    ΓööΓöÇ migration.sql
+      
+All migrations have been successfully applied.
+exit=0
+
+=== STEP 5: npm run db:seed ===
+
+> campusbites@1.0.0 db:seed
+> npm run db:seed --workspace=backend
+
+
+> campusbites-backend@1.0.0 db:seed
+> tsx prisma/seed.ts
+
+exit=0
+
+=== STEP 6: npm test ===
+
+> campusbites@1.0.0 test
+> npm run test --workspaces
+
+
+> campusbites-backend@1.0.0 pretest
+> npm run db:migrate:test
+
+
+> campusbites-backend@1.0.0 db:migrate:test
+> tsx scripts/migrate-test-db.ts
+
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to 
+a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "campusbites_test", schema "public" at "localhost:5432"
+
+2 migrations found in prisma/migrations
+
+Applying migration `20261105161538_0001_init`
+Applying migration `20261106090000_0002_index_hygiene`
+
+The following migration(s) have been applied:
+
+migrations/
+  ΓööΓöÇ 20261105161538_0001_init/
+    ΓööΓöÇ migration.sql
+  ΓööΓöÇ 20261106090000_0002_index_hygiene/
+    ΓööΓöÇ migration.sql
+      
+All migrations have been successfully applied.
+
+> campusbites-backend@1.0.0 test
+> vitest run
+
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/Oz/AppData/Local/Temp/opencode/nfr08-clone/backend[39m
+
+ [32mΓ£ô[39m tests/auth.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 840[2mms[22m[39m
+ [32mΓ£ô[39m tests/orders.create.test.ts [2m([22m[2m12 tests[22m[2m)[22m[33m 988[2mms[22m[39m
+ [32mΓ£ô[39m tests/orders.operator.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 851[2mms[22m[39m
+ [32mΓ£ô[39m tests/routes.access.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 239[2mms[22m[39m
+ [32mΓ£ô[39m tests/orders.access.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 280[2mms[22m[39m
+ [32mΓ£ô[39m tests/constraints.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 311[2mms[22m[39m
+ [32mΓ£ô[39m tests/error.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32mΓ£ô[39m tests/menu.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 246[2mms[22m[39m
+ [32mΓ£ô[39m src/services/orderRules.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m tests/testDbGuardSync.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m tests/seed.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 92[2mms[22m[39m
+ [32mΓ£ô[39m src/services/orderStateMachine.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m tests/env.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m src/services/menuRules.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 1[2mms[22m[39m
+ [32mΓ£ô[39m src/services/password.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32mΓ£ô[39m tests/health.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 15[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m16 passed[39m[22m[90m (16)[39m
+[2m      Tests [22m [1m[32m85 passed[39m[22m[90m (85)[39m
+[2m   Start at [22m 14:17:09
+[2m   Duration [22m 6.95s[2m (transform 146ms, setup 82ms, collect 1.22s, tests 3.92s, environment 1ms, prepare 601ms)[22m
+
+
+> campusbites-frontend@1.0.0 test
+> vitest run
+
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/Oz/AppData/Local/Temp/opencode/nfr08-clone/frontend[39m
+
+ [32mΓ£ô[39m src/auth/roles.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m src/auth/AuthContext.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+[90mstderr[2m | src/components/ProtectedRoute.test.tsx[2m > [22m[2mProtectedRoute[2m > [22m[2mrenders loading 
+indicator when auth is loading
+[22m[39mWarning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server 
+renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To 
+avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See 
+https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at MemoryRouter (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-route
+r.development.js:1097:7)
+
+[90mstderr[2m | src/components/ProtectedRoute.test.tsx[2m > [22m[2mProtectedRoute[2m > [22m[2mrenders error 
+alert instead of redirecting when auth check fails with error
+[22m[39mWarning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server 
+renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To 
+avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See 
+https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at MemoryRouter (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-route
+r.development.js:1097:7)
+
+[90mstderr[2m | src/components/ProtectedRoute.test.tsx[2m > [22m[2mProtectedRoute[2m > [22m[2mredirects to 
+/login when unauthenticated without error
+[22m[39mWarning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server 
+renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To 
+avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See 
+https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at MemoryRouter (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-route
+r.development.js:1097:7)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's 
+output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, 
+useLayoutEffect should only be used in components that render exclusively on the client. See 
+https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at Navigate (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-router.de
+velopment.js:1144:7)
+    at div
+    at Inspector
+    at Router (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-router.deve
+lopment.js:1203:17)
+    at MemoryRouter (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-route
+r.development.js:1097:7)
+
+[90mstderr[2m | src/components/ProtectedRoute.test.tsx[2m > [22m[2mProtectedRoute[2m > [22m[2mrenders 
+protected content when user has allowed role
+[22m[39mWarning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server 
+renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To 
+avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See 
+https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at MemoryRouter (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-route
+r.development.js:1097:7)
+
+[90mstderr[2m | src/components/ProtectedRoute.test.tsx[2m > [22m[2mProtectedRoute[2m > [22m[2mrenders in-place 
+403 forbidden message and does not Navigate when user role is not allowed (current path != destination)
+[22m[39mWarning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server 
+renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To 
+avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See 
+https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at MemoryRouter (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-route
+r.development.js:1097:7)
+
+[90mstderr[2m | src/components/ProtectedRoute.test.tsx[2m > [22m[2mProtectedRoute[2m > [22m[2mrenders in-place 
+403 forbidden message and does not Navigate when user role is not allowed (current path == destination)
+[22m[39mWarning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server 
+renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To 
+avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See 
+https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at MemoryRouter (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-route
+r.development.js:1097:7)
+
+ [32mΓ£ô[39m src/components/ProtectedRoute.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+[90mstderr[2m | src/App.test.tsx[2m > [22m[2mFrontend app shell[2m > [22m[2mrenders the Omazon header and the 
+login form
+[22m[39mWarning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server 
+renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To 
+avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See 
+https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at MemoryRouter (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-route
+r.development.js:1097:7)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's 
+output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, 
+useLayoutEffect should only be used in components that render exclusively on the client. See 
+https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at Header (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\frontend\src\components\Header.tsx:50:61)
+    at AppShell
+    at AuthProvider (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\frontend\src\auth\AuthContext.tsx:23:25)
+    at Router (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-router.deve
+lopment.js:1203:17)
+    at MemoryRouter (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-route
+r.development.js:1097:7)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's 
+output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, 
+useLayoutEffect should only be used in components that render exclusively on the client. See 
+https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at LinkWithRef (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router-dom\dist\umd\react-ro
+uter-dom.development.js:807:9)
+    at div
+    at header
+    at Header (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\frontend\src\components\Header.tsx:50:61)
+    at AppShell
+    at AuthProvider (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\frontend\src\auth\AuthContext.tsx:23:25)
+    at Router (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-router.deve
+lopment.js:1203:17)
+    at MemoryRouter (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-route
+r.development.js:1097:7)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's 
+output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, 
+useLayoutEffect should only be used in components that render exclusively on the client. See 
+https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at Login (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\frontend\src\pages\Login.tsx:28:60)
+    at RenderedRoute (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-rout
+er.development.js:535:7)
+    at Routes (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-router.deve
+lopment.js:1269:7)
+    at main
+    at AppShell
+    at AuthProvider (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\frontend\src\auth\AuthContext.tsx:23:25)
+    at Router (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-router.deve
+lopment.js:1203:17)
+    at MemoryRouter (C:\Users\Oz\AppData\Local\Temp\opencode\nfr08-clone\node_modules\react-router\dist\umd\react-route
+r.development.js:1097:7)
+
+ [32mΓ£ô[39m src/App.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 10[2mms[22m[39m
+[90mstderr[2m | src/pages/MyOrders.test.tsx[2m > [22m[2mMy orders screen (AC-31)[2m > [22m[2mTEST-31: shows a 
+loading state while the request is pending
+[22m[39mΓÜá∩╕Å React Router Future Flag Warning: React Router will begin wrapping state updates in 
+`React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, 
+see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+ΓÜá∩╕Å React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use 
+the `v7_relativeSplatPath` future flag to opt-in early. For more information, see 
+https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+[90mstderr[2m | src/pages/OperatorOrders.test.tsx[2m > [22m[2mOperatorOrders screen (AC-32, AC-33, AC-34, AC-35, 
+AC-41)[2m > [22m[2mshows Loading ordersΓÇª while the request is pending
+[22m[39mΓÜá∩╕Å React Router Future Flag Warning: React Router will begin wrapping state updates in 
+`React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, 
+see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+ΓÜá∩╕Å React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use 
+the `v7_relativeSplatPath` future flag to opt-in early. For more information, see 
+https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+[90mstderr[2m | src/pages/Menu.test.tsx[2m > [22m[2mF-02 Menu screen (AC-12, AC-13)[2m > [22m[2mTEST-13: shows 
+the loading message while the menu request is pending
+[22m[39mΓÜá∩╕Å React Router Future Flag Warning: React Router will begin wrapping state updates in 
+`React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, 
+see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+ΓÜá∩╕Å React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use 
+the `v7_relativeSplatPath` future flag to opt-in early. For more information, see 
+https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+[90mstderr[2m | src/pages/OrderDetail.test.tsx[2m > [22m[2mOrderDetail screen (Follow-ups 1 & 2, AC-27, 
+AC-39)[2m > [22m[2mdisplays the server-provided error message when fetchOrder rejects with 403 ApiRequestError
+[22m[39mΓÜá∩╕Å React Router Future Flag Warning: React Router will begin wrapping state updates in 
+`React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, 
+see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+ΓÜá∩╕Å React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use 
+the `v7_relativeSplatPath` future flag to opt-in early. For more information, see 
+https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ [32mΓ£ô[39m src/pages/MyOrders.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 74[2mms[22m[39m
+ [32mΓ£ô[39m src/pages/OrderDetail.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 81[2mms[22m[39m
+ [32mΓ£ô[39m src/pages/OperatorOrders.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[32m 125[2mms[22m[39m
+ [32mΓ£ô[39m src/pages/Menu.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[32m 124[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m8 passed[39m[22m[90m (8)[39m
+[2m      Tests [22m [1m[32m36 passed[39m[22m[90m (36)[39m
+[2m   Start at [22m 14:17:16
+[2m   Duration [22m 972ms[2m (transform 295ms, setup 0ms, collect 895ms, tests 432ms, environment 1.66s, prepare 779ms)[22m
+
+exit=0
+
+=== STEPS 0-6 COMPLETE ===
+
+
+=== STEP 7: npm run dev:backend ===
+GET http://localhost:3000/api/health -> 200 {"status":"ok","version":"1.0.0"}
+
+=== STEP 8: npm run dev:frontend ===
+GET http://localhost:5173 -> 200
+Playwright (Edge channel) captured NFR-08-fresh-clone-0b2f7d5.png from http://localhost:5173/login
+
+Command count: 8 (cp .env, docker compose up -d, npm install, db:migrate,
+db:seed, npm test, dev:backend, dev:frontend) - within the NFR-08 limit.

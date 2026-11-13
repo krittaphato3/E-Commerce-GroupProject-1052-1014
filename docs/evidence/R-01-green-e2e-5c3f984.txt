@@ -1,0 +1,42 @@
+Omazon - R-01 Sprint 1 Playwright journeys (green)
+Tested commit: 5c3f984
+Date: 2026-11-11
+Command: npm run e2e
+Exit code: 0
+Result: 6 Playwright journeys passed (6 tests, 1 worker, freshly reset campusbites_test).
+
+
+> campusbites@1.0.0 e2e
+> npm run e2e --workspace=frontend
+
+
+> campusbites-frontend@1.0.0 e2e
+> playwright test
+
+
+> campusbites-backend@1.0.0 db:reset:test
+> tsx scripts/reset-test-db.ts
+
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "campusbites_test", schema "public" at "localhost:5432"
+
+2 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+[E2E] Test database reset and seeded.
+
+Running 6 tests using 1 worker
+
+  ✓  1 [chromium] › e2e/auth.spec.ts:16:1 › TEST-09: customer and operator login, logout and invalid credentials (775ms)
+  ✓  2 [chromium] › e2e/menu.spec.ts:12:1 › TEST-12: anonymous menu shows formatted prices and sold-out items (145ms)
+  ✓  3 [chromium] › e2e/operator.spec.ts:16:1 › TEST-41: an operator accepts a pending order and the customer sees Accepted and history (2.0s)
+  ✓  4 [chromium] › e2e/operator.spec.ts:116:1 › TEST-42: a customer navigating to /operator/orders sees in-place 403 Forbidden (330ms)
+  ✓  5 [chromium] › e2e/order.spec.ts:14:1 › TEST-29: a customer places an order and sees the saved total (542ms)
+  ✓  6 [chromium] › e2e/order.spec.ts:86:1 › AC-21 / AC-30: a stale cart gets 409 ITEM_UNAVAILABLE and keeps both lines (462ms)
+
+  6 passed (8.0s)
