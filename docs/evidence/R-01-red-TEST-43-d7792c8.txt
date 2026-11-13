@@ -1,0 +1,63 @@
+Omazon — R-01 (AC-43 / TEST-43) TDD red run
+Commit: d7792c8
+Date: 2026-11-07
+Command: npx vitest run tests/routes.access.test.ts (in backend/)
+Exit code: 1
+Result: fails on Vitest assertions (registry stub returns empty lists), not on module resolution or type errors.
+Database: TEST_DATABASE_URL (campusbites_test) on localhost:5432
+
+
+ RUN  v3.2.7 /Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/backend
+
+ ❯ tests/routes.access.test.ts (2 tests | 2 failed) 144ms
+   × R-01 route access control and registry completeness (AC-43) > TEST-43: every protected route answers 401 anonymously and 403 for each non-allowed role without private data 107ms
+     → the registry must list the six protected Sprint 1 routes: expected +0 to be 6 // Object.is equality
+   × R-01 route access control and registry completeness (AC-43) > TEST-43: the registry and the mounted Express routes are in exact agreement 37ms
+     → four public routes: expected +0 to be 4 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes.access.test.ts > R-01 route access control and registry completeness (AC-43) > TEST-43: every protected route answers 401 anonymously and 403 for each non-allowed role without private data
+AssertionError: the registry must list the six protected Sprint 1 routes: expected +0 to be 6 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 6[39m
+[31m+ 0[39m
+
+ ❯ tests/routes.access.test.ts:112:7
+    110|       protectedRoutes.length,
+    111|       "the registry must list the six protected Sprint 1 routes"
+    112|     ).toBe(6);
+       |       ^
+    113| 
+    114|     const cookies: Record<Role, string> = {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/routes.access.test.ts > R-01 route access control and registry completeness (AC-43) > TEST-43: the registry and the mounted Express routes are in exact agreement
+AssertionError: four public routes: expected +0 to be 4 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 4[39m
+[31m+ 0[39m
+
+ ❯ tests/routes.access.test.ts:198:55
+    196|     const mounted = extractExpressRoutes(app).map(formatRoute).sort();
+    197| 
+    198|     expect(publicRoutes.length, "four public routes").toBe(4);
+       |                                                       ^
+    199|     expect(protectedRoutes.length, "six protected routes").toBe(6);
+    200|     expect(mounted).toHaveLength(10);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  17:55:16
+   Duration  473ms (transform 61ms, setup 12ms, collect 208ms, tests 144ms, environment 0ms, prepare 34ms)
+

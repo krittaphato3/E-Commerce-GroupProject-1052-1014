@@ -1,0 +1,20 @@
+# F-01 evidence — typecheck at commit 097da41
+
+Commit: 097da41
+Date: 2026-11-06
+Exit status: 0
+
+--- raw output -------------------------------------------------------------
+
+
+> campusbites@1.0.0 typecheck
+> npm run typecheck --workspaces
+
+
+> campusbites-backend@1.0.0 typecheck
+> tsc --noEmit
+
+
+> campusbites-frontend@1.0.0 typecheck
+> tsc --noEmit
+

@@ -1,0 +1,98 @@
+# Sprint 1 commit history — sprint-1-staging
+
+Branch: sprint-1-staging
+HEAD at capture: 5c3f984
+Captured: 2026-11-11
+Command: git log --reverse --date=short --pretty=format:'%h %ad %an %s' sprint-1-staging
+
+This is the reviewer-facing view of the contracts-before-implementation order required by
+docs/sprints/sprint-1/features.md section 5. Commit subjects are reproduced verbatim.
+
+--- commit list -----------------------------------------------------------
+
+36749b8 2026-10-31 krittaphato3 Initial commit
+f1cf242 2026-11-05 napatsun docs: sprint 1 baseline, post-audit fixes, resolve Q-03/Q-04
+a8e48db 2026-11-05 napatsun docs(srs): clarify cancellation boundary rules and out-of-band exclusions
+addbc0e 2026-11-05 krittaphato3 Merge pull request #8 from krittaphato3/feature/sprint1/spec-docs-setup
+c215549 2026-11-05 krittaphato3 feat(scaffold): initialize project scaffold, database schema and seed data (#2)
+ab28061 2026-11-06 krittaphato3 fix(scaffold): address PR #9 review findings
+60b5e57 2026-11-06 Sun Merge pull request #9 from krittaphato3/feature/sprint1/scaffold-db-seed
+e78cb7f 2026-11-06 napatsun chore(auth): wire tests to the test database and remove seed password literals
+8398fe2 2026-11-06 napatsun test(F-01): failing tests for AC-01 to AC-08 (red)
+05a4f08 2026-11-06 napatsun test(F-01): seed the TEST-06 session directly so red lands on logout
+f222daa 2026-11-06 napatsun feat(F-01): implement login, logout and current user (green)
+097da41 2026-11-06 napatsun feat(F-01): add login, logout and route-guard UI (AC-09)
+0c3e82e 2026-11-06 napatsun docs(F-01): record traceability, decisions and red/green evidence
+9587c12 2026-11-06 napatsun test(F-01): add failing regression test for lazy BCRYPT_ROUNDS dummy hash (red)
+bb0acb4 2026-11-06 napatsun fix(F-01): lazily hash the unknown-email dummy password with env.BCRYPT_ROUNDS (green)
+f45ba47 2026-11-06 napatsun test(F-01): add requireRole middleware tests for 401, 403 and 200
+eff7034 2026-11-06 napatsun test(F-01): add failing test that GET /api/auth/me strips extra user fields (red)
+2022899 2026-11-06 napatsun fix(F-01): pick only public user fields in authController.me (green)
+a7daacb 2026-11-06 napatsun test(config): replace SESSION_SECRET tests with opaque-session parseEnv tests (red)
+0074cb3 2026-11-06 napatsun fix(config): remove unused SESSION_SECRET from env schema and .env.example (green)
+ad00bd2 2026-11-06 napatsun test(F-01): add failing tests for expired-session deletion on lookup and startup sweep (red)
+6e68bee 2026-11-06 napatsun fix(F-01): delete expired sessions on lookup and at server startup (green)
+9ecb718 2026-11-06 napatsun test(F-01): add failing 72-byte and multibyte password validation tests (red)
+83f0337 2026-11-06 napatsun fix(F-01): cap login password validation at 72 UTF-8 bytes (green)
+9ec70cb 2026-11-06 napatsun test(F-01): capture retroactive TEST-09 red run against 60b5e57
+84fb684 2026-11-06 napatsun chore(config): require Node.js >=20.12 in package.json and README
+9de7923 2026-11-06 napatsun test(R-02): add literal TEST-44 cases for malformed login JSON and db password leak error
+2289f3c 2026-11-06 napatsun docs(F-01): record PR #10 review decisions DEC-17 to DEC-21 and traceability updates
+1ea658b 2026-11-06 napatsun refactor(seed): reuse hashPassword and env.BCRYPT_ROUNDS in seed.ts
+cb48105 2026-11-06 napatsun refactor(types): unify user types to single exported PublicUser and clean up unused exports
+3df5841 2026-11-06 napatsun refactor(tests): reuse prisma client from src/db/prisma.js in testDb helper
+ae81d13 2026-11-06 napatsun test(frontend): add failing tests for AuthContext error surfacing and ProtectedRoute loop guard
+8e1f7dc 2026-11-06 napatsun feat(frontend): exhaustive role switch, loop guard in ProtectedRoute, and error surfacing in AuthContext
+8d2689d 2026-11-06 napatsun refactor(auth): extract SESSION_TTL_MS constant and use findUnique for tokenHash lookup
+07a67ff 2026-11-06 napatsun docs(readme): add note that CLIENT_ORIGIN must match SPA origin in deployment
+a1fba94 2026-11-06 napatsun test(frontend): add failing test for in-place 403 Forbidden on ProtectedRoute loop guard
+235ced2 2026-11-06 napatsun fix(frontend): render in-place 403 Forbidden on ProtectedRoute loop guard instead of Navigate
+665bf42 2026-11-06 napatsun docs(F-01): record DEC-22 seed rounds default
+31cca16 2026-11-06 napatsun test(frontend): add failing test for in-place 403 Forbidden without Navigate on disallowed role
+d7ec1c2 2026-11-06 napatsun fix(frontend): render in-place 403 Forbidden without Navigate on disallowed role
+9e1a0ab 2026-11-06 krittaphato3 Merge pull request #10 from krittaphato3/feature/sprint1/auth-login-logout
+140c030 2026-11-06 krittaphato3 test(F-02,F-03): failing tests for menu and order placement (red)
+0f3c649 2026-11-06 krittaphato3 feat(F-02,F-03): menu browsing and atomic order placement
+d3c8b90 2026-11-06 krittaphato3 docs(F-02,F-03): record contract revision and traceability results
+9495000 2026-11-07 Sun Merge pull request #11 from krittaphato3/feature/sprint1/menu-and-place-order
+c04ca45 2026-11-07 napatsun test(F-04): failing tests for operator order list, accept order, and follow-ups (red)
+6d1d2f7 2026-11-07 napatsun feat(F-04): operator order list, accept order, and Location header (green)
+984ddb9 2026-11-07 napatsun feat(F-04): operator orders UI, role-aware links, and stock cap (green)
+11f575e 2026-11-07 napatsun docs(F-04): record contract revision, test evidence, and traceability results
+a614473 2026-11-07 napatsun test(F-04): add failing tests for 409 handled message, tab switch race, and menu stock edge cases (red)
+c680623 2026-11-07 napatsun fix(F-04): show already-handled message on 409 and reconcile list on filter switch (green)
+8fe7793 2026-11-07 napatsun test(F-04): strengthen TEST-40 with synchronization barrier and exact history assertions
+162b413 2026-11-07 napatsun fix(F-04): import missing types in OperatorOrders.test.tsx
+845444b 2026-11-07 napatsun docs(F-04): record review fixes contract clarification, test evidence, and traceability updates
+37cf31f 2026-11-07 napatsun test(F-04): set TEST-40 iterations to 10 with barrier synchronization
+01d5bb8 2026-11-07 napatsun docs(F-04): reconcile system SDS route guard, update traceability for red/green commits, and refresh TEST-40 10-run evidence
+e68fcd7 2026-11-07 napatsun update .gitignore (add graphify-out/)
+30b0f12 2026-11-07 krittaphato3 Merge pull request #12 from krittaphato3/feature/sprint1/operator-accept-order
+d7792c8 2026-11-07 napatsun test(R-01): add failing route access-control and registry completeness tests (TEST-43)
+8f42cbd 2026-11-07 napatsun feat(R-01): implement shared route registry and wire route guards (AC-43)
+d266329 2026-11-07 napatsun test(e2e): isolate Playwright on TEST_DATABASE_URL with globalSetup reset and 409 capture
+e78ea16 2026-11-07 napatsun test(brand): expect Omazon brand name in App unit test and TEST-09 E2E header
+c8fd8fc 2026-11-07 napatsun feat(brand): rename user-facing brand display name and doc titles to Omazon
+86d73ce 2026-11-07 napatsun docs(sprint1): record R-01 red/green evidence, refresh screenshots, and mark AC-43 PASS
+c7ed265 2026-11-07 napatsun refactor(e2e): extract testDatabase guard and make globalSetup single migration owner
+f63f1ef 2026-11-07 napatsun test(e2e): make 409 stale-cart test self-contained and spec order independent
+e5b6cfb 2026-11-07 napatsun ci: add GitHub Actions workflow running unit and E2E suites sequentially
+fb8de3a 2026-11-07 napatsun docs: record revision 1.9 DEC-26/27 amendments and README troubleshooting notes
+149c8a4 2026-11-07 napatsun fix(e2e): run the test-database reset through a shell so globalSetup works on Windows
+7af373d 2026-11-07 napatsun chore(e2e): standardize backend workspace script invocation on --workspace
+f58fa67 2026-11-07 napatsun refactor(registry): derive ALL_ROLES from the Prisma Role enum so new roles cannot silently drift
+669c680 2026-11-07 napatsun test(db): pin the three _test database-guard copies together with a sync test
+2d11381 2026-11-07 napatsun docs(brand): note that the CB- order-number prefix stays by design (DEC-25)
+b7f1ed8 2026-11-07 krittaphato3 Merge pull request #13 from krittaphato3/feature/sprint1/access-and-e2e-tests
+4d00f27 2026-11-07 krittaphato3 docs(deliverable-1): assemble the Sprint 1 Word deliverable and evidence pack
+9d8e7cb 2026-11-07 krittaphato3 test(e2e): capture the Sprint 1 evidence screenshots at the right moments
+c2352e7 2026-11-07 krittaphato3 docs(deliverable-1): complete the Sprint 1 deliverable with verified evidence
+ccef625 2026-11-07 krittaphato3 docs(deliverable-1): keep the generated Word file out of version control
+4a37e95 2026-11-07 krittaphato3 docs(deliverable-1): ignore the local deliverable working folder
+8315279 2026-11-07 krittaphato3 docs(deliverable-1): correct the evidence pack and keep the Word file out of Git
+afe4961 2026-11-07 krittaphato3 docs(deliverable-1): state that the Word file is submitted outside the repo
+47813f7 2026-11-10 Sun Merge pull request #14 from krittaphato3/feature/sprint1/evidence-readme-pdf
+5fbcb7a 2026-11-10 krittaphato3 docs(sprint-1): correct six doc-vs-code inconsistencies from the Sprint 1 audit
+f5dcf54 2026-11-10 krittaphato3 build(bench): add the NFR-05 autocannon harness
+f5caa04 2026-11-10 krittaphato3 docs(evidence): record the NFR-05 load benchmark baseline
+5c3f984 2026-11-10 Sun Merge pull request #17 from krittaphato3/fix/sprint1/docs-loadbenchmark-fix

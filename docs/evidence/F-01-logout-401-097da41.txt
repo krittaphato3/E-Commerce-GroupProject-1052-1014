@@ -1,0 +1,23 @@
+# F-01 evidence — logout then old cookie 401 at commit 097da41
+
+Commit: 097da41
+Date: 2026-11-06
+
+--- raw output -------------------------------------------------------------
+
+F-01 evidence: session invalidation after logout (AC-06, NFR-04)
+API: http://localhost:3100
+
+1) POST /api/auth/login as customer1
+HTTP 200
+
+2) GET /api/auth/me with the session cookie
+{"user":{"id":1,"email":"customer1@campusbites.test","displayName":"Alice Customer","role":"CUSTOMER"}}
+HTTP 200
+
+3) POST /api/auth/logout with the same cookie
+HTTP 204
+
+4) GET /api/auth/me again with the OLD cookie
+{"error":{"code":"UNAUTHENTICATED","message":"Authentication required"}}
+HTTP 401

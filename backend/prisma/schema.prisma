@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  OPERATOR
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  PREPARING
+  READY
+  COMPLETED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+model User {
+  id              Int                  @id @default(autoincrement())
+  email           String               @unique
+  displayName     String
+  passwordHash    String
+  role            Role
+  createdAt       DateTime             @default(now())
+  sessions        Session[]
+  orders          Order[]
+  statusHistories OrderStatusHistory[]
+}
+
+model Session {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model MenuItem {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique
+  description String
+  priceSatang Int
+  stockQty    Int
+  isAvailable Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id            Int                  @id @default(autoincrement())
+  customerId    Int
+  customer      User                 @relation(fields: [customerId], references: [id])
+  status        OrderStatus          @default(PENDING)
+  paymentStatus PaymentStatus        @default(UNPAID)
+  totalSatang   Int
+  pickupNote    String?              @db.VarChar(200)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  items         OrderItem[]
+  history       OrderStatusHistory[]
+
+  @@index([customerId])
+}
+
+model OrderItem {
+  id              Int      @id @default(autoincrement())
+  orderId         Int
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId      Int
+  menuItem        MenuItem @relation(fields: [menuItemId], references: [id])
+  itemName        String
+  unitPriceSatang Int
+  quantity        Int
+  lineTotalSatang Int
+
+  @@unique([orderId, menuItemId])
+  @@index([menuItemId])
+}
+
+model OrderStatusHistory {
+  id        Int          @id @default(autoincrement())
+  orderId   Int
+  order     Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fromStatus OrderStatus?
+  toStatus  OrderStatus
+  actorId   Int
+  actor     User         @relation(fields: [actorId], references: [id])
+  actorRole Role
+  note      String?
+  createdAt DateTime     @default(now())
+
+  @@index([orderId])
+}

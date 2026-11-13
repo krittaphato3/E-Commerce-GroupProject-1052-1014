@@ -1,0 +1,60 @@
+{
+  "endpoint": "POST /api/orders",
+  "run": 2,
+  "durationSeconds": 30,
+  "connections": 20,
+  "summary": {
+    "endpoint": "POST /api/orders",
+    "run": 2,
+    "durationSeconds": 30,
+    "connections": 20,
+    "requests": {
+      "total": 39035,
+      "averagePerSecond": 1300.7
+    },
+    "latencyMs": {
+      "p50": 11,
+      "p95": 39,
+      "p99": 60,
+      "mean": 14.9,
+      "max": 205
+    },
+    "throughputBytesPerSecond": 1071804.1,
+    "statusCodes": {
+      "201": 39035
+    },
+    "non2xx": 0,
+    "fiveHundreds": 0,
+    "errors": 0,
+    "timeouts": 0,
+    "mismatches": 0,
+    "resets": 0
+  },
+  "raw": {
+    "latencies": "HISTFAAAANV4nJNpmSzMwMCwgYGBgZGBgYGVAQIYIZS6AJyvdUrgnuAZ6U3ad/RadD6p7lGYIn1O4pLoNpEjwheEDgjOEVjB18bbxLOJ+wPnA45DHH0cPezv2Caw3WM9xbqIZQPLP+ZfzIuYJzE3MX9iOsf0j/EZ4xvGe4x7GI8xLmC8wFgRkzKJsaiBMc3Hy83FzMbOxExDQUVKQ0xOSEZCTIBLiIdPgIuHj4+Fi4OFjYOJg4WFg4OVjYWJiYGDgY2BjYmBhYmBiZWJlc2eiYFJmImByZEJAKTsL4s=",
+    "requests": "HISTFAAAAE54nDXHQQpAUAAA0TGfJP3Qz0LZWFg4gL2czQ2cwdHcQ5FZvJrxOBOwAhkQ+Mpem337/269dDHqpFjaWeQYjAZr86CViL0mZ5ODDx8pBQI=",
+    "throughput": "HISTFAAAAE94nDWIwQ1AUBTA+vsk4iAi/+DCFhIDuJjIAmxgDBPZwBgioqe2/X5kYAQSEHy83i3rzd/bmbzC2U6c1NLaKAwrw9KCd6GtNg42Zh9/ZAap",
+    "totalCompletedRequests": 39035,
+    "totalRequests": 39055,
+    "totalBytes": 32164840,
+    "samples": 30,
+    "errors": 0,
+    "timeouts": 0,
+    "mismatches": 0,
+    "non2xx": 0,
+    "statusCodeStats": {
+      "201": {
+        "count": 39035
+      }
+    },
+    "resets": 0,
+    "duration": 30.01,
+    "start": "2026-11-11T12:15:59.112Z",
+    "finish": "2026-11-11T12:16:29.119Z",
+    "1xx": 0,
+    "2xx": 39035,
+    "3xx": 0,
+    "4xx": 0,
+    "5xx": 0
+  }
+}

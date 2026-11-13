@@ -1,0 +1,19 @@
+# F-01 GREEN evidence — TEST-06 (AC-06 logout invalidation) at commit f222daa
+
+Commit: f222daa
+Command: cd backend && npx vitest run tests/auth.test.ts -t "TEST-06"
+Date: 2026-11-06
+Exit status: 0
+
+--- raw output -------------------------------------------------------------
+
+
+ RUN  v3.2.7 /Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/backend
+
+ ✓ tests/auth.test.ts (9 tests | 7 skipped) 106ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed | 7 skipped (9)
+   Start at  18:39:13
+   Duration  318ms (transform 43ms, setup 11ms, collect 110ms, tests 106ms, environment 0ms, prepare 24ms)
+

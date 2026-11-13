@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# One sequential job on purpose: the unit/integration suites and the Playwright
+# journeys share the same test database, and README warns that concurrent runs
+# collide (DEC-26). Splitting them into parallel jobs would reintroduce that
+# race, so the steps run one after another in a single job.
+jobs:
+  test:
+    name: Unit, integration and E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        # Same engine and tag as docker-compose.yml (PostgreSQL 16).
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: campusbites_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Test database only. The `_test` guards in backend/tests/setup.ts,
+      # backend/scripts/reset-test-db.ts and frontend/e2e/testDatabase.ts reject
+      # any other name, so a misconfigured value fails instead of wiping data.
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/campusbites_test?schema=public
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/campusbites_test?schema=public
+      # Keep bcrypt cheap for the disposable CI database.
+      BCRYPT_ROUNDS: "4"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # package.json engines: node >= 20.12; 22 is the current LTS line.
+          node-version: "22"
+          cache: npm
+
+      - name: Generate seed credentials for the CI database
+        # Random per run, so no password literal lives in the repository. The
+        # values only exist inside this disposable job; the seed hashes them
+        # with BCRYPT_ROUNDS=4 and Playwright logs in with the same variables.
+        run: |
+          echo "SEED_CUSTOMER_PASSWORD=$(openssl rand -base64 24)" >> "$GITHUB_ENV"
+          echo "SEED_OPERATOR_PASSWORD=$(openssl rand -base64 24)" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Unit and integration tests
+        # backend `pretest` migrates the test database; frontend runs Vitest.
+        run: npm test
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install chromium
+
+      - name: End-to-end tests
+        # globalSetup migrates, truncates and re-seeds the test database.
+        run: npm run e2e
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            frontend/test-results
+            frontend/playwright-report
+          if-no-files-found: ignore
+          retention-days: 7

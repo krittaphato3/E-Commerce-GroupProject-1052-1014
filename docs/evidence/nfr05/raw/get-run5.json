@@ -1,0 +1,60 @@
+{
+  "endpoint": "GET /api/menu",
+  "run": 5,
+  "durationSeconds": 30,
+  "connections": 20,
+  "summary": {
+    "endpoint": "GET /api/menu",
+    "run": 5,
+    "durationSeconds": 30,
+    "connections": 20,
+    "requests": {
+      "total": 469058,
+      "averagePerSecond": 15729.6
+    },
+    "latencyMs": {
+      "p50": 1,
+      "p95": 1,
+      "p99": 4,
+      "mean": 0.9,
+      "max": 51
+    },
+    "throughputBytesPerSecond": 27526877.9,
+    "statusCodes": {
+      "200": 469058
+    },
+    "non2xx": 0,
+    "fiveHundreds": 0,
+    "errors": 0,
+    "timeouts": 0,
+    "mismatches": 0,
+    "resets": 0
+  },
+  "raw": {
+    "latencies": "HISTFAAAAE54nJNpmSzMwMCgw8DAwMjAwMDKAAGMEEpdAMa/soiz77HunvQXCTdsz7E9YW5husM4gfEGY5CPmpWaggKLCI+QAgePBhcri7oGABzYDy8=",
+    "requests": "HISTFAAAAFR4nDWKMQqAMBTFXlOLiJRPKU56AY/gJoKg93J3cPQU3lBRzBAIpNuOLGmQ5CR5fbjXNo1/nwu74/IkxIwn0EJkJVGRoacgUGIYgYhR0zz3DV17Bhs=",
+    "throughput": "HISTFAAAAFV4nDWHMQ5AQBQF3458IiJbbLENUShcgUrrRBK9GzidG2glDiCIKSYz1boFSb0kJynRx9Nxmg/9v1+OhRM8YkAYEXJGPBke2hTDKCle1wQ6Gm7aJghW",
+    "totalCompletedRequests": 469058,
+    "totalRequests": 469078,
+    "totalBytes": 820851500,
+    "samples": 30,
+    "errors": 0,
+    "timeouts": 0,
+    "mismatches": 0,
+    "non2xx": 0,
+    "statusCodeStats": {
+      "200": {
+        "count": 469058
+      }
+    },
+    "resets": 0,
+    "duration": 29.82,
+    "start": "2026-11-11T12:14:54.261Z",
+    "finish": "2026-11-11T12:15:24.077Z",
+    "1xx": 0,
+    "2xx": 469058,
+    "3xx": 0,
+    "4xx": 0,
+    "5xx": 0
+  }
+}

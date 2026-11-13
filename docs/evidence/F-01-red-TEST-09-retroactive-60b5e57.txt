@@ -1,0 +1,55 @@
+# F-01 RED evidence (RETROACTIVE) — TEST-09 against base commit 60b5e57
+
+Evidence type: RETROACTIVE red run against the pre-F-01 base commit (60b5e57, sprint-1-staging).
+NOTE: This is a retroactive verification run captured after 097da41 by copying ONLY
+`frontend/e2e/auth.spec.ts` and `frontend/playwright.config.ts` into a temporary
+detached git worktree at `60b5e57` (`/tmp/campusbites-60b5e57-test09`), NOT a
+TDD-order red commit created before implementation.
+
+Base commit under test: 60b5e57 (Merge pull request #9 from krittaphato3/feature/sprint1/scaffold-db-seed)
+Spec and config copied from: 097da41 (`frontend/e2e/auth.spec.ts`, `frontend/playwright.config.ts`)
+Command: CI=1 E2E_FRONTEND_PORT=5184 E2E_API_PORT=3110 npx playwright test (in `/tmp/campusbites-60b5e57-test09/frontend`)
+Date: 2026-11-06
+Exit status: 1
+
+Reason for failure: At base commit 60b5e57, `/login` renders the Sprint 1 scaffold landing
+page with no login form (`getByLabel('Email')` never resolves and times out after 30000ms).
+
+--- raw output -------------------------------------------------------------
+
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium] › e2e/auth.spec.ts:15:1 › TEST-09: customer and operator login, logout and invalid credentials (30.0s)
+
+
+  1) [chromium] › e2e/auth.spec.ts:15:1 › TEST-09: customer and operator login, logout and invalid credentials 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByLabel('Email')
+
+
+      18 |
+      19 |   await page.goto("/login");
+    > 20 |   await page.getByLabel("Email").fill(customerEmail);
+         |                                  ^
+      21 |   await page.getByLabel("Password").fill(customerPassword);
+      22 |   await page.getByRole("button", { name: "Log in" }).click();
+      23 |
+        at /private/tmp/campusbites-60b5e57-test09/frontend/e2e/auth.spec.ts:20:34
+
+    Error Context: test-results/auth-TEST-09-customer-and--c8c91-out-and-invalid-credentials-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-TEST-09-customer-and--c8c91-out-and-invalid-credentials-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-TEST-09-customer-and--c8c91-out-and-invalid-credentials-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e/auth.spec.ts:15:1 › TEST-09: customer and operator login, logout and invalid credentials 

@@ -1,0 +1,73 @@
+# F-01 RED evidence — TEST-06 (AC-06 logout invalidation)
+
+Commit: 05a4f08 (red; reworked so the failure lands on the logout assertions)
+Command: cd backend && npx vitest run tests/auth.test.ts -t "TEST-06"
+Date: 2026-11-06
+
+Reason: POST /api/auth/logout is not mounted yet, so it returns 404 instead of 204.
+The session is seeded directly with a known raw token whose SHA-256 is stored, so no login is needed.
+
+--- raw output -------------------------------------------------------------
+
+
+ RUN  v3.2.7 /Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/backend
+
+ ❯ tests/auth.test.ts (9 tests | 2 failed | 7 skipped) 101ms
+   ↓ F-01 Authentication API (AC-01 to AC-08) > TEST-01: valid credentials return the user, set the session cookie and create one 8-hour session
+   ↓ F-01 Authentication API (AC-01 to AC-08) > TEST-02: a wrong password returns 401 INVALID_CREDENTIALS, sets no cookie and creates no session
+   ↓ F-01 Authentication API (AC-01 to AC-08) > TEST-03: an unknown email returns the same 401 response as a wrong password
+   ↓ F-01 Authentication API (AC-01 to AC-08) > TEST-04: invalid login bodies return 400 VALIDATION_ERROR in the standard error shape
+   ↓ F-01 Authentication API (AC-01 to AC-08) > TEST-05: GET /api/auth/me returns the logged-in operator and rejects an anonymous caller
+   × F-01 Authentication API (AC-01 to AC-08) > TEST-06: logout invalidates the seeded session cookie and deletes the session row 67ms
+     → expected 404 to be 204 // Object.is equality
+   × F-01 Authentication API (AC-01 to AC-08) > TEST-06 (supporting): a session created by login stops working after logout 32ms
+     → expected 404 to be 200 // Object.is equality
+   ↓ F-01 Authentication API (AC-01 to AC-08) > TEST-07: a session whose expiresAt is in the past is rejected with 401
+   ↓ F-01 Authentication API (AC-01 to AC-08) > TEST-08: stored passwords are bcrypt hashes and no response exposes the hash
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-06: logout invalidates the seeded session cookie and deletes the session row
+AssertionError: expected 404 to be 204 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 204[39m
+[31m+ 404[39m
+
+ ❯ tests/auth.test.ts:166:27
+    164| 
+    165|     const logout = await request(app).post("/api/auth/logout").set("Co…
+    166|     expect(logout.status).toBe(204);
+       |                           ^
+    167| 
+    168|     const cleared = setCookies(logout).find((value) => value.startsWit…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-06 (supporting): a session created by login stops working after logout
+AssertionError: expected 404 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 404[39m
+
+ ❯ tests/auth.test.ts:181:29
+    179|   it("TEST-06 (supporting): a session created by login stops working a…
+    180|     const loggedIn = await loginAs(CUSTOMER_EMAIL, CUSTOMER_PASSWORD);
+    181|     expect(loggedIn.status).toBe(200);
+       |                             ^
+    182|     const cookie = sessionCookie(loggedIn);
+    183|     expect(cookie).toBeDefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 skipped (9)
+   Start at  18:34:17
+   Duration  310ms (transform 40ms, setup 15ms, collect 101ms, tests 101ms, environment 0ms, prepare 26ms)
+
