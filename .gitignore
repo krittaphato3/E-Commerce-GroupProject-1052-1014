@@ -11,6 +11,8 @@ docs/deliverable-1/
 
 # Keep future tracked Python tooling reachable despite the global *.py rule
 !scripts/*.py
+!deploy/**/*.py
+!deploy/*.py
 
 # ZCode agent configuration & local session data
 .zcode/
