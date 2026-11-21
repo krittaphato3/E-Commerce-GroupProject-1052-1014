@@ -14,7 +14,13 @@ Status: first version, Episode 2 (cloud-ready code). GCP parts are TODO.
 | Probes | `GET /api/health` (no DB), `GET /api/ready` (200 if DB reachable, 503 if not) |
 
 Deviation from the reference stack (Docker, Cloud Run, Cloud SQL for PostgreSQL, Secret Manager, GitHub Actions): none in the choice of components. The Dockerfile, Cloud Run, Cloud SQL, Secret Manager and the deploy workflow are not written yet.
-TODO (later episode): decide how the SPA is served (same container vs. separate host) and set `CLIENT_ORIGIN`/`COOKIE_SECURE` accordingly.
+Plan: serve the built SPA from the same container as the API (same origin), so `CLIENT_ORIGIN` (CORS) is optional. TODO (later episode): add the static serving and Dockerfile.
+
+### Seed and deploy notes
+- The Cloud Run migration job runs `migrate` + `seed` on every release. The seed is create-only for users (an existing user's password hash is never changed); menu data is upserted.
+- With `NODE_ENV=production` and `SEED_DEMO_DATA` unset or `false`, the seed creates only the operator account `operator1@campusbites.test`, using `SEED_OPERATOR_PASSWORD`. That variable must be set and must not be the `change-me-local` placeholder. Demo customers, the second operator and sample orders are skipped.
+- `SEED_DEMO_DATA=true` is needed on the cloud job only when demo accounts are wanted (Lab 6); it also requires `SEED_CUSTOMER_PASSWORD`.
+- `COOKIE_SECURE` must be `true` behind HTTPS (Cloud Run).
 
 ## 2. Environment variables
 
@@ -24,9 +30,9 @@ TODO (later episode): decide how the SPA is served (same container vs. separate 
 | `NODE_ENV` | `development` / `test` / `production` | No | Local `.env`; Cloud Run env var |
 | `DATABASE_URL` | PostgreSQL connection string | Yes | Local `.env`; Secret Manager |
 | `TEST_DATABASE_URL` | Test DB (name must end `_test`) | No (local only) | Local `.env` |
-| `CLIENT_ORIGIN` | CORS allowed origin | No | Local `.env`; Cloud Run env var |
+| `CLIENT_ORIGIN` | CORS allowed origin (optional when the SPA is served same-origin) | No | Local `.env`; Cloud Run env var |
 | `SESSION_TTL_HOURS` | Session lifetime | No | Local `.env`; Cloud Run env var |
-| `COOKIE_SECURE` | `true` over HTTPS | No | Local `.env`; Cloud Run env var |
+| `COOKIE_SECURE` | Must be `true` behind HTTPS | No | Local `.env`; Cloud Run env var |
 | `BCRYPT_ROUNDS` | bcrypt cost (4-15) | No | Local `.env`; Cloud Run env var |
 | `SEED_DEMO_DATA` | Seed demo data (default on locally, off in production) | No | Local `.env`; Cloud Run env var |
 | `SEED_CUSTOMER_PASSWORD` | Demo customer password | Yes | Local `.env`; Secret Manager |

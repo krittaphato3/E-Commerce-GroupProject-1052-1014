@@ -113,23 +113,40 @@ export const SEED_MENU_ITEMS = [
   },
 ];
 
-export async function seedDatabase(client: PrismaClient = prisma) {
-  const customerPassword = readSeedPassword("SEED_CUSTOMER_PASSWORD");
-  const operatorPassword = readSeedPassword("SEED_OPERATOR_PASSWORD");
+/** The one account seeded even when demo data is off: the first operator. */
+const PRODUCTION_OPERATOR_EMAIL = "operator1@campusbites.test";
 
-  const customerHash = await hashPassword(customerPassword, env.BCRYPT_ROUNDS);
-  const operatorHash = await hashPassword(operatorPassword, env.BCRYPT_ROUNDS);
+export interface SeedOptions {
+  /** Seed demo customers and the second operator. Defaults to isDemoSeedEnabled(). */
+  demo?: boolean;
+}
 
-  // 1. Seed Users (idempotent upsert)
-  for (const user of SEED_USERS) {
+export async function seedDatabase(
+  client: PrismaClient = prisma,
+  options: SeedOptions = {}
+) {
+  const demo = options.demo ?? isDemoSeedEnabled();
+
+  const usersToSeed = SEED_USERS.filter(
+    (user) => demo || user.email === PRODUCTION_OPERATOR_EMAIL
+  );
+
+  const customerHash = demo
+    ? await hashPassword(readSeedPassword("SEED_CUSTOMER_PASSWORD"), env.BCRYPT_ROUNDS)
+    : null;
+  const operatorHash = await hashPassword(
+    readSeedPassword("SEED_OPERATOR_PASSWORD"),
+    env.BCRYPT_ROUNDS
+  );
+
+  // 1. Seed Users. Create-only: an existing user keeps its current passwordHash
+  // (and everything else), so re-running on every deploy never resets a password.
+  for (const user of usersToSeed) {
     const passwordHash = user.role === Role.OPERATOR ? operatorHash : customerHash;
+    if (!passwordHash) continue;
     await client.user.upsert({
       where: { email: user.email },
-      update: {
-        displayName: user.displayName,
-        role: user.role,
-        passwordHash,
-      },
+      update: {},
       create: {
         email: user.email,
         displayName: user.displayName,
@@ -223,11 +240,8 @@ export async function seedPerformanceOrders(
 }
 
 async function main() {
-  if (!isDemoSeedEnabled()) {
-    console.log("[seed] Demo data is disabled (SEED_DEMO_DATA=false or NODE_ENV=production); nothing to seed.");
-    return;
-  }
-
+  // Demo off: only the operator account and menu data are seeded; demo
+  // customers are skipped.
   await seedDatabase();
 
   if (process.argv.includes("--with-perf-orders")) {
