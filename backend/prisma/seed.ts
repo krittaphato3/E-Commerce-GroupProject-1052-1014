@@ -27,6 +27,17 @@ function readSeedPassword(name: "SEED_CUSTOMER_PASSWORD" | "SEED_OPERATOR_PASSWO
   return value;
 }
 
+/**
+ * Demo data (demo accounts and sample menu) is on by default locally and off in
+ * production. SEED_DEMO_DATA=true|false overrides the default either way.
+ */
+export function isDemoSeedEnabled(raw: NodeJS.ProcessEnv = process.env): boolean {
+  const value = raw.SEED_DEMO_DATA?.trim().toLowerCase();
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return raw.NODE_ENV !== "production";
+}
+
 export const SEED_USERS = [
   {
     email: "customer1@campusbites.test",
@@ -212,6 +223,11 @@ export async function seedPerformanceOrders(
 }
 
 async function main() {
+  if (!isDemoSeedEnabled()) {
+    console.log("[seed] Demo data is disabled (SEED_DEMO_DATA=false or NODE_ENV=production); nothing to seed.");
+    return;
+  }
+
   await seedDatabase();
 
   if (process.argv.includes("--with-perf-orders")) {

@@ -8,6 +8,10 @@ void sessionRepository.deleteExpired().catch((err) => {
   console.error("[Omazon Server] Failed to clean up expired sessions on startup:", err);
 });
 
-app.listen(PORT, () => {
-  console.log(`[Omazon Server] Listening on http://localhost:${PORT}`);
+// Cloud Run injects PORT and routes traffic to the container's external interface,
+// so bind to 0.0.0.0 rather than loopback only.
+const HOST = "0.0.0.0";
+
+app.listen(PORT, HOST, () => {
+  console.log(`[Omazon Server] Listening on http://${HOST}:${PORT}`);
 });

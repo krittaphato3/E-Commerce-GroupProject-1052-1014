@@ -55,3 +55,14 @@ describe("TEST-45: Seed idempotency & repeatability (AC-45, NFR-08)", () => {
     expect(customer1?.passwordHash.startsWith("$2")).toBe(true);
   });
 });
+
+describe("Demo seed switch (SEED_DEMO_DATA)", () => {
+  it("defaults to on outside production and off in production, with an explicit override", async () => {
+    const { isDemoSeedEnabled } = await import("../prisma/seed.js");
+
+    expect(isDemoSeedEnabled({ NODE_ENV: "development" })).toBe(true);
+    expect(isDemoSeedEnabled({ NODE_ENV: "production" })).toBe(false);
+    expect(isDemoSeedEnabled({ NODE_ENV: "production", SEED_DEMO_DATA: "true" })).toBe(true);
+    expect(isDemoSeedEnabled({ NODE_ENV: "development", SEED_DEMO_DATA: "false" })).toBe(false);
+  });
+});
