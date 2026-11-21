@@ -1,6 +1,6 @@
 # Lab 5 Deployment Notes (CPE 334)
 
-Status: first version, Episode 2 (cloud-ready code). GCP parts are TODO.
+Status: Episode 3 (containerized with Docker). GCP parts are TODO.
 
 ## 1. Stack summary
 
@@ -13,8 +13,11 @@ Status: first version, Episode 2 (cloud-ready code). GCP parts are TODO.
 | Port | `PORT` env var (default 3000), bound to `0.0.0.0` |
 | Probes | `GET /api/health` (no DB), `GET /api/ready` (200 if DB reachable, 503 if not) |
 
-Deviation from the reference stack (Docker, Cloud Run, Cloud SQL for PostgreSQL, Secret Manager, GitHub Actions): none in the choice of components. The Dockerfile, Cloud Run, Cloud SQL, Secret Manager and the deploy workflow are not written yet.
-Plan: serve the built SPA from the same container as the API (same origin), so `CLIENT_ORIGIN` (CORS) is optional. TODO (later episode): add the static serving and Dockerfile.
+Deviation from the reference stack (Docker, Cloud Run, Cloud SQL for PostgreSQL, Secret Manager, GitHub Actions): none in the choice of components.
+Containerization:
+- Multi-container Docker Compose for development and end-to-end testing: `postgres` (PostgreSQL 16), `backend` (Express 5 API on :3000), and `frontend` (Nginx serving SPA and proxying `/api` on :5173).
+- Single-container multi-stage root `Dockerfile` for Cloud Run (Node 22 runtime serving API and built SPA static files from the same origin).
+The Cloud Run, Cloud SQL, Secret Manager and the deploy workflow are scheduled for later episodes.
 
 ### Seed and deploy notes
 - The Cloud Run migration job runs `migrate` + `seed` on every release. The seed is create-only for users (an existing user's password hash is never changed); menu data is upserted.
@@ -46,9 +49,23 @@ Plan: serve the built SPA from the same container as the API (same origin), so `
 
 ## 3. Local commands
 
+### Docker Compose (Full Stack)
+
+```bash
+docker compose up --build -d             # build and start postgres, backend, and frontend
+docker compose ps                        # check container status and health
+docker compose logs -f backend           # follow backend logs and migration status
+curl http://localhost:3000/api/health    # probe backend health directly
+curl http://localhost:3000/api/ready     # probe backend readiness (DB check)
+curl http://localhost:5173/api/health    # probe health via frontend Nginx proxy
+docker compose down                      # stop containers (database volume persists)
+```
+
+### Local Development (without Docker for app services)
+
 ```bash
 npm ci                                   # install
-docker compose up -d postgres            # local database
+docker compose up -d postgres            # local database only
 cp backend/.env.example backend/.env     # then set local seed passwords
 npm run db:migrate                       # apply migrations
 npm run db:seed                          # seed demo data (idempotent)

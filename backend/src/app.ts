@@ -1,4 +1,6 @@
 import "dotenv/config";
+import path from "node:path";
+import fs from "node:fs";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -24,6 +26,27 @@ export function createApp(configureRoutes?: (app: express.Express) => void) {
   mountRouter(app, "/api/auth", authRouter);
   mountRouter(app, "/api/menu", menuRouter);
   mountRouter(app, "/api/orders", ordersRouter);
+
+  // Serve built SPA static files if enabled or in single-container production
+  const isProdOrStatic = env.NODE_ENV === "production" || process.env.SERVE_STATIC === "true";
+  if (isProdOrStatic) {
+    const candidates = [
+      process.env.CLIENT_DIST_PATH,
+      path.resolve(process.cwd(), "frontend/dist"),
+      path.resolve(process.cwd(), "../frontend/dist"),
+    ].filter((p): p is string => Boolean(p && fs.existsSync(p)));
+
+    const effectiveDistPath = candidates[0];
+    if (effectiveDistPath) {
+      app.use(express.static(effectiveDistPath));
+      app.get("*", (req, res, next) => {
+        if (req.path.startsWith("/api/")) {
+          return next();
+        }
+        res.sendFile(path.join(effectiveDistPath, "index.html"));
+      });
+    }
+  }
 
   if (configureRoutes) {
     configureRoutes(app);
