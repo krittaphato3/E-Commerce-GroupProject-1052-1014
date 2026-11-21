@@ -31,6 +31,7 @@ export interface ExpressRoute {
 /** Routes that any caller may use (DEC-09: the menu is publicly readable). */
 export const publicRoutes: ReadonlyArray<PublicRoute> = [
   { method: "GET", path: "/api/health" },
+  { method: "GET", path: "/api/ready" },
   { method: "POST", path: "/api/auth/login" },
   { method: "POST", path: "/api/auth/logout" },
   { method: "GET", path: "/api/menu" },

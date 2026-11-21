@@ -27,6 +27,23 @@ function readSeedPassword(name: "SEED_CUSTOMER_PASSWORD" | "SEED_OPERATOR_PASSWO
   return value;
 }
 
+/**
+ * Demo data is on by default locally and off in production. It covers the demo
+ * customers, the extra operators and the test-fixture menu items (sold-out,
+ * last-unit, delisted). The starter menu and the first operator are always
+ * seeded. SEED_DEMO_DATA overrides the default: "true"/"1" or "false"/"0".
+ * Any other non-empty value throws, so a typo can never silently flip it.
+ */
+export function isDemoSeedEnabled(raw: NodeJS.ProcessEnv = process.env): boolean {
+  const value = raw.SEED_DEMO_DATA?.trim().toLowerCase();
+  if (!value) return raw.NODE_ENV !== "production";
+  if (value === "true" || value === "1") return true;
+  if (value === "false" || value === "0") return false;
+  throw new Error(
+    `SEED_DEMO_DATA must be "true", "false", "1" or "0" (got "${raw.SEED_DEMO_DATA}"). Unset it to use the NODE_ENV default.`
+  );
+}
+
 export const SEED_USERS = [
   {
     email: "customer1@campusbites.test",
@@ -50,7 +67,16 @@ export const SEED_USERS = [
   },
 ];
 
-export const SEED_MENU_ITEMS = [
+interface SeedMenuItem {
+  name: string;
+  description: string;
+  priceSatang: number;
+  stockQty: number;
+  isAvailable: boolean;
+}
+
+/** Starter menu: always seeded, create-only so live prices and stock survive a re-seed. */
+export const STARTER_MENU_ITEMS: SeedMenuItem[] = [
   {
     name: "Basil Pork Rice",
     description: "Spicy stir-fried minced pork with holy basil and jasmine rice",
@@ -79,46 +105,74 @@ export const SEED_MENU_ITEMS = [
     stockQty: 50,
     isAvailable: true,
   },
+];
+
+/**
+ * Fixtures for the sold-out, last-unit and delisted cases used by the tests and
+ * e2e journeys. Seeded only when demo data is enabled; also create-only.
+ */
+export const DEMO_FIXTURE_MENU_ITEMS: SeedMenuItem[] = [
   {
     name: "Mango Sticky Rice",
-    description: "Sweet ripe mango with coconut sticky rice (last unit test)",
+    description: "Sweet ripe mango with coconut sticky rice",
     priceSatang: 8000,
     stockQty: 1,
     isAvailable: true,
   },
   {
     name: "Chicken Sandwich",
-    description: "Grilled chicken sandwich (sold out test)",
+    description: "Grilled chicken sandwich",
     priceSatang: 7000,
     stockQty: 0,
     isAvailable: true,
   },
   {
     name: "Pad Thai",
-    description: "Stir-fried rice noodles with tamarind sauce (delisted test)",
+    description: "Stir-fried rice noodles with tamarind sauce",
     priceSatang: 6000,
     stockQty: 20,
     isAvailable: false,
   },
 ];
 
-export async function seedDatabase(client: PrismaClient = prisma) {
-  const customerPassword = readSeedPassword("SEED_CUSTOMER_PASSWORD");
-  const operatorPassword = readSeedPassword("SEED_OPERATOR_PASSWORD");
+export interface SeedOptions {
+  /** Seed demo users and fixture menu items. Defaults to isDemoSeedEnabled(). */
+  demo?: boolean;
+}
 
-  const customerHash = await hashPassword(customerPassword, env.BCRYPT_ROUNDS);
-  const operatorHash = await hashPassword(operatorPassword, env.BCRYPT_ROUNDS);
+export async function seedDatabase(
+  client: PrismaClient = prisma,
+  options: SeedOptions = {}
+) {
+  const demo = options.demo ?? isDemoSeedEnabled();
 
-  // 1. Seed Users (idempotent upsert)
-  for (const user of SEED_USERS) {
+  // Without demo data only the first operator is seeded, picked by role.
+  const usersToSeed = demo
+    ? SEED_USERS
+    : SEED_USERS.filter((user) => user.role === Role.OPERATOR).slice(0, 1);
+
+  if (usersToSeed.length === 0) {
+    throw new Error("Seed selected no users; refusing to report success with an empty user list.");
+  }
+
+  const needsCustomerPassword = usersToSeed.some((user) => user.role === Role.CUSTOMER);
+  const customerHash = needsCustomerPassword
+    ? await hashPassword(readSeedPassword("SEED_CUSTOMER_PASSWORD"), env.BCRYPT_ROUNDS)
+    : null;
+  const operatorHash = await hashPassword(
+    readSeedPassword("SEED_OPERATOR_PASSWORD"),
+    env.BCRYPT_ROUNDS
+  );
+
+  // 1. Users: create-only. An existing user keeps its passwordHash and every other field.
+  for (const user of usersToSeed) {
     const passwordHash = user.role === Role.OPERATOR ? operatorHash : customerHash;
+    if (!passwordHash) {
+      throw new Error(`No password hash available for seed user ${user.email}.`);
+    }
     await client.user.upsert({
       where: { email: user.email },
-      update: {
-        displayName: user.displayName,
-        role: user.role,
-        passwordHash,
-      },
+      update: {},
       create: {
         email: user.email,
         displayName: user.displayName,
@@ -128,23 +182,15 @@ export async function seedDatabase(client: PrismaClient = prisma) {
     });
   }
 
-  // 2. Seed Menu Items (idempotent upsert)
-  for (const item of SEED_MENU_ITEMS) {
+  // 2. Menu: create-only too, so a re-seed never overwrites live price, stock or availability.
+  const menuItems = demo
+    ? [...STARTER_MENU_ITEMS, ...DEMO_FIXTURE_MENU_ITEMS]
+    : STARTER_MENU_ITEMS;
+  for (const item of menuItems) {
     await client.menuItem.upsert({
       where: { name: item.name },
-      update: {
-        description: item.description,
-        priceSatang: item.priceSatang,
-        stockQty: item.stockQty,
-        isAvailable: item.isAvailable,
-      },
-      create: {
-        name: item.name,
-        description: item.description,
-        priceSatang: item.priceSatang,
-        stockQty: item.stockQty,
-        isAvailable: item.isAvailable,
-      },
+      update: {},
+      create: { ...item },
     });
   }
 }
@@ -212,6 +258,8 @@ export async function seedPerformanceOrders(
 }
 
 async function main() {
+  // seedDatabase decides what to seed from isDemoSeedEnabled(): with demo data
+  // off it still creates the first operator and the starter menu.
   await seedDatabase();
 
   if (process.argv.includes("--with-perf-orders")) {

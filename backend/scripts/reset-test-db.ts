@@ -75,7 +75,7 @@ async function main(): Promise<void> {
 
   try {
     await clearTestDatabase(prisma);
-    await seedDatabase(prisma);
+    await seedDatabase(prisma, { demo: true });
   } finally {
     await prisma.$disconnect();
   }
