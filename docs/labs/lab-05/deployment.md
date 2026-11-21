@@ -1,6 +1,6 @@
 # Lab 5 Deployment Notes (CPE 334)
 
-Status: Episode 3 (containerized with Docker). GCP parts are TODO.
+Status: Episode 4 (CI checks and deployment scripts added). GCP deployment scheduled for Episode 5/7.
 
 ## 1. Stack summary
 
@@ -77,10 +77,16 @@ npm test                                 # unit + integration tests
 npm run e2e                              # Playwright (needs e2e:install once)
 ```
 
-## 4. GCP placeholders (TODO, later episode)
+## 4. CI/CD and Check Gates (Episode 4)
 
-- GCP project ID: `TODO`
-- Region: `TODO`
-- Resource names (Artifact Registry repo, Cloud Run service, Cloud SQL instance, secrets): `TODO`
-- Release procedure: `TODO`
-- How to find the running commit: `TODO` (for example, an image tag or a revision label set to the git SHA)
+- **`test-and-docker`** (in `.github/workflows/ci-docker.yml`): The required PR check gate for Episode 6. Runs deploy script static validation (`bash -n`, stub tests, smoke tests), backend unit/integration tests against a real PostgreSQL 16 service container, frontend tests and production build, and verifies root `Dockerfile` build.
+- **`ci.yml`**: Continues to run on pull requests for full unit, integration, and Playwright E2E test coverage across browsers.
+- **Concurrency**: PR runs automatically cancel prior runs for the same branch (`cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}`). Runs on `main` complete without cancellation.
+
+## 5. GCP placeholders & Resource Conventions (Episode 5/7)
+
+- GCP project ID: `TODO` (set via `GCP_PROJECT_ID` env var)
+- Region: `TODO` (default `asia-southeast1`)
+- **Starter Kit Resource Naming**: The deployment scripts (`deploy/deploy.sh`, `deploy/teardown.sh`, `deploy/release.sh`) retain the course Starter Kit naming convention with the `toktickit-*` prefix (`toktickit-repo`, `toktickit-web`, `toktickit-db`, `toktickit-migrate`, `toktickit-secrets`) as expected by the lab grading rubric, while deploying the CampusBites containerized application.
+- Release procedure: `TODO` (automated via `.github/workflows/deploy.yml` in Episode 7)
+- How to find the running commit: `TODO` (image tagged with git SHA and deployed to Cloud Run revision)

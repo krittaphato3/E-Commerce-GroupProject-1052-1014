@@ -21,9 +21,9 @@ class SmokeTests(unittest.TestCase):
     def response(self, base, path, data=None, token=None):
         return {
             '/api/health': b'{"status":"ok"}',
-            '/api/ready': b'{"db":"connected"}',
+            '/api/ready': b'{"status":"ready","database":"ok"}',
             '/': b'<html></html>',
-            '/api/categories': b'[{"id":1}]',
+            '/api/menu': b'{"items":[{"id":1}]}',
             '/api/auth/login': b'{"token":"test-session"}',
             '/api/auth/me': b'{"id":1}',
             '/api/auth/logout': b'{}',

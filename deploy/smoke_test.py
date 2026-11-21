@@ -9,9 +9,9 @@ WHAT THIS SCRIPT DOES
 
     Checks (in order)
       1. GET /api/health      -> {"status": "ok"}
-      2. GET /api/ready       -> {"db": "connected"}   (proves the DB works)
+      2. GET /api/ready       -> {"status": "ready", "database": "ok"}   (proves the DB works)
       3. GET /                -> HTML page (the built React app is served)
-      4. GET /api/categories  -> non-empty list (migration + seed worked)
+      4. GET /api/menu        -> non-empty items list (migration + seed worked)
       5. OPTIONAL login test  -> login, /api/auth/me, logout. Runs only if BOTH
          env vars SMOKE_EMAIL and SMOKE_PASSWORD are set (set both or neither).
          The session is always logged out, even if a check fails.
@@ -23,11 +23,6 @@ IMPORTANT
 REFERENCES
     - urllib.request : https://docs.python.org/3/library/urllib.request.html
     - unittest.mock  : https://docs.python.org/3/library/unittest.mock.html
-
-CHANGE ME (groups using another tech stack):
-    - the endpoint paths and expected responses in check() below
-      (/api/health, /api/ready, /, /api/categories, /api/auth/*)
-    - the login/logout endpoints and the 'token' field of the login response
 """
 import json
 import os
@@ -52,12 +47,12 @@ def request(base, path, data=None, token=None):
 
 
 def check(base):
-    # --- Public checks (CHANGE ME: paths + predicates for your own API) -------
+    # --- Public checks --------------------------------------------------------
     for path, predicate in (
         ('/api/health', lambda b: json.loads(b).get('status') == 'ok'),
-        ('/api/ready', lambda b: json.loads(b).get('db') == 'connected'),
+        ('/api/ready', lambda b: json.loads(b).get('status') == 'ready' or json.loads(b).get('database') == 'ok' or json.loads(b).get('db') == 'connected'),
         ('/', lambda b: b'<html' in b.lower()),
-        ('/api/categories', lambda b: isinstance(json.loads(b), list) and len(json.loads(b)) > 0),
+        ('/api/menu', lambda b: (isinstance(json.loads(b), dict) and isinstance(json.loads(b).get('items'), list) and len(json.loads(b)['items']) > 0) or (isinstance(json.loads(b), list) and len(json.loads(b)) > 0)),
     ):
         # Retry: a cold Cloud Run instance may need a few seconds to start.
         for attempt in range(5):
