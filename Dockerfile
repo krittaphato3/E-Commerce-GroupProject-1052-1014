@@ -42,6 +42,8 @@ RUN npm ci --workspace=backend
 
 COPY --from=backend-builder /app/backend/dist ./backend/dist
 COPY --from=backend-builder /app/backend/prisma ./backend/prisma
+COPY --from=backend-builder /app/backend/src ./backend/src
+COPY --from=backend-builder /app/backend/tsconfig.json ./backend/tsconfig.json
 COPY --from=backend-builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=backend-builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist

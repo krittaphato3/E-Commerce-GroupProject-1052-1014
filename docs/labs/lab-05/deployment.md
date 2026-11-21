@@ -15,15 +15,15 @@ Status: Episode 3 (containerized with Docker). GCP parts are TODO.
 
 Deviation from the reference stack (Docker, Cloud Run, Cloud SQL for PostgreSQL, Secret Manager, GitHub Actions): none in the choice of components.
 Containerization:
-- Multi-container Docker Compose for development and end-to-end testing: `postgres` (PostgreSQL 16), `backend` (Express 5 API on :3000), and `frontend` (Nginx serving SPA and proxying `/api` on :5173).
-- Single-container multi-stage root `Dockerfile` for Cloud Run (Node 22 runtime serving API and built SPA static files from the same origin).
+- Multi-container Docker Compose for development and end-to-end testing: `postgres` (PostgreSQL 16), `backend` (Express 5 API on :3000 with `NODE_ENV=development`), and `frontend` (Nginx serving SPA and proxying `/api` on :5173).
+- Single-container multi-stage root `Dockerfile` for Cloud Run (Node 22 runtime serving API and built SPA static files from the same origin). The root image entrypoint runs `exec "$@"` by default, and optionally executes `prisma migrate deploy` + `db:seed` when `RUN_MIGRATIONS=true`.
 The Cloud Run, Cloud SQL, Secret Manager and the deploy workflow are scheduled for later episodes.
 
 ### Seed and deploy notes
 - The Cloud Run migration job runs `migrate` + `seed` on every release. The seed is create-only for users (an existing user's password hash is never changed); menu data is create-only.
 - With `NODE_ENV=production` and `SEED_DEMO_DATA` unset or `false`, the seed creates only the operator account `operator1@campusbites.test`, using `SEED_OPERATOR_PASSWORD`. That variable must be set and must not be the `change-me-local` placeholder. Demo customers, the second operator and the test-fixture menu items are skipped.
 - `SEED_DEMO_DATA=true` is needed on the cloud job only when demo accounts are wanted (Lab 6); it also requires `SEED_CUSTOMER_PASSWORD`.
-- `COOKIE_SECURE` defaults to `true` when `NODE_ENV=production` (and `false` otherwise); an explicit value wins. It must be `true` behind HTTPS (Cloud Run). The repo's `docker-compose.yml` only runs PostgreSQL and does not set `NODE_ENV`, so local runs are unaffected.
+- `COOKIE_SECURE` defaults to `true` when `NODE_ENV=production` (and `false` otherwise); an explicit value wins. It must be `true` behind HTTPS (Cloud Run). The repo's `docker-compose.yml` runs backend with `NODE_ENV=development`, so local compose runs keep it `false` for HTTP.
 - CORS: in production with `CLIENT_ORIGIN` unset, CORS is disabled (same-origin deployment). Outside production the default is `http://localhost:5173` with credentials.
 - Seeding never overwrites existing users or menu items. Without demo data it creates the first operator and the four starter menu items; the sold-out/last-unit/delisted fixture items are demo-only. `SEED_DEMO_DATA` accepts `true`/`false`/`1`/`0`; any other value (for example `ture`) makes the seed fail.
 - `/api/ready` runs `SELECT 1` with a 2 second timeout (503 on failure or timeout), sends `Cache-Control: no-store`, and logs only an error code and redacted message, never a connection string.
@@ -43,6 +43,7 @@ The Cloud Run, Cloud SQL, Secret Manager and the deploy workflow are scheduled f
 | `SEED_DEMO_DATA` | Seed demo data (default on locally, off in production) | No | Local `.env`; Cloud Run env var |
 | `SEED_CUSTOMER_PASSWORD` | Demo customer password | Yes | Local `.env`; Secret Manager |
 | `SEED_OPERATOR_PASSWORD` | Demo operator password | Yes | Local `.env`; Secret Manager |
+| `RUN_MIGRATIONS` | Opt-in migration + seed run in root entrypoint (default off) | No | Cloud Run job / manual run |
 | `API_PROXY_TARGET` | Vite dev proxy target (default `http://localhost:3000`) | No | Shell only, e.g. `API_PROXY_TARGET=http://localhost:8080 npm run dev:frontend`; not read from `backend/.env` |
 | `E2E_*`, `CAPTURE_EVIDENCE` | Playwright overrides | No | `backend/.env` (loaded by `frontend/playwright.config.ts`) or shell |
 | `BASE_URL` | NFR-05 benchmark target | No | `backend/.env` (loaded by `backend/benchmarks/nfr05-load.js`) or shell |
