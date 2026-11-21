@@ -47,7 +47,9 @@ COPY --from=backend-builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 COPY docker-entrypoint.sh ./
-RUN sed -i 's/\r$//' ./docker-entrypoint.sh && chmod +x ./docker-entrypoint.sh
+RUN sed -i 's/\r$//' ./docker-entrypoint.sh && chmod +x ./docker-entrypoint.sh && chown -R node:node /app
+
+USER node
 
 EXPOSE 3000
 

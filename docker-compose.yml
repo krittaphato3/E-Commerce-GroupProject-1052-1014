@@ -7,7 +7,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: campusbites
-      POSTGRES_TEST_DB: campusbites_test
     ports:
       - "5432:5432"
     volumes:

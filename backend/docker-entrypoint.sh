@@ -19,7 +19,7 @@ if [ -n "$DATABASE_URL" ]; then
   echo "[CampusBites Backend] Migrations applied successfully."
 
   echo "[CampusBites Backend] Running database seed..."
-  npm run db:seed || echo "[CampusBites Backend] Database seed completed or skipped."
+  npm run db:seed
 fi
 
 echo "[CampusBites Backend] Executing command: $@"
