@@ -9,16 +9,12 @@ import { ordersRouter } from "./routes/orders.js";
 import { mountRouter } from "./routes/registry.js";
 import { errorHandler } from "./middleware/error.js";
 import { env } from "./config/env.js";
+import { resolveCorsOptions } from "./config/cors.js";
 
 export function createApp(configureRoutes?: (app: express.Express) => void) {
   const app = express();
 
-  app.use(
-    cors({
-      origin: env.CLIENT_ORIGIN || "http://localhost:5173",
-      credentials: true,
-    })
-  );
+  app.use(cors(resolveCorsOptions(env)));
   app.use(express.json());
   app.use(cookieParser());
 

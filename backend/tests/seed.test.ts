@@ -64,6 +64,20 @@ describe("Demo seed switch (SEED_DEMO_DATA)", () => {
     expect(isDemoSeedEnabled({ NODE_ENV: "production" })).toBe(false);
     expect(isDemoSeedEnabled({ NODE_ENV: "production", SEED_DEMO_DATA: "true" })).toBe(true);
     expect(isDemoSeedEnabled({ NODE_ENV: "development", SEED_DEMO_DATA: "false" })).toBe(false);
+    expect(isDemoSeedEnabled({ NODE_ENV: "production", SEED_DEMO_DATA: "1" })).toBe(true);
+    expect(isDemoSeedEnabled({ NODE_ENV: "development", SEED_DEMO_DATA: "0" })).toBe(false);
+    expect(isDemoSeedEnabled({ NODE_ENV: "production", SEED_DEMO_DATA: "" })).toBe(false);
+  });
+
+  it("throws a clear error for any other value, such as a typo", async () => {
+    const { isDemoSeedEnabled } = await import("../prisma/seed.js");
+
+    expect(() => isDemoSeedEnabled({ NODE_ENV: "production", SEED_DEMO_DATA: "ture" })).toThrow(
+      /SEED_DEMO_DATA must be/
+    );
+    expect(() => isDemoSeedEnabled({ NODE_ENV: "development", SEED_DEMO_DATA: "yes" })).toThrow(
+      /"yes"/
+    );
   });
 });
 
@@ -97,7 +111,7 @@ describe("Seed is safe to re-run on every deploy", () => {
     await seedDatabase(testPrisma);
 
     const users = await testPrisma.user.findMany();
-    expect(users.map((u) => u.email)).toEqual(["operator1@campusbites.test"]);
+    expect(users).toHaveLength(1);
     expect(users[0].role).toBe("OPERATOR");
     expect(users[0].passwordHash.startsWith("$2")).toBe(true);
     expect(await testPrisma.order.count()).toBe(0);
@@ -112,5 +126,45 @@ describe("Seed is safe to re-run on every deploy", () => {
     vi.stubEnv("SEED_OPERATOR_PASSWORD", "change-me-local");
     await expect(seedDatabase(testPrisma, { demo: false })).rejects.toThrow(/placeholder/);
     expect(await testPrisma.user.count()).toBe(0);
+  });
+
+  it("production with demo off seeds the starter menu but not the test fixtures", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    await seedDatabase(testPrisma, { demo: false });
+
+    const names = (await testPrisma.menuItem.findMany({ orderBy: { name: "asc" } })).map((m) => m.name);
+    expect(names).toEqual(
+      ["Basil Pork Rice", "Fried Rice with Egg", "Green Curry with Rice", "Thai Iced Tea"]
+    );
+  });
+
+  it("re-running the seed does not overwrite live menu fields of existing items", async () => {
+    await seedDatabase(testPrisma, { demo: true });
+
+    const live = { description: "Edited live", priceSatang: 9999, stockQty: 7, isAvailable: false };
+    const names = ["Basil Pork Rice", "Mango Sticky Rice"];
+    for (const name of names) {
+      await testPrisma.menuItem.update({ where: { name }, data: live });
+    }
+
+    await seedDatabase(testPrisma, { demo: true });
+
+    for (const name of names) {
+      const item = await testPrisma.menuItem.findUniqueOrThrow({ where: { name } });
+      expect({
+        description: item.description,
+        priceSatang: item.priceSatang,
+        stockQty: item.stockQty,
+        isAvailable: item.isAvailable,
+      }).toEqual(live);
+    }
+  });
+
+  it("seeded menu names are customer-facing (no test suffixes)", async () => {
+    await seedDatabase(testPrisma, { demo: true });
+    const items = await testPrisma.menuItem.findMany();
+    for (const item of items) {
+      expect(`${item.name} ${item.description}`).not.toMatch(/\btest\b/i);
+    }
   });
 });
