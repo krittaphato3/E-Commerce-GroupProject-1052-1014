@@ -22,6 +22,7 @@ The Cloud Run, Cloud SQL, Secret Manager and the deploy workflow are scheduled f
 ### Seed and deploy notes
 - The Cloud Run migration job runs `migrate` + `seed` on every release. The seed is create-only for users (an existing user's password hash is never changed); menu data is create-only.
 - With `NODE_ENV=production` and `SEED_DEMO_DATA` unset or `false`, the seed creates only the operator account `operator1@campusbites.test`, using `SEED_OPERATOR_PASSWORD`. That variable must be set and must not be the `change-me-local` placeholder. Demo customers, the second operator and the test-fixture menu items are skipped.
+- `deploy/deploy.sh` mounts the Secret Manager secret `toktickit-admin-password` as `SEED_OPERATOR_PASSWORD` and (with `--demo`) `toktickit-demo-password` as `SEED_CUSTOMER_PASSWORD` in the migration job. The job runs `npx prisma migrate deploy --schema=backend/prisma/schema.prisma && npm run db:seed`.
 - `SEED_DEMO_DATA=true` is needed on the cloud job only when demo accounts are wanted (Lab 6); it also requires `SEED_CUSTOMER_PASSWORD`.
 - `COOKIE_SECURE` defaults to `true` when `NODE_ENV=production` (and `false` otherwise); an explicit value wins. It must be `true` behind HTTPS (Cloud Run). The repo's `docker-compose.yml` runs backend with `NODE_ENV=development`, so local compose runs keep it `false` for HTTP.
 - CORS: in production with `CLIENT_ORIGIN` unset, CORS is disabled (same-origin deployment). Outside production the default is `http://localhost:5173` with credentials.

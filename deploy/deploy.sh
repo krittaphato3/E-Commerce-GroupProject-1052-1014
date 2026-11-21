@@ -269,7 +269,7 @@ fi
 # 8. Optional Demo Password in Secret Manager when --demo is passed
 #    Only used to seed demo users (./deploy/deploy.sh --demo).
 # ==============================================================================
-JOB_SECRETS="DATABASE_URL=${SECRET_DB_URL}:latest,ADMIN_PASSWORD=${SECRET_ADMIN_PASS}:latest"
+JOB_SECRETS="DATABASE_URL=${SECRET_DB_URL}:latest,SEED_OPERATOR_PASSWORD=${SECRET_ADMIN_PASS}:latest"
 if [ "$SEED_DEMO_DATA" = "true" ]; then
   if [ "$DRY_RUN" = "1" ]; then
     run_cmd gcloud secrets describe "$SECRET_DEMO_PASS" --project "$PROJECT_ID"
@@ -282,7 +282,7 @@ if [ "$SEED_DEMO_DATA" = "true" ]; then
       printf "%s" "$GENERATED_DEMO_PASSWORD" | gcloud secrets versions add "$SECRET_DEMO_PASS" --data-file=- --project "$PROJECT_ID"
     fi
   fi
-  JOB_SECRETS="${JOB_SECRETS},DEMO_USER_PASSWORD=${SECRET_DEMO_PASS}:latest"
+  JOB_SECRETS="${JOB_SECRETS},SEED_CUSTOMER_PASSWORD=${SECRET_DEMO_PASS}:latest"
 fi
 
 # ------------------------------------------------------------------------------
@@ -315,7 +315,7 @@ run_cmd gcloud builds submit \
 # 10. Create/Update & Execute Cloud Run Job for Migration + Non-destructive Seed
 #     ⭐ IMPORTANT: if this job fails the script stops BEFORE deploying the
 #        service, so a broken migration never reaches users.
-#     CHANGE ME: `--args` (prisma migrate deploy && npm run prisma:seed) is
+#     CHANGE ME: `--args` (prisma migrate deploy --schema=... && npm run db:seed) is
 #        Prisma/npm specific — use your stack's migrate/seed command.
 #     deploy.yml / release.sh later re-run this same job (name: toktickit-migrate).
 # ==============================================================================
@@ -327,7 +327,7 @@ run_cmd gcloud run jobs deploy "$MIGRATE_JOB_NAME" \
   --set-secrets "$JOB_SECRETS" \
   --set-env-vars "NODE_ENV=production,TZ=Asia/Bangkok,SEED_DEMO_DATA=${SEED_DEMO_DATA}" \
   --command "sh" \
-  --args "-c,npx prisma migrate deploy && npm run prisma:seed" \
+  --args "-c,npx prisma migrate deploy --schema=backend/prisma/schema.prisma && npm run db:seed" \
   --max-retries 1 \
   --task-timeout 300s \
   --project "$PROJECT_ID"
@@ -379,7 +379,7 @@ printf '%s\n' "Deployment Completed!"
 printf '%s\n' "Service URL    : ${SERVICE_URL}"
 printf '%s\n' "Health Check   : ${SERVICE_URL}/api/health"
 printf '%s\n' "Readiness Check: ${SERVICE_URL}/api/ready"
-printf '%s\n' "Admin Email    : john.smith@example.com (mustChangePassword: true)"
+printf '%s\n' "Admin Email    : operator1@campusbites.test"
 printf '%s\n' "Admin Password : Stored in Secret Manager: ${SECRET_ADMIN_PASS} (not printed)."
 if [ "$SEED_DEMO_DATA" = "true" ]; then
   printf '%s\n' "Demo Password  : Stored in Secret Manager: ${SECRET_DEMO_PASS} (not printed)."
