@@ -50,9 +50,9 @@ def check(base):
     # --- Public checks --------------------------------------------------------
     for path, predicate in (
         ('/api/health', lambda b: json.loads(b).get('status') == 'ok'),
-        ('/api/ready', lambda b: json.loads(b).get('status') == 'ready' or json.loads(b).get('database') == 'ok' or json.loads(b).get('db') == 'connected'),
+        ('/api/ready', lambda b: json.loads(b).get('status') == 'ready' and json.loads(b).get('database') == 'ok'),
         ('/', lambda b: b'<html' in b.lower()),
-        ('/api/menu', lambda b: (isinstance(json.loads(b), dict) and isinstance(json.loads(b).get('items'), list) and len(json.loads(b)['items']) > 0) or (isinstance(json.loads(b), list) and len(json.loads(b)) > 0)),
+        ('/api/menu', lambda b: isinstance(json.loads(b).get('items'), list) and len(json.loads(b)['items']) > 0),
     ):
         # Retry: a cold Cloud Run instance may need a few seconds to start.
         for attempt in range(5):

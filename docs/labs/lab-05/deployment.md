@@ -87,6 +87,13 @@ npm run e2e                              # Playwright (needs e2e:install once)
 
 - GCP project ID: `TODO` (set via `GCP_PROJECT_ID` env var)
 - Region: `TODO` (default `asia-southeast1`)
-- **Starter Kit Resource Naming**: The deployment scripts (`deploy/deploy.sh`, `deploy/teardown.sh`, `deploy/release.sh`) retain the course Starter Kit naming convention with the `toktickit-*` prefix (`toktickit-repo`, `toktickit-web`, `toktickit-db`, `toktickit-migrate`, `toktickit-secrets`) as expected by the lab grading rubric, while deploying the CampusBites containerized application.
+- **Starter Kit Resource Naming**: The deployment scripts (`deploy/deploy.sh`, `deploy/teardown.sh`, `deploy/release.sh`) retain the course Starter Kit naming conventions as expected by the lab grading rubric, while deploying the CampusBites containerized application:
+  - Artifact Registry repository: `toktickit`
+  - Cloud Run service: `toktickit`
+  - Cloud SQL instance: `toktickit-pg` (PostgreSQL 16)
+  - Cloud SQL database & user: `toktickit`
+  - Cloud Run migration & seed job: `toktickit-migrate`
+  - Service Account: `toktickit-runner`
+  - Secret Manager secrets: `toktickit-database-url`, `toktickit-admin-password`, `toktickit-demo-password`
 - Release procedure: `TODO` (automated via `.github/workflows/deploy.yml` in Episode 7)
 - How to find the running commit: `TODO` (image tagged with git SHA and deployed to Cloud Run revision)
