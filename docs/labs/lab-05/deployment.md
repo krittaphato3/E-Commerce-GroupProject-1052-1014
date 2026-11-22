@@ -145,7 +145,7 @@ Evidence examples:
 | Release | Commit SHA (image tag) | Cloud Run revision | Image digest |
 | --- | --- | --- | --- |
 | A | `c70969973cdfee6ea64213a3de1685d907610607` | `toktickit-00002-9h5` | `sha256:f8bb8fb00378749a07311f3f6d0158776e1f16054495b3f7dc799f708f3a5db5` |
-| B | `f7d50f7f63eef2dadcbe84b09e6e53b4f3ada19a` | `toktickit-00005-b4n` (active after roll-forward) | `sha256:3ae886f2ebe5f67cd713797970af0368ec57422f884f7c66210c4b0101bd6fcb` |
+| B | `f7d50f7f63eef2dadcbe84b09e6e53b4f3ada19a` | `toktickit-00003-87w` (same image served again as `toktickit-00005-b4n` after the roll-forward) | `sha256:3ae886f2ebe5f67cd713797970af0368ec57422f884f7c66210c4b0101bd6fcb` |
 
 Cloud Run revision history (`gcloud run revisions list --service toktickit --region asia-southeast1 --limit 5`):
 
