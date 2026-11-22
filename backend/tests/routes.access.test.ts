@@ -198,9 +198,9 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
     const registry = [...publicRoutes, ...protectedRoutes].map(formatRoute).sort();
     const mounted = extractExpressRoutes(app).map(formatRoute).sort();
 
-    expect(publicRoutes.length, "four public routes").toBe(4);
+    expect(publicRoutes.length, "five public routes").toBe(5);
     expect(protectedRoutes.length, "six protected routes").toBe(6);
-    expect(mounted).toHaveLength(10);
+    expect(mounted).toHaveLength(11);
 
     // Every mounted route is registered.
     expect(mounted).toEqual(registry);

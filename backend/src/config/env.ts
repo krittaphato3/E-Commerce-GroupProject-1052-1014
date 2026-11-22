@@ -3,7 +3,7 @@ import { z } from "zod";
 
 dotenv.config();
 
-const envSchema = z.object({
+const baseSchema = z.object({
   PORT: z.string().default("3000").transform((val) => parseInt(val, 10)),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
@@ -14,12 +14,18 @@ const envSchema = z.object({
     .default("10")
     .transform((val) => parseInt(val, 10))
     .pipe(z.number().int().min(4).max(15)),
+  // Unset: secure in production, not otherwise. An explicit value always wins.
   COOKIE_SECURE: z
     .enum(["true", "false"])
-    .default("false")
-    .transform((val) => val === "true"),
+    .optional()
+    .transform((val) => (val === undefined ? undefined : val === "true")),
   CLIENT_ORIGIN: z.string().min(1).optional(),
 });
+
+const envSchema = baseSchema.transform((value) => ({
+  ...value,
+  COOKIE_SECURE: value.COOKIE_SECURE ?? value.NODE_ENV === "production",
+}));
 
 export type Env = z.infer<typeof envSchema>;
 

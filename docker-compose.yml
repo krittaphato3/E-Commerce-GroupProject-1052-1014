@@ -18,5 +18,36 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: campusbites-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/campusbites?schema=public
+      PORT: 3000
+      NODE_ENV: development
+      SEED_DEMO_DATA: "true"
+      SEED_CUSTOMER_PASSWORD: change-me-local
+      SEED_OPERATOR_PASSWORD: change-me-local
+      CLIENT_ORIGIN: http://localhost:5173
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: campusbites-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:

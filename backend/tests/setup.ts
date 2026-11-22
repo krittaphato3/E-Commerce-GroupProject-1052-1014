@@ -29,6 +29,9 @@ process.env.DATABASE_URL = testDatabaseUrl;
 // bcrypt cost 4 keeps the API tests fast; production and development use BCRYPT_ROUNDS.
 process.env.BCRYPT_ROUNDS = "4";
 
+// Tests rely on the demo users and fixture menu items regardless of the developer's .env.
+process.env.SEED_DEMO_DATA = "true";
+
 // Seed passwords are generated per run so no password literal exists in the repo.
 process.env.SEED_CUSTOMER_PASSWORD = randomBytes(18).toString("base64url");
 process.env.SEED_OPERATOR_PASSWORD = randomBytes(18).toString("base64url");
