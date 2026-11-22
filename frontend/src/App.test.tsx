@@ -15,7 +15,7 @@ describe("Frontend app shell", () => {
     );
 
     expect(html).toContain("Omazon");
-    expect(html).toContain("Log in");
+    expect(html).toContain("Log in (deployed via CI/CD)");
     expect(html).toContain("Email");
     expect(html).toContain("Password");
   });

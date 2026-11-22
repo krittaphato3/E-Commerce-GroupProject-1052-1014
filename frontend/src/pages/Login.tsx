@@ -63,7 +63,7 @@ export function Login() {
       <div className="col-md-5">
         <div className="card shadow-sm">
           <div className="card-body p-4">
-            <h1 className="h4 mb-3">Log in</h1>
+            <h1 className="h4 mb-3">Log in (deployed via CI/CD)</h1>
             <p className="text-muted">Pre-order your meal from the campus canteen.</p>
 
             {errors.length > 0 && (
