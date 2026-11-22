@@ -145,7 +145,17 @@ Evidence examples:
 | Release | Commit SHA (image tag) | Cloud Run revision | Image digest |
 | --- | --- | --- | --- |
 | A | `c70969973cdfee6ea64213a3de1685d907610607` | `toktickit-00002-9h5` | `sha256:f8bb8fb00378749a07311f3f6d0158776e1f16054495b3f7dc799f708f3a5db5` |
-| B | `f7d50f7f63eef2dadcbe84b09e6e53b4f3ada19a` | (not recorded) | `sha256:3ae886f2ebe5f67cd713797970af0368ec57422f884f7c66210c4b0101bd6fcb` |
+| B | `f7d50f7f63eef2dadcbe84b09e6e53b4f3ada19a` | `toktickit-00005-b4n` (active after roll-forward) | `sha256:3ae886f2ebe5f67cd713797970af0368ec57422f884f7c66210c4b0101bd6fcb` |
+
+Cloud Run revision history (`gcloud run revisions list --service toktickit --region asia-southeast1 --limit 5`):
+
+| Revision | Deployed (UTC) | Deployed by |
+| --- | --- | --- |
+| `toktickit-00005-b4n` (active) | 2026-11-22 14:36:41 | `toktickit-deployer` |
+| `toktickit-00004-zgn` | 2026-11-22 14:32:27 | `toktickit-deployer` |
+| `toktickit-00003-87w` | 2026-11-22 14:10:51 | `toktickit-deployer` |
+| `toktickit-00002-9h5` | 2026-11-22 13:39:53 | `toktickit-deployer` |
+| `toktickit-00001-zwk` | 2026-11-22 07:25:04 | a team member (manual first deploy with `deploy/deploy.sh`) |
 
 ## 8. Rollback and roll-forward
 
