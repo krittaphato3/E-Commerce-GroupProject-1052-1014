@@ -157,7 +157,7 @@ Evidence examples:
 | --- | --- |
 | `Invalid image tag.` | A short SHA was used. Use the full 40-character lowercase SHA. |
 | `Image digest not found.` | No image with that tag exists in Artifact Registry. Check the tag with the `gcloud artifacts docker images list` command in section 7. |
-| Workflow fails at authentication / branch not allowed | Run the workflow from branch `main` (the environment and Workload Identity provider only accept `main`). |
+| Workflow fails at authentication / branch not allowed | Run the workflow from branch `main` (the deployment is set up to accept runs from `main` only). |
 | Page does not change after a deployment | The browser cached the old page. Hard refresh (Ctrl+Shift+R / Cmd+Shift+R). |
 
 ## 9. Persistence check
