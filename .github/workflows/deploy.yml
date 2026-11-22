@@ -1,0 +1,113 @@
+# ##############################################################################
+# TokTickIT / CampusBites — Automated Deployment Workflow
+# Lab 5 Episode 7: Add auto-deploy pipeline and release a visible change
+# ##############################################################################
+name: Deploy demo
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      rollback:
+        description: 'Rollback mode (true/false)'
+        required: false
+        default: false
+        type: boolean
+      image_tag:
+        description: 'Image tag (commit SHA) to deploy in rollback mode'
+        required: false
+        default: ''
+        type: string
+
+# Least privilege: default to reading contents; deploy job gets id-token for WIF.
+permissions:
+  contents: read
+
+# Concurrency: ensure deployments do not conflict, never cancel deploy in progress.
+concurrency:
+  group: deploy-demo
+  cancel-in-progress: false
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # 1. Run tests before deployment via reusable workflow
+  # ----------------------------------------------------------------------------
+  test:
+    name: Test and Docker Build Check
+    if: ${{ (inputs.rollback || false) == false }}
+    uses: ./.github/workflows/ci-docker.yml
+
+  # ----------------------------------------------------------------------------
+  # 2. Deploy to Google Cloud Run
+  # ----------------------------------------------------------------------------
+  deploy:
+    name: Deploy demo
+    needs: test
+    if: ${{ !failure() && !cancelled() }}
+    runs-on: ubuntu-latest
+    environment: demo
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Validate rollback inputs
+        if: ${{ inputs.rollback == true && inputs.image_tag == '' }}
+        run: |
+          echo "::error::Rollback mode requires 'image_tag' (40-char commit SHA) to be specified."
+          exit 1
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+
+      - name: Authenticate to Google Cloud (WIF)
+        id: auth
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2.1.13
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f # v2.2.1
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push container image
+        if: ${{ (inputs.rollback || false) == false }}
+        env:
+          IMAGE_URI: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/toktickit/toktickit:${{ github.sha }}
+        run: |
+          docker build -t "$IMAGE_URI" .
+          docker push "$IMAGE_URI"
+
+      - name: Run release script (Migration + Service Update)
+        env:
+          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          REGION: ${{ vars.GCP_REGION }}
+          IMAGE_TAG: ${{ inputs.image_tag != '' && inputs.image_tag || github.sha }}
+          ROLLBACK: ${{ inputs.rollback && 'true' || 'false' }}
+        run: |
+          bash deploy/release.sh
+
+      - name: Set up Python for Smoke Test
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v5
+        with:
+          python-version: "3.12"
+
+      - name: Run Smoke Test on Live Service
+        run: |
+          python3 deploy/smoke_test.py "$SERVICE_URL"
+
+      - name: Write deployment summary
+        if: ${{ always() && env.DEPLOYED_IMAGE != '' }}
+        run: |
+          {
+            echo "### CampusBites demo deployment"
+            echo "- Commit image tag: \`${{ inputs.image_tag != '' && inputs.image_tag || github.sha }}\`"
+            echo "- Image digest: \`${DEPLOYED_IMAGE}\`"
+            echo "- Service URL: ${SERVICE_URL}"
+          } >> "$GITHUB_STEP_SUMMARY"
