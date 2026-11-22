@@ -12,7 +12,7 @@ on:
       rollback:
         description: 'Rollback mode (true/false)'
         required: false
-        default: 'false'
+        default: false
         type: boolean
       image_tag:
         description: 'Image tag (commit SHA) to deploy in rollback mode'
@@ -52,19 +52,25 @@ jobs:
       id-token: write
 
     steps:
+      - name: Validate rollback inputs
+        if: ${{ inputs.rollback == true && inputs.image_tag == '' }}
+        run: |
+          echo "::error::Rollback mode requires 'image_tag' (40-char commit SHA) to be specified."
+          exit 1
+
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
 
       - name: Authenticate to Google Cloud (WIF)
         id: auth
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2.1.13
         with:
           project_id: ${{ vars.GCP_PROJECT_ID }}
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
           service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f # v2.2.1
 
       - name: Configure Docker for Artifact Registry
         run: |
@@ -88,10 +94,20 @@ jobs:
           bash deploy/release.sh
 
       - name: Set up Python for Smoke Test
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v5
         with:
           python-version: "3.12"
 
       - name: Run Smoke Test on Live Service
         run: |
           python3 deploy/smoke_test.py "$SERVICE_URL"
+
+      - name: Write deployment summary
+        if: ${{ always() && env.DEPLOYED_IMAGE != '' }}
+        run: |
+          {
+            echo "### CampusBites demo deployment"
+            echo "- Commit image tag: \`${{ inputs.image_tag != '' && inputs.image_tag || github.sha }}\`"
+            echo "- Image digest: \`${DEPLOYED_IMAGE}\`"
+            echo "- Service URL: ${SERVICE_URL}"
+          } >> "$GITHUB_STEP_SUMMARY"
