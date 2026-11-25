@@ -134,4 +134,7 @@ jobs:
       # ------------------------------------------------------------------------
       - name: Verify Unified Production Dockerfile Build
         run: |
-          docker build -t campusbites-root:test .
+          docker build \
+            --build-arg VITE_GIT_SHA="${GITHUB_SHA::7}" \
+            --build-arg APP_VERSION="${GITHUB_SHA::7}" \
+            -t campusbites-root:test .

@@ -3,10 +3,15 @@ import { prisma } from "../db/prisma.js";
 
 export const healthRouter = Router();
 
+export function resolveAppVersion(): string {
+  const candidate = process.env.APP_VERSION?.trim() || process.env.GIT_SHA?.trim();
+  return candidate || "1.0.0";
+}
+
 healthRouter.get("/", (_req: Request, res: Response) => {
   res.status(200).json({
     status: "ok",
-    version: "1.0.0",
+    version: resolveAppVersion(),
   });
 });
 
