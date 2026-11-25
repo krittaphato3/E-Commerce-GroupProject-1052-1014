@@ -10,6 +10,8 @@ RUN npm ci --workspace=frontend
 
 COPY frontend ./frontend
 WORKDIR /app/frontend
+ARG VITE_GIT_SHA=
+ENV VITE_GIT_SHA=${VITE_GIT_SHA}
 RUN npm run build
 
 # Stage 2: Build backend service
@@ -34,6 +36,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
+ARG APP_VERSION=1.0.0
+ENV APP_VERSION=${APP_VERSION}
 
 COPY package.json package-lock.json ./
 COPY backend/package.json ./backend/

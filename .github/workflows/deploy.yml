@@ -81,7 +81,11 @@ jobs:
         env:
           IMAGE_URI: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/toktickit/toktickit:${{ github.sha }}
         run: |
-          docker build -t "$IMAGE_URI" .
+          SHORT_SHA="${GITHUB_SHA::7}"
+          docker build \
+            --build-arg VITE_GIT_SHA="$SHORT_SHA" \
+            --build-arg APP_VERSION="$SHORT_SHA" \
+            -t "$IMAGE_URI" .
           docker push "$IMAGE_URI"
 
       - name: Run release script (Migration + Service Update)

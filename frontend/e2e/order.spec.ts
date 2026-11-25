@@ -113,6 +113,7 @@ test("AC-21 / AC-30: a stale cart gets 409 ITEM_UNAVAILABLE and keeps both lines
   const cart = page.getByRole("region", { name: "Cart" });
   await expect(cart.getByText(lastUnit!.name, { exact: true })).toBeVisible();
   await expect(cart.getByText(keeper!.name, { exact: true })).toBeVisible();
+  await page.getByLabel("Pickup note").fill("No chili");
 
   // customer2 buys every remaining unit through the API, so customer1's cart is
   // stale. A dedicated request context keeps customer1's browser session intact.
@@ -154,5 +155,11 @@ test("AC-21 / AC-30: a stale cart gets 409 ITEM_UNAVAILABLE and keeps both lines
   // The alert lives inside the Cart region, so match the line itself exactly.
   await expect(cart.getByText(lastUnit!.name, { exact: true })).toBeVisible();
   await expect(cart.getByText(keeper!.name, { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Pickup note")).toHaveValue("No chili");
+  // FND-02: menu availability refreshes in place without a manual page reload.
+  await expect(lastUnitCard.getByText("Sold out")).toBeVisible();
+  await expect(
+    lastUnitCard.getByRole("button", { name: `Add ${lastUnit!.name} to cart` })
+  ).toBeDisabled();
   await captureEvidence(page, "F-03-order-unavailable-409.png");
 });

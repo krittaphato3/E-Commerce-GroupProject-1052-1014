@@ -150,6 +150,14 @@ export function Menu() {
           ? error.message
           : "Something went wrong. Please try again."
       );
+      if (error instanceof ApiRequestError && error.status === 409) {
+        try {
+          const refreshed = await fetchMenu();
+          setItems(refreshed.items);
+        } catch {
+          // Preserve the 409 alert and cart state if the background menu refresh fails.
+        }
+      }
     } finally {
       setPlacing(false);
     }
