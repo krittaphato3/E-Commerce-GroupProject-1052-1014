@@ -174,6 +174,71 @@ describe("F-02 Menu screen (AC-12, AC-13)", () => {
     expect(mockedCreateOrder).toHaveBeenCalledTimes(1);
   });
 
+  it("FND-02: refreshes menu availability in place on 409 ITEM_UNAVAILABLE without clearing cart or pickupNote", async () => {
+    const mangoInStock = {
+      id: 5,
+      name: "Mango Sticky Rice",
+      description: "Sweet mango with sticky rice",
+      priceSatang: 8000,
+      stockQty: 1,
+      isAvailable: true,
+      available: true,
+    };
+    const mangoSoldOut = {
+      ...mangoInStock,
+      stockQty: 0,
+      available: false,
+    };
+
+    mockedFetchMenu
+      .mockResolvedValueOnce({ items: [TWO_ITEMS.items[0], mangoInStock] })
+      .mockResolvedValueOnce({ items: [TWO_ITEMS.items[0], mangoSoldOut] });
+    mockedCreateOrder.mockRejectedValueOnce(
+      new ApiRequestError(409, "ITEM_UNAVAILABLE", "Mango Sticky Rice is sold out.", {
+        menuItemId: 5,
+        requested: 1,
+        available: 0,
+      })
+    );
+
+    renderMenu();
+
+    await addToCart("Basil Pork Rice");
+    await addToCart("Mango Sticky Rice");
+    fireEvent.change(screen.getByLabelText("Pickup note"), {
+      target: { value: "Less spicy" },
+    });
+
+    const mangoCardBefore = (await screen.findAllByText("Mango Sticky Rice"))
+      .map((el) => el.closest("article"))
+      .find((el): el is HTMLElement => el !== null)!;
+    expect(within(mangoCardBefore).getByText("1 left")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Place order" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Mango Sticky Rice is sold out.");
+
+    const cartAfter = screen.getByRole("region", { name: "Cart" });
+    expect(within(cartAfter).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(cartAfter).getByText("Basil Pork Rice")).toBeTruthy();
+    expect(within(cartAfter).getByText("Mango Sticky Rice")).toBeTruthy();
+    expect((screen.getByLabelText("Pickup note") as HTMLInputElement).value).toBe("Less spicy");
+    expect(screen.getByTestId("location").textContent).toBe("/menu");
+
+    const mangoCardAfter = screen
+      .getAllByText("Mango Sticky Rice")
+      .map((el) => el.closest("article"))
+      .find((el): el is HTMLElement => el !== null)!;
+    expect(within(mangoCardAfter).getByText("Sold out")).toBeTruthy();
+    expect(within(mangoCardAfter).queryByText("1 left")).toBeNull();
+    const addMangoAfter = within(mangoCardAfter).getByRole("button", {
+      name: "Add Mango Sticky Rice to cart",
+    }) as HTMLButtonElement;
+    expect(addMangoAfter.disabled).toBe(true);
+    expect(mockedFetchMenu).toHaveBeenCalledTimes(2);
+  });
+
   it("TEST-30 (supporting): an anonymous visitor sees a login link instead of the place-order button", async () => {
     mockedFetchMenu.mockResolvedValue(TWO_ITEMS);
 
