@@ -1,19 +1,61 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from "vitest";
 import request from "supertest";
 import { app } from "../src/app.js";
+import { prisma } from "../src/db/prisma.js";
 import { checkDatabaseReady } from "../src/routes/health.js";
 
 describe("Health API Endpoint (R-03)", () => {
-  it("GET /api/health returns 200 OK with status: ok", async () => {
+  const originalAppVersion = process.env.APP_VERSION;
+  const originalGitSha = process.env.GIT_SHA;
+
+  afterEach(() => {
+    if (originalAppVersion === undefined) delete process.env.APP_VERSION;
+    else process.env.APP_VERSION = originalAppVersion;
+
+    if (originalGitSha === undefined) delete process.env.GIT_SHA;
+    else process.env.GIT_SHA = originalGitSha;
+  });
+
+  it("GET /api/health returns 200 OK with status: ok and default version 1.0.0", async () => {
+    delete process.env.APP_VERSION;
+    delete process.env.GIT_SHA;
+
     const response = await request(app).get("/api/health");
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("status", "ok");
-    expect(response.body).toHaveProperty("version");
+    expect(response.body).toEqual({ status: "ok", version: "1.0.0" });
+  });
+
+  it("GET /api/health exposes APP_VERSION over GIT_SHA when configured", async () => {
+    process.env.GIT_SHA = "abc1234";
+    process.env.APP_VERSION = "deadbee";
+
+    const response = await request(app).get("/api/health");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ status: "ok", version: "deadbee" });
+  });
+
+  it("GET /api/health falls back to GIT_SHA when APP_VERSION is unset", async () => {
+    delete process.env.APP_VERSION;
+    process.env.GIT_SHA = "cafebabe";
+
+    const response = await request(app).get("/api/health");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ status: "ok", version: "cafebabe" });
   });
 });
 
 describe("Readiness API Endpoint", () => {
+  beforeAll(async () => {
+    await prisma.$connect();
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
   it("GET /api/ready returns 200 when the database is reachable", async () => {
     const response = await request(app).get("/api/ready");
 
