@@ -438,3 +438,141 @@ In addition to the Product Definition of Done:
 - Traceability rows FR-11, BR-10 and BR-06 updated.
 
 ---
+
+## 9. F-07 — Simulated Payment (Engineering Contract)
+
+| Item | Value |
+|---|---|
+| Feature | F-07 Simulated payment |
+| Requirements | FR-13, BR-11, BR-07 |
+| Sprint | 2 |
+| Depends on | F-04 |
+| Contract version | 1.0 (2026-11-27) |
+| Issue / branch | #56 / `feature/F-07-payment` |
+
+### Revision history
+| Version | Date | Change | Reason |
+|---|---|---|---|
+| 1.0 | 2026-11-27 | Initial contract | Before implementation |
+
+### 1. Feature design
+
+**Behavior.** A Customer pays for their own `ACCEPTED`, `UNPAID` order. The payment is simulated: no gateway, no card data (SRS §3.2). The Customer confirms the amount; it must equal the order total. `paymentStatus` becomes `PAID` exactly once. The order status stays `ACCEPTED`.
+
+**Payment status.**
+```mermaid
+stateDiagram-v2
+    [*] --> UNPAID: order submitted
+    UNPAID --> PAID: pay (Customer owner, order ACCEPTED, exact amount)
+```
+`PAID` → `REFUNDED` is F-12, Sprint 3.
+
+**Workflow (`POST /api/orders/:id/pay`).** Checks run in this order, and the first failure is returned:
+1. Authenticate (401), require role `CUSTOMER` (403).
+2. Validate the body (400), then `:id` (400).
+3. In a transaction load the order: missing → 404; not the owner → 403.
+4. Status is not `ACCEPTED`, or `paymentStatus` is not `UNPAID` → 409.
+5. `amountSatang` differs from `totalSatang` → 400.
+6. Conditional update: set `paymentStatus = PAID` where `id`, `customerId`, `status = ACCEPTED`, `paymentStatus = UNPAID` and `totalSatang = amountSatang` all match. Zero rows → re-read and return 409.
+7. Commit and return 200.
+
+Steps 4 and 5 are a pure function in `backend/src/services/paymentRules.ts` (`assertPaymentAllowed(order, amountSatang)`), so they can be unit-tested.
+
+**Business rules.** BR-11, BR-07. The server total is the only authority (BR-03); the client amount is only compared with it, never stored.
+
+**Validation (zod, strict).** `amountSatang`: required, integer greater than 0 (not a string, not a decimal). Unknown fields are rejected.
+
+**Dependencies.** `Order.paymentStatus` (exists since `0001_init`).
+
+**Permissions.** Customer who owns the order. Operators cannot pay.
+
+**Failure and boundary cases.**
+- Total - 1 and total + 1 return 400 and the order stays `UNPAID` (AC-69).
+- A missing, zero, negative, decimal or string amount, or an unknown field, returns 400 (AC-70).
+- Paying a `PENDING`, `REJECTED` or `CANCELLED` order returns 409; so does any unpaid order that is not `ACCEPTED` (AC-71).
+- Paying a paid order returns 409, in any later status too (AC-72). Two payments at once: one succeeds (AC-73).
+- Another customer 403, Operator 403, anonymous 401, missing 404, bad id 400 (AC-74).
+
+### 2. API specification
+
+```ts
+export const orderPaymentSchema = z
+  .object({ amountSatang: z.number().int().positive() })
+  .strict();
+```
+
+#### `POST /api/orders/:id/pay` (Customer, owner)
+| Item | Spec |
+|---|---|
+| Role / ownership | `CUSTOMER`, and `order.customerId` equals the session user id |
+| Request | `orderPaymentSchema`, for example `{ "amountSatang": 15000 }` |
+| 200 | `{ "order": { ...order detail... } }` with `paymentStatus` `PAID` and `status` `ACCEPTED` |
+| 400 | `VALIDATION_ERROR`: schema violation, unknown field or invalid `:id`. Wrong amount: message "Payment amount must equal the order total.", `details: [ { "field": "amountSatang", "message": "Must equal 15000" } ]` |
+| 401 | `UNAUTHENTICATED` |
+| 403 | `FORBIDDEN`: Operator, or a Customer who is not the owner. Generic error only |
+| 404 | `NOT_FOUND` |
+| 409 | `INVALID_TRANSITION`: order not `ACCEPTED`, or already `PAID`; `details: { "from": "<paymentStatus>", "to": "PAID", "orderStatus": "<status>" }` |
+
+No new error code is introduced (DEC-36). There is no idempotency key: a repeat of a successful payment gets 409, and the client reloads the order to see `PAID`.
+
+**Registry.** `POST /api/orders/:id/pay` with `[CUSTOMER]`.
+
+### 3. UI specification
+| Element | Behavior |
+|---|---|
+| Order detail `/orders/:id` | A **Pay** button is shown only to a Customer when the status is `ACCEPTED` and payment is `UNPAID` |
+| Confirmation | Click shows "Pay ฿150.00 (simulated)?" with **Confirm payment** and **Back**. The amount is the order's `totalSatang`; the user does not type it, and no card fields exist (DEC-38) |
+| Pending | "Paying…", buttons disabled |
+| Success | Payment badge "Paid"; Pay button gone |
+| 409 / 400 | Alert with the API message, then the order is reloaded |
+| Other errors | Generic message; the button remains |
+| `PENDING` + `UNPAID` | Text "You can pay after the shop accepts this order." |
+| Loading / empty / error | Existing order detail states are unchanged. Empty does not apply |
+
+### 4. Data specification
+| Layer | Change |
+|---|---|
+| Prisma schema | **No change.** `Order.paymentStatus` (`UNPAID`, `PAID`, `REFUNDED`) exists. No `Payment` table and no new column (DEC-35) |
+| Constraints | **No change** |
+| Migration | **None** |
+| Data written | `Order.paymentStatus` and `updatedAt`. **No** `OrderStatusHistory` row, because the order status does not change (BR-15, DEC-35) |
+| Seed | **No change** |
+
+### 5. Acceptance criteria
+
+| AC | Statement |
+|---|---|
+| AC-68 | The owner paying the exact total of an `ACCEPTED`, `UNPAID` order gets 200; the database and `GET /api/orders/:id` show `paymentStatus` `PAID` with status still `ACCEPTED`; total, stock and history are unchanged. |
+| AC-69 | An amount of total - 1 or total + 1 returns 400 `VALIDATION_ERROR` naming `amountSatang`; the order stays `UNPAID`. The exact total is accepted. |
+| AC-70 | A missing body, a missing, zero, negative, decimal or string `amountSatang`, or an unknown field returns 400 `VALIDATION_ERROR`; the order stays `UNPAID`. |
+| AC-71 | Paying an unpaid order whose status is `PENDING`, `PREPARING`, `READY`, `COMPLETED`, `REJECTED` or `CANCELLED` returns 409 `INVALID_TRANSITION`; payment status is unchanged. |
+| AC-72 | Paying an already `PAID` order returns 409 `INVALID_TRANSITION`; it stays `PAID` and nothing else changes. |
+| AC-73 | Two simultaneous payments of one order give exactly one 200 and one 409, and the order is `PAID`. |
+| AC-74 | Another Customer and an Operator get 403 `FORBIDDEN` with no order data, an anonymous caller gets 401, a missing order gets 404 and a non-numeric id gets 400; the order stays `UNPAID`. |
+| AC-75 | In the UI the Pay button appears only for a Customer on an `ACCEPTED`, `UNPAID` order; the confirmation shows the total; the request sends that exact amount; success shows "Paid"; a rejection shows the message and reloads the order. |
+| AC-76 | In the UI, after an Operator accepts an order, the Customer pays it and still sees "Paid" after a reload. |
+
+### 6. Software Test Specification (STS)
+
+| Test | AC | Level | Precondition and input | Action | Expected result | Planned file::test name |
+|---|---|---|---|---|---|---|
+| TEST-68 | AC-68 | API-DB | `customer1` order O1 (total 15000) accepted by `operator1` | POST pay 15000; read DB; GET O1 | 200; DB `PAID`, `ACCEPTED`, total 15000; stock and history count unchanged; GET shows `PAID` | `backend/tests/orders.pay.test.ts::TEST-68` |
+| TEST-69 | AC-69 | Unit + API-DB | Total 15000 | Unit: `assertPaymentAllowed` with 14999, 15000, 15001. API: pay 14999, 15001, then 15000 | Unit: only 15000 passes. API: 400, 400 (`details[0].field` = `amountSatang`, still `UNPAID`), then 200 | `backend/src/services/paymentRules.test.ts::TEST-69`; `backend/tests/orders.pay.test.ts::TEST-69` |
+| TEST-70 | AC-70 | Unit + API-DB | Accepted unpaid O1 | Schema and API with: no body, `{}`, 0, -15000, 150.5, `"15000"`, extra `paymentStatus: "PAID"` | All rejected; API 400; O1 `UNPAID` | `backend/src/middleware/paymentSchema.test.ts::TEST-70`; `backend/tests/orders.pay.test.ts::TEST-70` |
+| TEST-71 | AC-71 | API-DB | One unpaid order per listed status (set by test helper) | Pay each with its exact total | Each 409 with `details.orderStatus`; still `UNPAID` | `backend/tests/orders.pay.test.ts::TEST-71` |
+| TEST-72 | AC-72 | API-DB | O1 already paid | Pay again; repeat after moving O1 to `PREPARING` in the DB | Both 409, `details.from` = `PAID`; still `PAID`; history unchanged | `backend/tests/orders.pay.test.ts::TEST-72` |
+| TEST-73 | AC-73 | API-DB | Accepted unpaid order | Two pay calls with `Promise.all` behind a synchronization barrier; repeat 10 times with new orders | One 200 and one 409 each time; final `PAID` | `backend/tests/orders.pay.test.ts::TEST-73` |
+| TEST-74 | AC-74 | API-DB | Accepted unpaid O1 owned by `customer1` | Pay as `customer2`, `operator1`, anonymous; `customer1` pays id 99999 and `abc` with a valid body | 403, 403, 401, 404, 400; 403 bodies contain only `error`; O1 `UNPAID` | `backend/tests/orders.pay.test.ts::TEST-74` |
+| TEST-75 | AC-75 | UI component | API client mocked: orders in `PENDING`, `ACCEPTED` unpaid and paid; Operator user; success and 409 | Render; Pay; Back; Pay; Confirm | Button only in the allowed case; confirmation shows `฿150.00`; Back sends nothing; request has `amountSatang` 15000; "Paid" on success; alert and refetch on 409 | `frontend/src/pages/OrderDetail.test.tsx::TEST-75` |
+| TEST-76 | AC-76 | E2E | `customer1` order created and accepted in the test | Log in as customer; open order; pay; confirm; reload | "Paid" before and after reload; no Pay button | `frontend/e2e/payment.spec.ts::TEST-76` |
+
+### 7. Definition of Done (feature-specific)
+In addition to the Product Definition of Done:
+- TEST-68 to TEST-76 executed and passing, results recorded; TEST-43 passes with the new route.
+- **TDD evidence** (red then green with commit IDs) for TEST-69 (amount rule) and TEST-73 (double payment).
+- The concurrency test runs against the real PostgreSQL test database (no mock).
+- Screenshots: confirmation, paid order, rejection message. API output showing a 403 for a non-owner.
+- No card number or other payment data is collected, logged or stored.
+- Traceability rows FR-13 and BR-11 updated.
+
+---
