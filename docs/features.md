@@ -3,9 +3,9 @@
 | Item | Value |
 |---|---|
 | Document | `docs/features.md` |
-| Version | 1.4 |
-| Date | 2026-11-12 |
-| Related | `docs/srs.md`, `docs/traceability.md`, `docs/sprints/plan.md`, `docs/sprints/sprint-1/features.md` (Sprint 1 contracts) |
+| Version | 1.5 |
+| Date | 2026-11-27 |
+| Related | `docs/srs.md`, `docs/traceability.md`, `docs/sprints/plan.md`, `docs/sprints/sprint-1/features.md` (Sprint 1 contracts), `docs/sprints/sprint-2/features.md` (Sprint 2 contracts) |
 
 ### Revision history
 | Version | Date | Change | Reason |
@@ -15,6 +15,7 @@
 | 1.2 | 2026-11-05 | Removed BR-13 from F-03: order submission does not enforce the catalog price/stock bounds, which belong to F-05 API validation and the R-03 DB checks | Align F-03 with the traceability matrix; F-03 enforces BR-02 and BR-05, not BR-13 |
 | 1.3 | 2026-11-07 | Document title uses the Omazon display name | Display brand rename (DEC-25); no requirement, feature or sprint content changed |
 | 1.4 | 2026-11-12 | §4 approved scope changes now lists CHG-01 and CHG-02 instead of "None yet" | The cell contradicted `docs/traceability.md` §6, which already records both changes (PR #20 review) |
+| 1.5 | 2026-11-27 | Related row references the Sprint 2 contract file `docs/sprints/sprint-2/features.md` (F-05 to F-08, R-05); no requirement, feature or sprint content changed | Sprint 2 contracts written before implementation (Issue #53) |
 
 ## 1. Features
 
