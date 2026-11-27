@@ -836,3 +836,35 @@ In addition to the Product Definition of Done:
 - Traceability rows NFR-06 and NFR-10 updated.
 
 ---
+
+## 12. Decisions and open questions
+
+These continue the decision numbering of `docs/srs.md` §9 (last used: DEC-27). The SRS and SDS do not settle these points; each takes the simplest option consistent with the current code. Status of all entries: **proposed**, confirmed by merging the PR for Issue #53.
+
+| ID | Decision | Rationale | Applies to | Date |
+|---|---|---|---|---|
+| DEC-28 | Catalog writes are `POST /api/menu-items` and `PATCH /api/menu-items/:id`. No delete endpoint and no Operator list endpoint; the Operator screen reads `GET /api/menu`. | FR-10 asks for create, edit, enable and disable only. `GET /api/menu` already returns all items and fields. Order lines reference menu items. | F-05 | 2026-11-27 |
+| DEC-29 | Limits: `name` 1–100 and `description` 1–500 characters after trimming; `priceSatang` 1–1,000,000; `stockQty` 0–10,000. Upper bounds are API validation only. | BR-13 sets lower bounds only. The price cap keeps the largest order (10 lines × 10 × price = 100,000,000) inside the 32-bit `totalSatang` column. | F-05 | 2026-11-27 |
+| DEC-30 | A duplicate name returns 400 `VALIDATION_ERROR` with `details` on `name`. Uniqueness is exact and case-sensitive after trimming. | Matches the existing unique index and adds no new error code. | F-05 | 2026-11-27 |
+| DEC-31 | `stockQty` in an update is an absolute value (last write wins), with no version check. The edit form sends only changed fields. | A-05: stock is set by hand. Order reservation stays atomic, so stock cannot become negative. | F-05 | 2026-11-27 |
+| DEC-32 | The seed is not changed. Renaming a seeded item makes the next seed run create the original again; this is a known limitation. | The seed upserts by name and is create-only. Changing it is outside FR-10. | F-05, R-05 | 2026-11-27 |
+| DEC-33 | Cancel is `POST /api/orders/:id/cancel`, `CUSTOMER` only in Sprint 2; Operators get 403. No body and no reason. BR-10's 409 "by any role" is enforced in the role-independent state machine and reaches Operators when F-12 adds their cancel path. | Operator cancellation is FR-17 (Sprint 3). The endpoint follows the accept endpoint. | F-06 | 2026-11-27 |
+| DEC-34 | Cancellation adds each line quantity to the item's current stock, including disabled items. The sum is not capped, so it can exceed the DEC-29 API limit. | BR-10 requires restoring reserved stock. The limit applies to Operator input only. | F-06 | 2026-11-27 |
+| DEC-35 | Payment stores only `Order.paymentStatus`: no `Payment` table, paid amount, paid time or history row. No migration. | The amount must equal the stored total. BR-15 covers order creation and status changes. The enum already exists. | F-07 | 2026-11-27 |
+| DEC-36 | A wrong amount is 400 `VALIDATION_ERROR`; a wrong state or repeat payment is 409 `INVALID_TRANSITION`. State is checked before amount. No idempotency key. | Reuses the SDS error codes. | F-07 | 2026-11-27 |
+| DEC-37 | Fulfilment uses three action endpoints, `/start`, `/ready`, `/complete`. Starting an unpaid order is 409 `INVALID_TRANSITION` with `paymentStatus` in `details`. | The paths are already in the SDS endpoint summary and match `/accept`. | F-08 | 2026-11-27 |
+| DEC-38 | UI: cancel and pay use an inline two-step confirmation; the paid amount is not typed; fulfilment buttons are on the operator list only; the customer sees new status on load or reload (no polling or push). | Smallest change to the existing screens; notifications are excluded by SRS §3.2. | F-06, F-07, F-08 | 2026-11-27 |
+| DEC-39 | COV-01 is the check name of TEST-88 and CHECK-01 of TEST-89. | Keeps "TEST-nn verifies AC-nn" with no gaps while keeping the names used in the traceability matrix. | R-05 | 2026-11-27 |
+| DEC-40 | The coverage gate counts backend unit and API-DB tests, lines only, 85% over `src/services` as a whole. It runs in `ci.yml` and in `test-and-docker`, and `ci-docker.yml` also runs on PRs into `sprint-2-staging`. | A step only in `ci.yml` would not block a merge to `main` or a deployment, because only `test-and-docker` is required there. | R-05 | 2026-11-27 |
+| DEC-41 | The registry fix keeps the explicit `mountRouter` approach, extended to parent routers and multiple prefixes. No Express method is patched. | Consistent with DEC-24. | R-05, R-01 | 2026-11-27 |
+| DEC-42 | In CHECK-01 a restart is a forced new Cloud Run revision and a redeploy is a normal `Deploy demo` run. | Cloud Run has no in-place restart; both steps use existing tooling. | R-05 | 2026-11-27 |
+
+### Open questions for the team
+
+| ID | Question | Default in this contract |
+|---|---|---|
+| OQ-01 | Is 403 for an Operator calling cancel in Sprint 2 acceptable, given BR-10's "any role" wording? | Yes (DEC-33) |
+| OQ-02 | Is it acceptable to store no payment record or paid time? | Yes (DEC-35) |
+| OQ-03 | Are the catalog limits right for the stall? | DEC-29 |
+| OQ-04 | Accept the renamed-seed-item limitation, or fix the seed in Sprint 2 through a contract revision? | Accept (DEC-32) |
+| OQ-05 | Should `main` also require the full `ci.yml` check (with Playwright)? This is a repository ruleset setting. | Not changed (DEC-40) |
