@@ -720,3 +720,119 @@ In addition to the Product Definition of Done:
 - Traceability rows FR-12, BR-09 and BR-06 updated.
 
 ---
+
+## 11. R-05 — Delivery and Quality Gates (Engineering Contract)
+
+| Item | Value |
+|---|---|
+| Responsibilities | R-05 Delivery and quality gates, with the Sprint 2 extension of R-01 Access control |
+| Requirements | NFR-06, NFR-10, NFR-01, NFR-02 |
+| Sprint | 2 |
+| Depends on | Lab 5 deployment; F-05 to F-08 merged |
+| Contract version | 1.0 (2026-11-27) |
+| Issue / branch | #58 / `chore/R-05-coverage-persistence` |
+
+### Revision history
+| Version | Date | Change | Reason |
+|---|---|---|---|
+| 1.0 | 2026-11-27 | Initial contract | Before implementation |
+
+### 1. Design
+
+Lab 5 already delivered the Dockerfile, CI, Cloud Run, Cloud SQL and the release pipeline (`docs/labs/lab-05/deployment.md`). R-05 adds the three things below.
+
+#### COV-01 Coverage gate (NFR-10)
+- Add the dev dependency `@vitest/coverage-v8` (same major version as `vitest`) and a backend script `coverage` that applies the test migrations and runs `vitest run --coverage`.
+- Coverage settings in `backend/vitest.config.ts`: provider `v8`; include `src/services/**/*.ts`; exclude `**/*.test.ts`; `thresholds.lines: 85`; reporters `text`, `json-summary` and `lcov`. Files in the include list that no test imports count as uncovered.
+- Run it in `.github/workflows/ci.yml` (every PR) and upload the report as a run artifact.
+- `main` requires only the check `test-and-docker`, and the deploy workflow depends on that job (DEC-40). So the backend test step in `.github/workflows/ci-docker.yml` also runs the coverage script, and `sprint-2-staging` is added to that workflow's pull-request branches.
+- Raising the percentage by excluding service files or by assertion-free tests is not allowed (Product DoD item 3).
+
+#### CHECK-01 Persistence after restart and redeploy (NFR-06)
+Run against the deployed Sprint 2 release on GCP (service `toktickit`, region `asia-southeast1`), after the release is merged to `main` and before it is tagged. Cloud SQL must be running and demo accounts must exist (deployment notes §10). Nobody else uses the system during the check.
+
+1. Record the current revision name and `GET /api/health` version.
+2. As `customer1`, create an order through the deployed app. Save the `GET /api/orders/:id` body and the `stockQty` of the ordered items from `GET /api/menu`.
+3. **Restart:** force a new revision of the same image, for example `gcloud run services update toktickit --region asia-southeast1 --update-labels=check01=<timestamp>`.
+4. Record the new revision name and confirm it serves 100% of traffic. Log in again, read the same order and stock, and compare.
+5. **Redeploy:** run the `Deploy demo` workflow on `main` with `rollback` = `false`. It runs the migration and seed job, then updates the service.
+6. Record the workflow run URL, the image digest and the serving revision name. Log in again, read the same order and stock, and compare. If no new revision was created, record that and make the redeploy produce one before the check can pass.
+
+**Pass:** at steps 4 and 6 the order body is identical (id, order number, status, payment status, items, total, history), the stock values are identical, the same account can log in, and the revision name differs from the one before.
+
+Save commands, output, revision names, commit SHA and date to `docs/evidence/CHECK-01-<sha>.txt`. Never record passwords, cookies or connection strings.
+
+#### Route registry fixes (R-01 extension)
+These close the two README "Known Limitations" of `backend/src/routes/registry.ts` (DEC-41).
+
+| Limitation | Required behavior |
+|---|---|
+| Nested sub-routers are not extracted | `extractExpressRoutes` walks router stacks recursively. `mountRouter` accepts an application **or a parent router**, and full paths join all prefixes. A nested router mounted with a raw `router.use` is reported as `<unregistered-mount>` |
+| A router mounted under two prefixes keeps only the last | The `WeakMap` stores every recorded prefix, and each route is reported once per prefix. If a router appears in the stacks more times than `mountRouter` recorded it, it is reported as `<unregistered-mount>` |
+
+Remove the two limitation bullets from `README.md` only after TEST-90 and TEST-91 pass.
+
+**Sprint 2 routes TEST-43 must cover:**
+
+| Route | Roles | Added by |
+|---|---|---|
+| `POST /api/menu-items` | `OPERATOR` | F-05 |
+| `PATCH /api/menu-items/:id` | `OPERATOR` | F-05 |
+| `POST /api/orders/:id/cancel` | `CUSTOMER` | F-06 |
+| `POST /api/orders/:id/pay` | `CUSTOMER` | F-07 |
+| `POST /api/orders/:id/start` | `OPERATOR` | F-08 |
+| `POST /api/orders/:id/ready` | `OPERATOR` | F-08 |
+| `POST /api/orders/:id/complete` | `OPERATOR` | F-08 |
+
+With these, the registry has 5 public and 13 protected routes (18 mounted). Each feature PR registers its own routes and updates the counts; R-05 verifies the final set.
+
+**Delivery upkeep.** Docker build, `.env.example`, migrations and seed stay current. Sprint 2 contracts add **no** environment variable, migration or seed change.
+
+**Failure and boundary cases.**
+- Coverage of exactly 85% passes; below 85% fails the job (AC-88).
+- A changed or missing order, stock value or account after restart or redeploy fails CHECK-01 (AC-89).
+- An unregistered nested route, or a second unrecorded mount, fails the meta-test (AC-90, AC-91).
+
+### 2. API specification
+R-05 adds no endpoint and changes no request or response. It verifies the 401 and 403 behavior of the seven Sprint 2 routes above.
+
+### 3. UI specification
+**No change.** The footer and `GET /api/health` already show the deployed commit, which CHECK-01 records.
+
+### 4. Data specification
+| Layer | Change |
+|---|---|
+| Prisma schema | **No change** |
+| Constraints and migration | **No change; no migration** |
+| Seed | **No change** |
+| Cloud data | CHECK-01 creates one synthetic order in Cloud SQL |
+
+### 5. Acceptance criteria
+
+| AC | Statement |
+|---|---|
+| AC-88 | CI measures line coverage of `backend/src/services` (test files excluded), publishes the report, and fails the job, including the required `test-and-docker` check, when it is below 85%. The Sprint 2 release commit is at or above 85%. |
+| AC-89 | On the deployed GCP release, an order, its stock effect and the account used survive a restart (new revision) and a redeployment: the same data is read back after each. |
+| AC-90 | The route extractor reports routes of nested routers with their full path; an unregistered nested route, or a nested router mounted without `mountRouter`, is returned by `findUnregisteredRoutes`. |
+| AC-91 | A router mounted twice with `mountRouter` is reported under both prefixes; a second mount made without `mountRouter` is reported as unregistered. |
+| AC-92 | The access sweep covers all 13 protected routes, including the 7 Sprint 2 routes with the roles listed above: 401 anonymously and 403 for each non-allowed role with no private data; a non-owner Customer gets 403 on cancel and pay; the registry matches the 18 mounted routes; no negative call changes data. |
+
+### 6. Software Test Specification (STS)
+
+| Test | AC | Level | Precondition and input | Action | Expected result | Planned file::test name |
+|---|---|---|---|---|---|---|
+| TEST-88 (**COV-01**) | AC-88 | Check (CI) | Sprint 2 code with PostgreSQL service | Run the coverage script in CI. Gate proof: once, locally or on a throwaway branch, set the threshold above the measured value and run again | Report lists every file in `src/services`; lines ≥ 85% and job passes; the gate-proof run exits non-zero. Report, both outputs and CI run URL saved | `.github/workflows/ci.yml` and `ci-docker.yml` coverage step::COV-01 |
+| TEST-89 (**CHECK-01**) | AC-89 | Check (post-deployment) | Deployed release; Cloud SQL running; demo accounts | Steps 1 to 6 above | All pass conditions met after restart and after redeploy | `docs/evidence/CHECK-01-<sha>.txt`::CHECK-01 |
+| TEST-90 | AC-90 | Unit | Test apps built with Express routers | Extract: nested via `mountRouter` (two levels); an unregistered nested route; a nested raw `router.use` | Full paths correct; both bad cases appear in `findUnregisteredRoutes` | `backend/tests/routes.registry.test.ts::TEST-90` |
+| TEST-91 | AC-91 | Unit | One router with one route | Mount under `/api/a` and `/api/b` with `mountRouter`; in a second app, one `mountRouter` plus one raw `app.use` | Both paths reported; the raw mount is reported as `<unregistered-mount>` | `backend/tests/routes.registry.test.ts::TEST-91` |
+| TEST-92 | AC-92 | API-DB | Seeded users; a `customer1` order; final Sprint 2 app | TEST-43 sweep over the registry, with a pinned list of the 7 Sprint 2 `method path roles` entries; `customer2` calls cancel and pay (with a valid body) on `customer1`'s order | Pinned entries match; 401 and 403 as in AC-92; 5 public, 13 protected, 18 mounted; order, payment, stock and menu unchanged | `backend/tests/routes.access.test.ts::TEST-92` (runs with `::TEST-43`) |
+
+### 7. Definition of Done (feature-specific)
+In addition to the Product Definition of Done:
+- TEST-88 to TEST-92 executed; COV-01 report attached to a CI run and CHECK-01 record saved.
+- The meta-test is enabled (not skipped). **Red-then-green evidence** for TEST-90 and TEST-91 (they fail against the Sprint 1 extractor).
+- README "Known Limitations" and `docs/labs/lab-05/deployment.md` updated where behavior changed.
+- CI is green with the gate, `sprint-2-staging` is merged to `main`, deployed, checked and tagged `sprint-2-v2.0`.
+- Traceability rows NFR-06 and NFR-10 updated.
+
+---
