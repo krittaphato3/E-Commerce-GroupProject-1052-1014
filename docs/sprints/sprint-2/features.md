@@ -576,3 +576,147 @@ In addition to the Product Definition of Done:
 - Traceability rows FR-13 and BR-11 updated.
 
 ---
+
+## 10. F-08 — Fulfilment Workflow (Engineering Contract)
+
+| Item | Value |
+|---|---|
+| Feature | F-08 Fulfilment workflow |
+| Requirements | FR-12, BR-06, BR-09, BR-08, BR-15 |
+| Sprint | 2 |
+| Depends on | F-04, F-07 |
+| Contract version | 1.0 (2026-11-27) |
+| Issue / branch | #57 / `feature/F-08-fulfilment` |
+
+### Revision history
+| Version | Date | Change | Reason |
+|---|---|---|---|
+| 1.0 | 2026-11-27 | Initial contract | Before implementation |
+
+### 1. Feature design
+
+**Behavior.** An Operator moves a paid order through `ACCEPTED → PREPARING → READY → COMPLETED`, one step at a time. An unpaid order cannot start. Every step writes a history entry, and the Customer sees the status and timeline on their order.
+
+**State machine at the end of Sprint 2** (with F-04 and F-06):
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: submit (Customer)
+    PENDING --> ACCEPTED: accept (Operator)
+    PENDING --> CANCELLED: cancel (Customer owner)
+    ACCEPTED --> PREPARING: start (Operator, paid only)
+    PREPARING --> READY: ready (Operator)
+    READY --> COMPLETED: complete (Operator)
+    CANCELLED --> [*]
+    COMPLETED --> [*]
+```
+`REJECTED` (F-09) and `ACCEPTED → CANCELLED` (F-12) are Sprint 3.
+
+| Endpoint | Required status | New status | Extra precondition |
+|---|---|---|---|
+| `/start` | `ACCEPTED` | `PREPARING` | `paymentStatus = PAID` (BR-09) |
+| `/ready` | `PREPARING` | `READY` | none |
+| `/complete` | `READY` | `COMPLETED` | none |
+
+**Workflow (each endpoint).**
+1. Authenticate (401), require role `OPERATOR` (403), validate `:id` (400).
+2. In a transaction load the order (404). `assertTransition(current, target)` → 409.
+3. For `/start`: payment status is not `PAID` → 409.
+4. Conditional update where `id` and the required status match (for `/start` also `paymentStatus = PAID`). Zero rows → re-read and return 409.
+5. Insert history `required → new`, actor = the operator, role `OPERATOR`.
+6. Commit and return 200.
+
+**Business rules.** BR-06 (only the listed transitions), BR-09, BR-08, BR-15.
+
+**Validation.** `:id` positive integer. The endpoints take no body; any body sent is ignored, as for accept.
+
+**Dependencies.** F-07 sets `PAID`.
+
+**Permissions.** Operator only, any order (single shop). A Customer, including the owner, gets 403.
+
+**Failure and boundary cases.**
+- An unpaid `ACCEPTED` order cannot start: 409, no change (AC-80).
+- Skipping, going back, repeating a step and moving a terminal order return 409 with no change (AC-81, AC-82).
+- Two Operators making the same step at once: one succeeds, one history row (AC-83).
+- Customer 403, anonymous 401, missing order 404, bad id 400 (AC-84).
+
+### 2. API specification
+
+All three endpoints: role `OPERATOR`, no ownership rule, no request body and no zod body schema; `:id` is parsed with `parsePositiveIntegerParam`.
+
+#### `POST /api/orders/:id/start`, `POST /api/orders/:id/ready`, `POST /api/orders/:id/complete`
+| Status | Code | When |
+|---|---|---|
+| 200 | — | `{ "order": { ...order detail, with `customer: { id, displayName }` as in the F-04 Operator view... } }` with the new status and history entry |
+| 400 | `VALIDATION_ERROR` | Invalid `:id` |
+| 401 | `UNAUTHENTICATED` | No session |
+| 403 | `FORBIDDEN` | Caller is a Customer |
+| 404 | `NOT_FOUND` | No such order |
+| 409 | `INVALID_TRANSITION` | Current status is not the required one; `details: { "from": "<current>", "to": "<target>" }` |
+| 409 | `INVALID_TRANSITION` | `/start` only: order is `ACCEPTED` but not `PAID`; message "Order must be paid before preparation can start.", `details: { "from": "ACCEPTED", "to": "PREPARING", "paymentStatus": "UNPAID" }` |
+
+**Registry.** All three with `[OPERATOR]`.
+
+**Customer progress.** `GET /api/orders/:id`, `GET /api/orders/mine` and `GET /api/orders` are **unchanged**; they already return the status, payment status and (detail only) history.
+
+### 3. UI specification
+| Element | Behavior |
+|---|---|
+| `/operator/orders` columns | Add a **Payment** badge (Paid / Unpaid) |
+| Action per row | `PENDING`: Accept (unchanged). `ACCEPTED` + `PAID`: **Start preparing**. `ACCEPTED` + `UNPAID`: text "Awaiting payment", no button. `PREPARING`: **Mark ready**. `READY`: **Complete**. Other statuses: no button |
+| Pending | The clicked button shows "Updating…" and is disabled |
+| Success | The row shows the new status and next action; if the active status filter no longer matches, the list reloads |
+| 409 | Alert with the API message and the list reloads |
+| Loading / empty / error | Existing states: "Loading orders…", "No orders to show.", error alert with Retry |
+| Customer order detail | Status badge and history timeline show each step. The page updates when loaded or reloaded; there is no polling or push (DEC-38). Existing loading and error states apply |
+
+### 4. Data specification
+| Layer | Change |
+|---|---|
+| Prisma schema | **No change.** `PREPARING`, `READY`, `COMPLETED` are in `OrderStatus` since `0001_init` |
+| Constraints | **No change.** BR-09 is enforced in the service and its conditional update, not by a CHECK constraint |
+| Migration | **None** |
+| Data written | `Order.status` and one `OrderStatusHistory` row per step. Stock and payment status are not touched |
+| Seed | **No change** |
+
+### 5. Acceptance criteria
+
+| AC | Statement |
+|---|---|
+| AC-77 | Starting a paid `ACCEPTED` order returns 200; the database shows `PREPARING` and one new history row (`ACCEPTED → PREPARING`, actor = the operator, role `OPERATOR`, with a `createdAt`); payment status and stock are unchanged. |
+| AC-78 | Marking a `PREPARING` order ready returns 200; the database shows `READY` with one new history row `PREPARING → READY` by that operator. |
+| AC-79 | Completing a `READY` order returns 200; the database shows `COMPLETED` with one new history row `READY → COMPLETED` by that operator. |
+| AC-80 | Starting an `ACCEPTED`, `UNPAID` order returns 409 `INVALID_TRANSITION` with `paymentStatus` `UNPAID` in `details`; status and history are unchanged. |
+| AC-81 | Across all 49 ordered pairs of statuses, the state machine allows exactly `PENDING → ACCEPTED`, `PENDING → CANCELLED`, `ACCEPTED → PREPARING`, `PREPARING → READY` and `READY → COMPLETED`. |
+| AC-82 | Calling start, ready or complete on an order in any status other than the required one (skipping, going back, repeating, terminal) returns 409 `INVALID_TRANSITION`; status and history are unchanged. |
+| AC-83 | Two simultaneous identical fulfilment calls give exactly one 200 and one 409, with exactly one history row for that step. |
+| AC-84 | On all three endpoints a Customer (including the owner) gets 403 `FORBIDDEN` with no order data, an anonymous caller gets 401, a missing order gets 404 and a non-numeric id gets 400; nothing changes. |
+| AC-85 | The cross-feature journey create → accept → pay → prepare → ready → complete succeeds through the API. The database shows `COMPLETED` and `PAID`, stock reduced once, and exactly 5 history rows in order (create, accept, preparing, ready, completed) with the right actors; the owner's `GET /api/orders/:id` shows the matching status after each step. |
+| AC-86 | In the UI the operator table shows the payment badge and only the valid action for each row ("Awaiting payment" for unpaid accepted orders), with pending and 409 behavior; the customer order detail shows the fulfilment status and timeline. |
+| AC-87 | In the UI an Operator takes a paid order to Completed with the three buttons, and the Customer then sees "Completed" and the full timeline. |
+
+### 6. Software Test Specification (STS)
+
+| Test | AC | Level | Precondition and input | Action | Expected result | Planned file::test name |
+|---|---|---|---|---|---|---|
+| TEST-77 | AC-77 | API-DB | Order accepted and paid through the API | POST start; read DB | 200; `PREPARING`; new history row as AC-77; `PAID`; stock unchanged | `backend/tests/orders.fulfilment.test.ts::TEST-77` |
+| TEST-78 | AC-78 | API-DB | Order in `PREPARING` reached through the API | POST ready; read DB | 200; `READY`; one new row `PREPARING → READY` | `backend/tests/orders.fulfilment.test.ts::TEST-78` |
+| TEST-79 | AC-79 | API-DB | Order in `READY` reached through the API | POST complete; read DB | 200; `COMPLETED`; one new row `READY → COMPLETED` | `backend/tests/orders.fulfilment.test.ts::TEST-79` |
+| TEST-80 | AC-80 | API-DB | Order accepted, not paid | POST start; read DB | 409; message and `details` as specified; still `ACCEPTED`, `UNPAID`; history unchanged | `backend/tests/orders.fulfilment.test.ts::TEST-80` |
+| TEST-81 | AC-81 | Unit | None | Table-driven `canTransition` and `assertTransition` over all 7 × 7 pairs | Exactly the 5 listed pairs pass; the other 44 throw `INVALID_TRANSITION` | `backend/src/services/orderStateMachine.test.ts::TEST-81` |
+| TEST-82 | AC-82 | API-DB | One **paid** order in each status (set by test helper) | Call each endpoint on every status except its required one (18 cases) | Each 409 with `{from, to}`; status and history unchanged | `backend/tests/orders.fulfilment.test.ts::TEST-82` |
+| TEST-83 | AC-83 | API-DB | `operator1` and `operator2`; fresh order at each step | For each endpoint, two calls with `Promise.all` behind a synchronization barrier; repeat 10 times | One 200 and one 409; one history row per step | `backend/tests/orders.fulfilment.test.ts::TEST-83` |
+| TEST-84 | AC-84 | API-DB | For each endpoint, an order in its required status owned by `customer1` | Call as `customer1` and anonymously; as operator on id 99999 and `abc` | 403, 401, 404, 400; 403 bodies contain only `error`; nothing changed | `backend/tests/orders.fulfilment.test.ts::TEST-84` |
+| TEST-85 | AC-85 | API-DB | Seeded database; `customer1`, `operator1` | Create → accept → pay → start → ready → complete, API only; GET as owner after each; read order, history and stock from the DB at the end | All succeed; final state and 5 history rows as in AC-85 | `backend/tests/orders.journey.test.ts::TEST-85` |
+| TEST-86 | AC-86 | UI component | API client mocked: rows in every status, paid and unpaid; success and 409; completed order detail | Render table; click each action; render customer detail | Actions and badges as specified; "Updating…"; alert and reload on 409; detail shows "Completed" and the timeline | `frontend/src/pages/OperatorOrders.test.tsx::TEST-86`; `frontend/src/pages/OrderDetail.test.tsx::TEST-86` |
+| TEST-87 | AC-87 | E2E | Order created, accepted and paid in the test | Operator: Start preparing, Mark ready, Complete (switching filter as needed); log in as customer and open the order | Each status shown; customer sees "Completed" and all steps | `frontend/e2e/fulfilment.spec.ts::TEST-87` |
+
+### 7. Definition of Done (feature-specific)
+In addition to the Product Definition of Done:
+- TEST-77 to TEST-87 executed and passing, results recorded; TEST-43 passes with the three new routes.
+- **TDD evidence** (red then green with commit IDs) for TEST-80 (unpaid cannot start) and TEST-81 (transition table).
+- TEST-85 uses only API calls to change state (no direct database writes).
+- Screenshots: operator table with each action, "Awaiting payment", customer timeline.
+- The state machine stays a single shared function.
+- Traceability rows FR-12, BR-09 and BR-06 updated.
+
+---
