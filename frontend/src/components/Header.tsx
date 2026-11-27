@@ -18,9 +18,14 @@ function renderRoleNav(role: Role) {
       );
     case "OPERATOR":
       return (
-        <Link to="/operator/orders" className="link-secondary text-decoration-none">
-          Orders
-        </Link>
+        <>
+          <Link to="/operator/orders" className="link-secondary text-decoration-none">
+            Orders
+          </Link>
+          <Link to="/operator/menu" className="link-secondary text-decoration-none">
+            Menu management
+          </Link>
+        </>
       );
     default: {
       const _exhaustive: never = role;

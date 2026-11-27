@@ -10,7 +10,7 @@ import type { Express, RequestHandler, Router } from "express";
 import { Role } from "@prisma/client";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 
-export type HttpMethod = "GET" | "POST";
+export type HttpMethod = "GET" | "POST" | "PATCH";
 
 export interface PublicRoute {
   method: HttpMethod;
@@ -45,6 +45,8 @@ export const protectedRoutes: ReadonlyArray<ProtectedRoute> = [
   { method: "GET", path: "/api/orders/mine", roles: [Role.CUSTOMER] },
   { method: "GET", path: "/api/orders/:id", roles: [Role.CUSTOMER, Role.OPERATOR] },
   { method: "POST", path: "/api/orders/:id/accept", roles: [Role.OPERATOR] },
+  { method: "POST", path: "/api/menu-items", roles: [Role.OPERATOR] },
+  { method: "PATCH", path: "/api/menu-items/:id", roles: [Role.OPERATOR] },
 ];
 
 // Derived from the enum so a newly added schema role automatically widens the

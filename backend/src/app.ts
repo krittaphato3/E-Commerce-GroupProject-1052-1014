@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import { authRouter } from "./routes/auth.js";
 import { healthRouter, readyRouter } from "./routes/health.js";
 import { menuRouter } from "./routes/menu.js";
+import { menuItemsRouter } from "./routes/menuItems.js";
 import { ordersRouter } from "./routes/orders.js";
 import { mountRouter } from "./routes/registry.js";
 import { errorHandler } from "./middleware/error.js";
@@ -25,6 +26,7 @@ export function createApp(configureRoutes?: (app: express.Express) => void) {
   mountRouter(app, "/api/ready", readyRouter);
   mountRouter(app, "/api/auth", authRouter);
   mountRouter(app, "/api/menu", menuRouter);
+  mountRouter(app, "/api/menu-items", menuItemsRouter);
   mountRouter(app, "/api/orders", ordersRouter);
 
   // Serve built SPA static files if enabled or in single-container production

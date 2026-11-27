@@ -52,13 +52,19 @@ async function loginCookie(email: string, password: string): Promise<string> {
 const app = createApp();
 
 function requestApp(method: HttpMethod, path: string, cookie?: string) {
-  const agent = method === "GET" ? request(app).get(path) : request(app).post(path);
+  const agent =
+    method === "GET"
+      ? request(app).get(path)
+      : method === "PATCH"
+        ? request(app).patch(path)
+        : request(app).post(path);
   return cookie ? agent.set("Cookie", cookie) : agent;
 }
 
-/** Replaces `:id` with a concrete order id so a registry entry can be called. */
-function concretePath(path: string, orderId: number): string {
-  return path.replace(":id", String(orderId));
+/** Replaces `:id` with a concrete resource id so a registry entry can be called. */
+function concretePath(path: string, orderId: number, menuItemId: number): string {
+  const targetId = path.startsWith("/api/menu-items") ? menuItemId : orderId;
+  return path.replace(":id", String(targetId));
 }
 
 function formatRoute(route: ExpressRoute): string {
@@ -81,6 +87,7 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
   let customer2Cookie: string;
   let operator1Cookie: string;
   let order1Id: number;
+  let menuItem1Id: number;
 
   beforeEach(async () => {
     await clearTestDatabase(testPrisma);
@@ -94,6 +101,7 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
     const basil = await testPrisma.menuItem.findUniqueOrThrow({
       where: { name: "Basil Pork Rice" },
     });
+    menuItem1Id = basil.id;
     const created = await requestApp("POST", "/api/orders", customer1Cookie).send({
       items: [{ menuItemId: basil.id, quantity: 1 }],
     });
@@ -108,8 +116,8 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
   it("TEST-43: every protected route answers 401 anonymously and 403 for each non-allowed role without private data", async () => {
     expect(
       protectedRoutes.length,
-      "the registry must list the six protected Sprint 1 routes"
-    ).toBe(6);
+      "the registry must list the eight protected routes"
+    ).toBe(8);
 
     // Keyed by Role so adding a new schema role requires a seeded account cookie here.
     const cookies: Record<Role, string> = {
@@ -121,7 +129,7 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
     let wrongRoleChecks = 0;
 
     for (const entry of protectedRoutes) {
-      const path = concretePath(entry.path, order1Id);
+      const path = concretePath(entry.path, order1Id, menuItem1Id);
       const label = `${entry.method} ${entry.path}`;
 
       const anonymous = await requestApp(entry.method, path);
@@ -199,8 +207,8 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
     const mounted = extractExpressRoutes(app).map(formatRoute).sort();
 
     expect(publicRoutes.length, "five public routes").toBe(5);
-    expect(protectedRoutes.length, "six protected routes").toBe(6);
-    expect(mounted).toHaveLength(11);
+    expect(protectedRoutes.length, "eight protected routes").toBe(8);
+    expect(mounted).toHaveLength(13);
 
     // Every mounted route is registered.
     expect(mounted).toEqual(registry);
