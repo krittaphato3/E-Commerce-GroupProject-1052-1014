@@ -304,3 +304,137 @@ In addition to the Product Definition of Done:
 - Traceability rows FR-10, BR-13 and BR-04 updated with test file and commit.
 
 ---
+
+## 8. F-06 — Customer Order Cancellation (Engineering Contract)
+
+| Item | Value |
+|---|---|
+| Feature | F-06 Customer order cancellation |
+| Requirements | FR-11, BR-10, BR-06, BR-05, BR-07, BR-15 |
+| Sprint | 2 |
+| Depends on | F-03 (the race test also uses F-04 accept) |
+| Contract version | 1.0 (2026-11-27) |
+| Issue / branch | #55 / `feature/F-06-customer-cancel` |
+
+### Revision history
+| Version | Date | Change | Reason |
+|---|---|---|---|
+| 1.0 | 2026-11-27 | Initial contract | Before implementation |
+
+### 1. Feature design
+
+**Behavior.** A Customer cancels their own order while it is `PENDING`. The order becomes `CANCELLED`, the stock reserved by every line is given back, and a history entry is written, all in one transaction.
+
+**State transitions added.**
+```mermaid
+stateDiagram-v2
+    PENDING --> CANCELLED: cancel (Customer owner)
+    PENDING --> ACCEPTED: accept (Operator, S1)
+    CANCELLED --> [*]
+```
+`orderStateMachine.ts` gains `PENDING → CANCELLED`. No transition into `CANCELLED` exists from any other status in Sprint 2.
+
+**Workflow (`POST /api/orders/:id/cancel`).**
+1. Authenticate (401) and require role `CUSTOMER` (403).
+2. Validate `:id` (400). In a transaction load the order: missing → 404; `customerId` is not the caller → 403.
+3. `assertTransition(status, "CANCELLED")` → 409 if the status is not `PENDING`.
+4. Conditional update: set `CANCELLED` where `id`, `customerId` and `status = PENDING` all match. Zero rows → re-read and return 409 `INVALID_TRANSITION`.
+5. Only after that update succeeds, add each line's quantity back to `MenuItem.stockQty` with an atomic increment, in ascending `menuItemId` order (the same lock order as order creation).
+6. Insert history `PENDING → CANCELLED`, actor = the customer, role `CUSTOMER`.
+7. Commit and return 200. Any failure rolls back steps 4 to 6.
+
+**Business rules.** BR-10, BR-06, BR-05 (stock never wrong or negative), BR-07, BR-15. `paymentStatus` stays `UNPAID`: a `PENDING` order cannot have been paid (BR-11).
+
+**Validation.** `:id` positive integer. The endpoint takes no body; like accept, any body sent is ignored (DEC-33).
+
+**Dependencies.** `Order`, `OrderItem`, `OrderStatusHistory`, `MenuItem.stockQty`.
+
+**Permissions.** Customer who owns the order. Operators cannot use this endpoint (403). Operator cancellation of an `ACCEPTED` order is F-12, Sprint 3 (DEC-33).
+
+**Failure and boundary cases.**
+- Cancel from `ACCEPTED`, `PREPARING`, `READY`, `COMPLETED`, `REJECTED` or `CANCELLED` returns 409 and changes nothing, so a repeated cancel never restores stock twice (AC-60, AC-61).
+- Two cancels at once restore stock once (AC-62).
+- Cancel and accept at once: exactly one wins (AC-63).
+- A failure part-way leaves order, stock and history unchanged (AC-64).
+- Stock is restored to an item even if it has since been disabled; the item stays disabled (AC-59). Stock is added to the current value, including a value the Operator has since edited (DEC-34).
+- Another customer gets 403, an Operator 403, anonymous 401, a missing order 404, a non-numeric id 400 (AC-65).
+
+### 2. API specification
+
+#### `POST /api/orders/:id/cancel` (Customer, owner)
+| Item | Spec |
+|---|---|
+| Role / ownership | `CUSTOMER`, and `order.customerId` equals the session user id (checked in the service) |
+| Request | No body; no zod body schema. `:id` is parsed with `parsePositiveIntegerParam` |
+| 200 | `{ "order": { ...order detail, same shape as F-03... } }` with `status` `CANCELLED` and the new history entry |
+| 400 | `VALIDATION_ERROR`: invalid `:id` |
+| 401 | `UNAUTHENTICATED` |
+| 403 | `FORBIDDEN`: caller is an Operator, or a Customer who is not the owner. Generic error only, no order data |
+| 404 | `NOT_FOUND`: no such order |
+| 409 | `INVALID_TRANSITION`: order is not `PENDING`; `details: { "from": "<current status>", "to": "CANCELLED" }` |
+
+**BR-10 and Operators.** In Sprint 2 no Operator may call cancel, so the role guard answers 403 before any status check. BR-10's "409 `INVALID_TRANSITION` by any role" for `PREPARING`, `READY` and `COMPLETED` is enforced by the state machine, which does not look at the role (TEST-60), and is observable through the API for the owner (TEST-61). F-12 must keep it for the Operator cancel path.
+
+**Registry.** `POST /api/orders/:id/cancel` with `[CUSTOMER]`.
+
+### 3. UI specification
+| Element | Behavior |
+|---|---|
+| Order detail `/orders/:id` | A **Cancel order** button is shown only to a Customer when the status is `PENDING`. Operators never see it |
+| Confirmation | The first click shows "Cancel this order?" with **Yes, cancel** and **Keep order** (DEC-38) |
+| Pending | "Cancelling…", both buttons disabled |
+| Success | The page shows the returned order: badge "Cancelled", history "Pending → Cancelled", no Cancel button |
+| 409 | Alert "This order can no longer be cancelled." and the order is reloaded |
+| Other errors | Alert with the API message; generic message for network or 500 errors. The button remains |
+| Loading / empty / error | Existing order detail states are unchanged. Empty does not apply to a single order |
+| My orders and operator list | No change beyond showing the `CANCELLED` status they already support |
+
+### 4. Data specification
+| Layer | Change |
+|---|---|
+| Prisma schema | **No change.** `OrderStatus.CANCELLED` and `OrderStatusHistory` exist |
+| Constraints | **No change.** CHECK `stockQty >= 0` stays |
+| Migration | **None** |
+| Data written | `Order.status`, `MenuItem.stockQty`, one `OrderStatusHistory` row |
+| Seed | **No change** |
+
+### 5. Acceptance criteria
+
+| AC | Statement |
+|---|---|
+| AC-58 | A Customer cancelling their own `PENDING` order gets 200; the database shows `CANCELLED` with `paymentStatus` `UNPAID`, and exactly one new history row (`PENDING → CANCELLED`, actor = that customer, role `CUSTOMER`, with a `createdAt`). |
+| AC-59 | Cancellation increases the stock of every ordered item by exactly its ordered quantity, including an item that has since been disabled (which stays disabled); other items are unchanged. |
+| AC-60 | The state machine allows `PENDING → CANCELLED` and rejects a transition to `CANCELLED` from `ACCEPTED`, `PREPARING`, `READY`, `COMPLETED`, `REJECTED` and `CANCELLED` with `INVALID_TRANSITION`. |
+| AC-61 | Cancelling an order that is not `PENDING` (including a second cancel) returns 409 `INVALID_TRANSITION`; status, stock and history are unchanged. |
+| AC-62 | Two simultaneous cancels of one order give exactly one 200 and one 409; stock is restored once and there is one cancel history row. |
+| AC-63 | When the owner cancels while an Operator accepts, exactly one request gets 200 and the other 409. The final status, stock and history match the winner only. |
+| AC-64 | Cancellation is atomic: if writing the history row fails, the response is 500 `INTERNAL_ERROR` and the order status, every stock value and the history are unchanged. |
+| AC-65 | Another Customer and an Operator get 403 `FORBIDDEN` with no order data, an anonymous caller gets 401, a missing order gets 404 and a non-numeric id gets 400; nothing changes. |
+| AC-66 | In the UI the Cancel button appears only for a Customer on a `PENDING` order, asks for confirmation, shows a pending state, updates status and history on success, and on 409 shows an alert and reloads the order. |
+| AC-67 | In the UI a Customer places an order, cancels it, still sees "Cancelled" after a reload, and the menu stock is back to its earlier value. |
+
+### 6. Software Test Specification (STS)
+
+| Test | AC | Level | Precondition and input | Action | Expected result | Planned file::test name |
+|---|---|---|---|---|---|---|
+| TEST-58 | AC-58 | API-DB | `customer1` owns `PENDING` order O1 | POST `/api/orders/O1/cancel`; read order and history from the DB; GET O1 | 200; DB `CANCELLED`, `UNPAID`; history has 2 rows, the second as in AC-58; GET shows the same | `backend/tests/orders.cancel.test.ts::TEST-58` |
+| TEST-59 | AC-59 | API-DB | O1 = item 1 × 2 and item 4 × 3; note all stock; then disable item 4 | Cancel O1; read all stock | Item 1 +2, item 4 +3 and still disabled; all others unchanged | `backend/tests/orders.cancel.test.ts::TEST-59` |
+| TEST-60 | AC-60 | Unit | None | Table-driven `assertTransition(from, "CANCELLED")` over all 7 statuses | Only `PENDING` passes; the other 6 throw 409 `INVALID_TRANSITION` with `{from, to}` | `backend/src/services/orderStateMachine.test.ts::TEST-60` |
+| TEST-61 | AC-61 | API-DB | `customer1` orders in `ACCEPTED`, `PREPARING`, `READY`, `COMPLETED`, `REJECTED`, `CANCELLED` (set in the DB by the helper, one of them by a first cancel) | Cancel each | Each 409 with `details.from`; status, stock and history count unchanged | `backend/tests/orders.cancel.test.ts::TEST-61` |
+| TEST-62 | AC-62 | API-DB | `PENDING` order; two requests from `customer1` | Two cancels with `Promise.all`; repeat 10 times | One 200 and one 409 each time; stock rises by the quantity once; one cancel history row | `backend/tests/orders.cancel.test.ts::TEST-62` |
+| TEST-63 | AC-63 | API-DB | `PENDING` order; `customer1` and `operator1` logged in | Cancel and accept with `Promise.all` behind a synchronization barrier (as TEST-40); repeat 10 times | Exactly one 200 and one 409. Cancel wins: `CANCELLED`, stock restored. Accept wins: `ACCEPTED`, stock still reserved. Exactly one history row after creation | `backend/tests/orders.cancel.test.ts::TEST-63` |
+| TEST-64 | AC-64 | API-DB | `PENDING` order; a temporary test-database trigger raises on insert of a `CANCELLED` history row | Cancel; read DB; drop the trigger | 500 `INTERNAL_ERROR`; order still `PENDING`; stock and history unchanged | `backend/tests/orders.cancel.test.ts::TEST-64` |
+| TEST-65 | AC-65 | API-DB | O1 owned by `customer1` | Cancel as `customer2`, `operator1`, anonymous; `customer1` cancels id 99999 and `abc` | 403, 403, 401, 404, 400; 403 bodies contain only `error`; O1 `PENDING`, stock unchanged | `backend/tests/orders.cancel.test.ts::TEST-65` |
+| TEST-66 | AC-66 | UI component | API client mocked: `PENDING` and `ACCEPTED` orders; Customer and Operator users; success and 409 | Render detail; click Cancel, then Keep; click Cancel, then confirm | Button only for Customer + `PENDING`; Keep sends nothing; "Cancelling…"; success shows "Cancelled"; 409 shows the alert and refetches | `frontend/src/pages/OrderDetail.test.tsx::TEST-66` |
+| TEST-67 | AC-67 | E2E | Seeded database; `customer1` | Note stock; place an order; cancel it; reload; compare menu stock | "Cancelled" with history after reload; stock equals the earlier value | `frontend/e2e/cancel.spec.ts::TEST-67` |
+
+### 7. Definition of Done (feature-specific)
+In addition to the Product Definition of Done:
+- TEST-58 to TEST-67 executed and passing, results recorded; TEST-43 passes with the new route.
+- **TDD evidence** (red then green with commit IDs) for TEST-59 (stock restore) and TEST-63 (cancel vs accept).
+- Race tests run against the real PostgreSQL test database (no mock).
+- Screenshots: Cancel confirmation, cancelled order with history, stock before and after. API output showing a 403 for a non-owner.
+- Transitions stay in `orderStateMachine.ts`; none are duplicated in controllers.
+- Traceability rows FR-11, BR-10 and BR-06 updated.
+
+---
