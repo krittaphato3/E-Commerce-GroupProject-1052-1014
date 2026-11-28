@@ -59,7 +59,8 @@ GET /api/menu stockQty compared with step 2 (diff): IDENTICAL
 - Revision name differs from the one before (step 4: 00009-xdb vs 00008-4jv; step 6: 00010-wj6 vs 00009-xdb): YES
 
 == Finding ==
+- The 401 observations below were made by the team from a local terminal, outside the scripted CHECK-01 run.
 - On 2026-11-28 login as operator1, customer1 and customer2 using the current Secret Manager values (toktickit-admin-password, toktickit-demo-password, one version each, created 2026-11-22) returned HTTP 401 INVALID_CREDENTIALS.
 - The migration job toktickit-migrate is configured with SEED_DEMO_DATA=true and mounts both secrets; the seed is create-only, so existing users keep their stored password hash.
-- Therefore the stored passwords differ from the current secret values, and docs/labs/lab-05/deployment.md section 10 ("read the password from Secret Manager") is not reliable for these accounts.
+- Conclusion: the stored password hashes do not match the current secret values. The cause is unconfirmed. docs/labs/lab-05/deployment.md section 10 ("read the password from Secret Manager") is therefore not reliable for these accounts.
 - CHECK-01 was run with a working customer1 password supplied by the team through an environment variable.
