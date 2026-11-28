@@ -1,0 +1,1002 @@
+EV-CR01-02  CR-01 baseline: static per-line limit, availability rule and order transaction before the stock-aware cap (Issue #76)
+Captured: 2026-11-28 23:35:16 +0700
+Branch: docs/CR-01-contract   HEAD at capture: ba9cabd
+Refs: sprint-1-v1.0 = 858ef85 (accepted Sprint 1 baseline); d85f1be (origin/main, deployed per docs/evidence/POSTDEPLOY-d85f1be.txt)
+Method: read-only git commands. Nothing was built, run or deployed. Each block shows the command, its output and exit status.
+Complements EV-CR01-01 (docs/evidence/CR-01-BASELINE-858ef85-d85f1be.txt), which is unchanged.
+
+================================================================
+0. Branch base and code identity
+================================================================
+
+$ git rev-parse HEAD origin/sprint-3-staging origin/main 'sprint-1-v1.0^{commit}'
+ba9cabdf54b34415a093db7b5733497013ec3d2e
+36a04b3cd4910eec78d89fc531398db931b7246e
+d85f1be3e287c47af8ba1e4c8461bd24d339a8de
+858ef85c71c9ac56a6fe41bad360e86e3841ddaf
+[exit 0]
+
+$ git merge-base --is-ancestor origin/sprint-3-staging HEAD
+[exit 0]
+
+$ git diff --stat d85f1be origin/sprint-3-staging
+ docs/evidence/POSTDEPLOY-d85f1be.txt | 157 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 157 insertions(+)
+[exit 0]
+
+================================================================
+1.1 sprint-1-v1.0 - order submission: stock reservation, error path and transaction (orderService.ts)
+================================================================
+
+$ git show sprint-1-v1.0:backend/src/services/orderService.ts | awk -v s='BR-02/BR-05: one atomic' -v e='return toDetailView(order);' -v b=1 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+109: /**
+110:  * BR-02/BR-05: one atomic statement reserves stock. Zero rows means the item is
+111:  * disabled or the stock is short, which aborts the whole transaction with 409.
+112:  */
+113: async function reserveStock(
+114:   tx: Prisma.TransactionClient,
+115:   menuItemId: number,
+116:   quantity: number
+117: ): Promise<StockRow> {
+118:   const rows = await tx.$queryRaw<StockRow[]>`
+119:     UPDATE "MenuItem"
+120:        SET "stockQty" = "stockQty" - ${quantity}::int,
+121:            "updatedAt" = NOW()
+122:      WHERE "id" = ${menuItemId}::int
+123:        AND "isAvailable" = true
+124:        AND "stockQty" >= ${quantity}::int
+125:     RETURNING "name", "priceSatang"
+126:   `;
+127: 
+128:   if (rows.length === 0) {
+129:     const item = await tx.menuItem.findUnique({
+130:       where: { id: menuItemId },
+131:       select: { name: true, stockQty: true, isAvailable: true },
+132:     });
+133: 
+134:     const stockQty = item?.stockQty ?? 0;
+135:     const available = item && isOrderable({ isAvailable: item.isAvailable, stockQty }, 1)
+136:       ? stockQty
+137:       : 0;
+138:     const name = item?.name ?? "That item";
+139: 
+140:     let message = `${name} has only ${available} left.`;
+141:     if (!item || !item.isAvailable) {
+142:       message = `${name} is not available.`;
+143:     } else if (stockQty === 0) {
+144:       message = `${name} is sold out.`;
+145:     }
+146: 
+147:     throw new AppError(409, "ITEM_UNAVAILABLE", message, {
+148:       menuItemId,
+149:       requested: quantity,
+150:       available,
+151:     });
+152:   }
+153: 
+154:   return rows[0];
+155: }
+156: 
+157: export const orderService = {
+158:   /** FR-05/FR-06: validate, reserve stock atomically, snapshot prices and record history. */
+159:   async create(customerId: number, input: OrderCreateBody): Promise<OrderDetailView> {
+160:     // Process lines in ascending menuItemId order so concurrent orders lock rows in one order.
+161:     const lines = [...input.items].sort((a, b) => a.menuItemId - b.menuItemId);
+162: 
+163:     const existing = await orderRepository.findExistingMenuItemIds(
+164:       lines.map((line) => line.menuItemId)
+165:     );
+166:     const existingIds = new Set(existing.map((row) => row.id));
+167:     const unknownLine = lines.find((line) => !existingIds.has(line.menuItemId));
+168: 
+169:     if (unknownLine) {
+170:       throw new AppError(400, "VALIDATION_ERROR", "Unknown menu item", [
+171:         { field: "items", message: `Menu item ${unknownLine.menuItemId} does not exist` },
+172:       ]);
+173:     }
+174: 
+175:     const order = await prisma.$transaction(async (tx) => {
+176:       const orderLines: OrderLineView[] = [];
+177: 
+178:       for (const line of lines) {
+179:         // BR-04: the database returns the current name and price at reservation time.
+180:         const reserved = await reserveStock(tx, line.menuItemId, line.quantity);
+181: 
+182:         orderLines.push({
+183:           menuItemId: line.menuItemId,
+184:           itemName: reserved.name,
+185:           unitPriceSatang: reserved.priceSatang,
+186:           quantity: line.quantity,
+187:           lineTotalSatang: reserved.priceSatang * line.quantity,
+188:         });
+189:       }
+190: 
+191:       const totalSatang = calculateOrderTotal(orderLines);
+192: 
+193:       // BR-15: one history row from nothing to PENDING, actor is the ordering customer.
+194:       return tx.order.create({
+195:         data: {
+196:           customerId,
+197:           status: "PENDING",
+198:           paymentStatus: "UNPAID",
+199:           totalSatang,
+200:           pickupNote: input.pickupNote ?? null,
+201:           items: { create: orderLines },
+202:           history: {
+203:             create: {
+204:               fromStatus: null,
+205:               toStatus: "PENDING",
+206:               actorId: customerId,
+207:               actorRole: "CUSTOMER",
+208:             },
+209:           },
+210:         },
+211:         include: {
+212:           items: { orderBy: { id: "asc" } },
+213:           history: { orderBy: { id: "asc" } },
+214:         },
+215:       });
+216:     });
+217: 
+218:     return toDetailView(order);
+[exit 0]
+
+$ git grep -n -E '\$transaction|isolationLevel|FOR UPDATE|Serializable' sprint-1-v1.0 -- backend/src ':!*.test.ts'
+sprint-1-v1.0:backend/src/services/orderService.ts:175:    const order = await prisma.$transaction(async (tx) => {
+sprint-1-v1.0:backend/src/services/orderService.ts:257:    const order = await prisma.$transaction(async (tx) => {
+[exit 0]
+
+$ git show sprint-1-v1.0:backend/src/db/prisma.ts
+import { PrismaClient } from "@prisma/client";
+
+export const prisma = new PrismaClient();
+[exit 0]
+
+================================================================
+1.2 sprint-1-v1.0 - availability rule and menu response (menuRules.ts, menuService.ts, menuRepository.ts)
+================================================================
+
+$ git show sprint-1-v1.0:backend/src/services/menuRules.ts | awk '{print NR": "$0}'
+1: export interface AvailabilityItem {
+2:   isAvailable: boolean;
+3:   stockQty: number;
+4: }
+5: 
+6: /**
+7:  * BR-02: one shared availability rule for F-02 (the menu flag) and F-03 (order lines).
+8:  * An item is orderable only when it is enabled and its stock covers the requested quantity.
+9:  */
+10: export function isOrderable(item: AvailabilityItem, quantity: number): boolean {
+11:   return item.isAvailable === true && quantity > 0 && item.stockQty >= quantity;
+12: }
+[exit 0]
+
+$ git show sprint-1-v1.0:backend/src/services/menuService.ts | awk '{print NR": "$0}'
+1: import { isOrderable } from "./menuRules.js";
+2: import { menuRepository, type StoredMenuItem } from "../repositories/menuRepository.js";
+3: 
+4: export interface MenuViewItem extends StoredMenuItem {
+5:   available: boolean;
+6: }
+7: 
+8: export const menuService = {
+9:   /** FR-04/AC-10: the public catalog, with availability computed by the shared rule. */
+10:   async list(): Promise<MenuViewItem[]> {
+11:     const items = await menuRepository.findAll();
+12: 
+13:     return items.map((item) => ({
+14:       ...item,
+15:       available: isOrderable(item, 1),
+16:     }));
+17:   },
+18: };
+[exit 0]
+
+$ git grep -n -E 'stockQty: true|MENU_ITEM_SELECT' sprint-1-v1.0 -- backend/src/repositories/menuRepository.ts
+sprint-1-v1.0:backend/src/repositories/menuRepository.ts:21:        stockQty: true,
+[exit 0]
+
+================================================================
+1.3 sprint-1-v1.0 - orderRules.ts (no quantity or line-limit rule) and request validation (validate.ts)
+================================================================
+
+$ git show sprint-1-v1.0:backend/src/services/orderRules.ts | awk '{print NR": "$0}'
+1: export interface PricedLine {
+2:   unitPriceSatang: number;
+3:   quantity: number;
+4: }
+5: 
+6: /** BR-03: the server computes the total from the snapshotted unit prices. */
+7: export function calculateOrderTotal(lines: PricedLine[]): number {
+8:   return lines.reduce((total, line) => total + line.unitPriceSatang * line.quantity, 0);
+9: }
+10: 
+11: /** BR-14: order number is "CB-" plus the id padded to six digits. */
+12: export function formatOrderNumber(id: number): string {
+13:   return `CB-${String(id).padStart(6, "0")}`;
+14: }
+[exit 0]
+
+$ git show sprint-1-v1.0:backend/src/middleware/validate.ts | awk 'NR>=23 && NR<=31 {print NR": "$0}'
+23:     // BR-01: integer quantity from 1 to 10, never a string or a decimal.
+24:     quantity: z.number().int().min(1).max(10),
+25:   })
+26:   .strict();
+27: 
+28: export const orderCreateSchema = z
+29:   .object({
+30:     // BR-01: 1 to 10 lines.
+31:     items: z.array(orderItemSchema).min(1).max(10),
+[exit 0]
+
+================================================================
+1.4 sprint-1-v1.0 - UI selector and order-error handling (Menu.tsx)
+================================================================
+
+$ git grep -n -E 'MAX_LINE_QUANTITY|maxOrderable|lineMax|error\.status === 409|fetchMenu\(\)' sprint-1-v1.0 -- frontend/src/pages/Menu.tsx
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:9:const MAX_LINE_QUANTITY = 10;
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:40:    fetchMenu()
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:66:  const maxOrderable = useCallback(
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:67:    (stockQty: number) => Math.min(MAX_LINE_QUANTITY, Math.max(0, stockQty)),
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:74:        const max = maxOrderable(stockQty);
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:82:    [maxOrderable]
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:86:    const max = maxOrderable(item.stockQty);
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:114:    const max = item ? maxOrderable(item.stockQty) : MAX_LINE_QUANTITY;
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:240:                          disabled={!item.available || quantity >= maxOrderable(item.stockQty)}
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:273:                    const lineMax = item ? maxOrderable(item.stockQty) : MAX_LINE_QUANTITY;
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:296:                            disabled={line.quantity >= lineMax}
+[exit 0]
+
+================================================================
+1.5 sprint-1-v1.0 - error codes; the new code and fields do not exist (ITEM_UNAVAILABLE is the positive control)
+================================================================
+
+$ git grep -o -h -E '"[A-Z]+(_[A-Z]+)+"' sprint-1-v1.0 -- backend/src ':!*.test.ts' | sort | uniq -c
+   1 "INTERNAL_ERROR"
+   1 "INVALID_CREDENTIALS"
+   2 "INVALID_TRANSITION"
+   1 "ITEM_UNAVAILABLE"
+   3 "NOT_FOUND"
+   6 "VALIDATION_ERROR"
+[exit 0]
+
+$ git grep -n -E '"(ITEM_UNAVAILABLE|VALIDATION_ERROR)"' sprint-1-v1.0 -- backend/src/services/orderService.ts backend/src/middleware
+sprint-1-v1.0:backend/src/middleware/error.ts:25:        code: "VALIDATION_ERROR",
+sprint-1-v1.0:backend/src/middleware/validate.ts:90:    throw new AppError(400, "VALIDATION_ERROR", "Invalid status query parameter");
+sprint-1-v1.0:backend/src/middleware/validate.ts:106:      next(new AppError(400, "VALIDATION_ERROR", "Invalid request body", details));
+sprint-1-v1.0:backend/src/services/orderService.ts:147:    throw new AppError(409, "ITEM_UNAVAILABLE", message, {
+sprint-1-v1.0:backend/src/services/orderService.ts:170:      throw new AppError(400, "VALIDATION_ERROR", "Unknown menu item", [
+[exit 0]
+
+$ git grep -n -E 'QUANTITY_LIMIT_EXCEEDED|maxOrderQuantity|allowedMax' sprint-1-v1.0
+[exit 1]
+
+================================================================
+1.6 sprint-1-v1.0 - tests that pin the old behaviour
+================================================================
+
+$ git show sprint-1-v1.0:backend/src/services/orderRules.test.ts | awk -v s='it.each([0, -1' -v e='  });' -v b=0 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+40:   it.each([0, -1, 1.5, "2", 11])("rejects the invalid quantity %s", (quantity) => {
+41:     const result = orderCreateSchema.safeParse({ items: [{ menuItemId: 1, quantity }] });
+42:     expect(result.success).toBe(false);
+43:   });
+[exit 0]
+
+$ git show sprint-1-v1.0:backend/tests/orders.create.test.ts | awk -v s='it("TEST-18' -v e='order.count()).toBe(0)' -v b=0 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+164:   it("TEST-18: invalid quantities return 400 and save nothing", async () => {
+165:     const cookie = await loginCookie(CUSTOMER1_EMAIL);
+166:     const basilId = await menuItemId("Basil Pork Rice");
+167: 
+168:     for (const quantity of [0, -1, 1.5, "2", 11]) {
+169:       const response = await postOrder(cookie, {
+170:         items: [{ menuItemId: basilId, quantity }],
+171:       });
+172: 
+173:       expect(response.status, `quantity ${String(quantity)}`).toBe(400);
+174:       expect(response.body.error.code).toBe("VALIDATION_ERROR");
+175:     }
+176: 
+177:     expect(await testPrisma.order.count()).toBe(0);
+[exit 0]
+
+$ git show sprint-1-v1.0:backend/tests/orders.create.test.ts | awk -v s='it("TEST-22' -v e='orderItem.count()).toBe(0)' -v b=0 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+275:   it("TEST-22: a failing line rolls the whole order back and leaves other stock unchanged", async () => {
+276:     const cookie = await loginCookie(CUSTOMER1_EMAIL);
+277:     const basilId = await menuItemId("Basil Pork Rice");
+278:     const soldOutId = await menuItemId("Chicken Sandwich");
+279: 
+280:     await testPrisma.menuItem.update({ where: { id: basilId }, data: { stockQty: 3 } });
+281: 
+282:     const tooMany = await postOrder(cookie, {
+283:       items: [{ menuItemId: basilId, quantity: 4 }],
+284:     });
+285:     expect(tooMany.status).toBe(409);
+286:     expect(tooMany.body.error.code).toBe("ITEM_UNAVAILABLE");
+287: 
+288:     const mixed = await postOrder(cookie, {
+289:       items: [
+290:         { menuItemId: basilId, quantity: 1 },
+291:         { menuItemId: soldOutId, quantity: 1 },
+292:       ],
+293:     });
+294:     expect(mixed.status).toBe(409);
+295:     expect(mixed.body.error.code).toBe("ITEM_UNAVAILABLE");
+296: 
+297:     expect(
+298:       (await testPrisma.menuItem.findUniqueOrThrow({ where: { id: basilId } })).stockQty
+299:     ).toBe(3);
+300:     expect(await testPrisma.order.count()).toBe(0);
+301:     expect(await testPrisma.orderItem.count()).toBe(0);
+[exit 0]
+
+$ git show sprint-1-v1.0:backend/tests/orders.create.test.ts | awk -v s='it("TEST-24' -v e='attempt + 1}`).toEqual([201, 409])' -v b=0 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+318:   it("TEST-24: two customers ordering the last unit produce exactly one 201 and one 409", async () => {
+319:     const cookieOne = await loginCookie(CUSTOMER1_EMAIL);
+320:     const cookieTwo = await loginCookie(CUSTOMER2_EMAIL);
+321:     const lastUnitId = await menuItemId("Mango Sticky Rice");
+322: 
+323:     for (let attempt = 0; attempt < 10; attempt += 1) {
+324:       await testPrisma.orderStatusHistory.deleteMany();
+325:       await testPrisma.orderItem.deleteMany();
+326:       await testPrisma.order.deleteMany();
+327:       await testPrisma.menuItem.update({
+328:         where: { id: lastUnitId },
+329:         data: { stockQty: 1, isAvailable: true },
+330:       });
+331: 
+332:       const body = { items: [{ menuItemId: lastUnitId, quantity: 1 }] };
+333:       const [first, second] = await Promise.all([
+334:         postOrder(cookieOne, body),
+335:         postOrder(cookieTwo, body),
+336:       ]);
+337: 
+338:       const statuses = [first.status, second.status].sort((a, b) => a - b);
+339:       expect(statuses, `attempt ${attempt + 1}`).toEqual([201, 409]);
+[exit 0]
+
+$ git grep -n -E 'CHECK quantity 1\.\.10|Over Quantity' sprint-1-v1.0 -- backend/tests/constraints.test.ts
+sprint-1-v1.0:backend/tests/constraints.test.ts:105:  it("4. Rejects order line quantity of 0 (CHECK quantity 1..10)", async () => {
+sprint-1-v1.0:backend/tests/constraints.test.ts:118:  it("5. Rejects order line quantity of 11 (CHECK quantity 1..10)", async () => {
+sprint-1-v1.0:backend/tests/constraints.test.ts:124:        VALUES (${initialOrderId}, ${initialItemId}, 'Over Quantity', 5000, 11, 55000);
+[exit 0]
+
+$ git show sprint-1-v1.0:backend/tests/menu.test.ts | awk -v s='expect(Object.keys(item).sort())' -v e=');' -v b=0 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+29:       expect(Object.keys(item).sort()).toEqual(
+30:         ["available", "description", "id", "isAvailable", "name", "priceSatang", "stockQty"].sort()
+31:       );
+[exit 0]
+
+$ git show sprint-1-v1.0:frontend/e2e/order.spec.ts | awk -v s='BR-01 caps one line' -v e='remaining -= quantity;' -v b=0 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+126:     // BR-01 caps one line at 10 units, so buy out in chunks.
+127:     let remaining = lastUnit!.stockQty;
+128:     while (remaining > 0) {
+129:       const quantity = Math.min(10, remaining);
+130:       const response = await otherApi.post(`${apiOrigin}/api/orders`, {
+131:         data: { items: [{ menuItemId: lastUnit!.id, quantity }] },
+132:       });
+133:       expect(response.status()).toBe(201);
+134:       remaining -= quantity;
+[exit 0]
+
+$ git show sprint-1-v1.0:frontend/src/pages/Menu.test.tsx | awk -v s='Follow-up 5: caps the card stepper' -v e='expect(cartIncreaseBtn.disabled).toBe(true);' -v b=0 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+186:   it("Follow-up 5: caps the card stepper, Add button, and cart quantity at item.stockQty when stockQty is below 10", async () => {
+187:     mockedFetchMenu.mockResolvedValue({
+188:       items: [
+189:         {
+190:           id: 5,
+191:           name: "Mango Sticky Rice",
+192:           description: "Sweet mango with sticky rice",
+193:           priceSatang: 8000,
+194:           stockQty: 2,
+195:           isAvailable: true,
+196:           available: true,
+197:         },
+198:       ],
+199:     });
+200: 
+201:     renderMenu();
+202: 
+203:     const card = (await screen.findByText("Mango Sticky Rice")).closest("article")!;
+204:     const increaseBtn = within(card).getByRole("button", {
+205:       name: "Increase menu quantity for Mango Sticky Rice",
+206:     }) as HTMLButtonElement;
+207: 
+208:     // Step 1: 1 -> 2
+209:     fireEvent.click(increaseBtn);
+210:     expect(within(card).getByText("2")).toBeTruthy();
+211:     // At stockQty 2, + button on card should be disabled
+212:     expect(increaseBtn.disabled).toBe(true);
+213: 
+214:     // Add 2 to cart
+215:     fireEvent.click(within(card).getByRole("button", { name: "Add Mango Sticky Rice to cart" }));
+216: 
+217:     const cart = screen.getByRole("region", { name: "Cart" });
+218:     const cartIncreaseBtn = within(cart).getByRole("button", {
+219:       name: "Increase quantity in cart for Mango Sticky Rice",
+220:     }) as HTMLButtonElement;
+221:     expect(cartIncreaseBtn.disabled).toBe(true);
+[exit 0]
+
+================================================================
+1.7 sprint-1-v1.0 - requirement, criteria and traceability rows
+================================================================
+
+$ git grep -n -E '^\| Version \||^\| BR-0[125] \|' sprint-1-v1.0 -- docs/srs.md
+sprint-1-v1.0:docs/srs.md:6:| Version | 1.12 |
+sprint-1-v1.0:docs/srs.md:14:| Version | Date | Author | Change | Reason |
+sprint-1-v1.0:docs/srs.md:84:| BR-01 | Each order line has an integer quantity from 1 to 10. An order has 1 to 10 lines, and no menu item appears twice in one order. | Service + schema validation | 1 |
+sprint-1-v1.0:docs/srs.md:85:| BR-02 | An item can be ordered only if it is enabled and its stock is at least the requested quantity. If any line fails, the whole order is rejected and nothing is saved. | Service (transaction) | 1 |
+sprint-1-v1.0:docs/srs.md:88:| BR-05 | Stock is reserved (decremented) atomically when an order is submitted. Two concurrent orders for the last unit cannot both succeed, and stock never goes below 0. | Conditional DB update + CHECK constraint | 1 |
+[exit 0]
+
+$ git grep -n -E '^\| BR-0[12] \|' sprint-1-v1.0 -- docs/traceability.md
+sprint-1-v1.0:docs/traceability.md:68:| BR-01 | F-03 | 1 | AC-18, AC-19 | TEST-18, 19 | backend/src/services/orderRules.test.ts::TEST-18; backend/tests/orders.create.test.ts::TEST-18, ::TEST-19 | PASS | 140c030 (red), 0f3c649 (green) |
+sprint-1-v1.0:docs/traceability.md:69:| BR-02 | F-02 (defines), F-03 (enforces) | 1 | AC-11, AC-21, AC-22 | TEST-11, 21, 22 | backend/src/services/menuRules.test.ts::TEST-11; backend/tests/orders.create.test.ts::TEST-21, ::TEST-22 | PASS | 140c030 (red), 0f3c649 (green) |
+[exit 0]
+
+$ git grep -n -E '^\| (AC|TEST)-(10|11|18|19|21|22|24) \|' sprint-1-v1.0 -- docs/sprints/sprint-1/features.md
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:314:| AC-10 | An anonymous `GET /api/menu` returns 200 with all seeded items, each with `id`, `name`, `description`, `priceSatang` (integer), `stockQty` and `available`, ordered by `id`. |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:315:| AC-11 | `available` is `false` when `isAvailable` is false or `stockQty` is 0, and `true` only when both `isAvailable` is true and `stockQty` is above 0. |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:323:| TEST-10 | AC-10 | Integration | Seeded database, no cookie | GET `/api/menu` | 200; 7 items; every `priceSatang` is an integer; items sorted by `id`; no `createdAt` field; response contains no user data |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:324:| TEST-11 | AC-11 | Unit | Items: (enabled, stock 5), (enabled, stock 0), (disabled, stock 5), (disabled, stock 0) | Call `isOrderable(item, 1)` for each; also `isOrderable(enabled stock 5, 6)` | `true`, `false`, `false`, `false`; the quantity-6 call returns `false` |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:459:| AC-18 | A quantity of 0, a negative number, a decimal, a string or a value above 10 returns 400; no order is saved. |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:460:| AC-19 | An empty item list, more than 10 lines, or the same `menuItemId` twice returns 400; no order is saved. |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:462:| AC-21 | Ordering a disabled item or an item with stock 0 returns 409 `ITEM_UNAVAILABLE`; no order is saved and stock is unchanged. |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:463:| AC-22 | Ordering more than the available stock returns 409. When one line of a multi-line order fails, **no** line is applied: stock of the other lines is unchanged and no order exists. |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:465:| AC-24 | When two customers simultaneously order the last unit of an item, exactly one request succeeds with 201 and the other returns 409; stock ends at 0 (never negative) and only one order contains the item. |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:482:| TEST-18 | AC-18 | Unit + Integration | Logged in `customer1` | POST with quantity 0, -1, 1.5, "2", 11 | Each 400 `VALIDATION_ERROR`; order count 0; the schema unit test rejects the same values |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:483:| TEST-19 | AC-19 | Integration | Logged in `customer1`; 11 menu items exist (extra created by test helper) | POST with `items: []`; with 11 distinct lines; with item 1 listed twice | Each 400; order count 0 |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:485:| TEST-21 | AC-21 | Integration | Seed: item 6 stock 0; item 7 disabled | POST order for item 6; POST order for item 7 | Each 409 `ITEM_UNAVAILABLE` with `details.menuItemId`; order count 0; stock unchanged |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:486:| TEST-22 | AC-22 | Integration | Item 1 stock 3 (set by test); item 6 stock 0 | POST item 1 × 4; POST lines [item 1 × 1, item 6 × 1] | Both 409. After the second call item 1 stock is still 3 and no order exists |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:488:| TEST-24 | AC-24 | Integration | Item 5 stock 1; `customer1` and `customer2` logged in | Send two `POST /api/orders` for item 5 × 1 at the same time with `Promise.all` | One 201 and one 409 `ITEM_UNAVAILABLE`; stock is 0; exactly one `OrderItem` references item 5. Repeat 10 times: always the same outcome |
+[exit 0]
+
+================================================================
+2.1 d85f1be - order submission: stock reservation, error path and transaction (orderService.ts)
+================================================================
+
+$ git show d85f1be:backend/src/services/orderService.ts | awk -v s='BR-02/BR-05: one atomic' -v e='return toDetailView(order);' -v b=1 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+232: /**
+233:  * BR-02/BR-05: one atomic statement reserves stock. Zero rows means the item is
+234:  * disabled or the stock is short, which aborts the whole transaction with 409.
+235:  */
+236: async function reserveStock(
+237:   tx: Prisma.TransactionClient,
+238:   menuItemId: number,
+239:   quantity: number
+240: ): Promise<StockRow> {
+241:   const rows = await tx.$queryRaw<StockRow[]>`
+242:     UPDATE "MenuItem"
+243:        SET "stockQty" = "stockQty" - ${quantity}::int,
+244:            "updatedAt" = NOW()
+245:      WHERE "id" = ${menuItemId}::int
+246:        AND "isAvailable" = true
+247:        AND "stockQty" >= ${quantity}::int
+248:     RETURNING "name", "priceSatang"
+249:   `;
+250: 
+251:   if (rows.length === 0) {
+252:     const item = await tx.menuItem.findUnique({
+253:       where: { id: menuItemId },
+254:       select: { name: true, stockQty: true, isAvailable: true },
+255:     });
+256: 
+257:     const stockQty = item?.stockQty ?? 0;
+258:     const available = item && isOrderable({ isAvailable: item.isAvailable, stockQty }, 1)
+259:       ? stockQty
+260:       : 0;
+261:     const name = item?.name ?? "That item";
+262: 
+263:     let message = `${name} has only ${available} left.`;
+264:     if (!item || !item.isAvailable) {
+265:       message = `${name} is not available.`;
+266:     } else if (stockQty === 0) {
+267:       message = `${name} is sold out.`;
+268:     }
+269: 
+270:     throw new AppError(409, "ITEM_UNAVAILABLE", message, {
+271:       menuItemId,
+272:       requested: quantity,
+273:       available,
+274:     });
+275:   }
+276: 
+277:   return rows[0];
+278: }
+279: 
+280: export const orderService = {
+281:   /** FR-05/FR-06: validate, reserve stock atomically, snapshot prices and record history. */
+282:   async create(customerId: number, input: OrderCreateBody): Promise<OrderDetailView> {
+283:     // Process lines in ascending menuItemId order so concurrent orders lock rows in one order.
+284:     const lines = [...input.items].sort((a, b) => a.menuItemId - b.menuItemId);
+285: 
+286:     const existing = await orderRepository.findExistingMenuItemIds(
+287:       lines.map((line) => line.menuItemId)
+288:     );
+289:     const existingIds = new Set(existing.map((row) => row.id));
+290:     const unknownLine = lines.find((line) => !existingIds.has(line.menuItemId));
+291: 
+292:     if (unknownLine) {
+293:       throw new AppError(400, "VALIDATION_ERROR", "Unknown menu item", [
+294:         { field: "items", message: `Menu item ${unknownLine.menuItemId} does not exist` },
+295:       ]);
+296:     }
+297: 
+298:     const order = await prisma.$transaction(async (tx) => {
+299:       const orderLines: OrderLineView[] = [];
+300: 
+301:       for (const line of lines) {
+302:         // BR-04: the database returns the current name and price at reservation time.
+303:         const reserved = await reserveStock(tx, line.menuItemId, line.quantity);
+304: 
+305:         orderLines.push({
+306:           menuItemId: line.menuItemId,
+307:           itemName: reserved.name,
+308:           unitPriceSatang: reserved.priceSatang,
+309:           quantity: line.quantity,
+310:           lineTotalSatang: reserved.priceSatang * line.quantity,
+311:         });
+312:       }
+313: 
+314:       const totalSatang = calculateOrderTotal(orderLines);
+315: 
+316:       // BR-15: one history row from nothing to PENDING, actor is the ordering customer.
+317:       return tx.order.create({
+318:         data: {
+319:           customerId,
+320:           status: "PENDING",
+321:           paymentStatus: "UNPAID",
+322:           totalSatang,
+323:           pickupNote: input.pickupNote ?? null,
+324:           items: { create: orderLines },
+325:           history: {
+326:             create: {
+327:               fromStatus: null,
+328:               toStatus: "PENDING",
+329:               actorId: customerId,
+330:               actorRole: "CUSTOMER",
+331:             },
+332:           },
+333:         },
+334:         include: {
+335:           items: { orderBy: { id: "asc" } },
+336:           history: { orderBy: { id: "asc" } },
+337:         },
+338:       });
+339:     });
+340: 
+341:     return toDetailView(order);
+[exit 0]
+
+$ git grep -n -E '\$transaction|isolationLevel|FOR UPDATE|Serializable' d85f1be -- backend/src ':!*.test.ts'
+d85f1be:backend/src/services/orderService.ts:144:  const order = await prisma.$transaction(async (tx) => {
+d85f1be:backend/src/services/orderService.ts:298:    const order = await prisma.$transaction(async (tx) => {
+d85f1be:backend/src/services/orderService.ts:380:    const order = await prisma.$transaction(async (tx) => {
+d85f1be:backend/src/services/orderService.ts:455:    const order = await prisma.$transaction(async (tx) => {
+d85f1be:backend/src/services/orderService.ts:529:    const order = await prisma.$transaction(async (tx) => {
+d85f1be:backend/src/services/orderService.ts:603:    const order = await prisma.$transaction(async (tx) => {
+[exit 0]
+
+$ git show d85f1be:backend/src/db/prisma.ts
+import { PrismaClient } from "@prisma/client";
+
+export const prisma = new PrismaClient();
+[exit 0]
+
+================================================================
+2.2 d85f1be - availability rule and menu response (menuRules.ts, menuService.ts, menuRepository.ts)
+================================================================
+
+$ git show d85f1be:backend/src/services/menuRules.ts | awk '{print NR": "$0}'
+1: export interface AvailabilityItem {
+2:   isAvailable: boolean;
+3:   stockQty: number;
+4: }
+5: 
+6: /**
+7:  * BR-02: one shared availability rule for F-02 (the menu flag) and F-03 (order lines).
+8:  * An item is orderable only when it is enabled and its stock covers the requested quantity.
+9:  */
+10: export function isOrderable(item: AvailabilityItem, quantity: number): boolean {
+11:   return item.isAvailable === true && quantity > 0 && item.stockQty >= quantity;
+12: }
+[exit 0]
+
+$ git show d85f1be:backend/src/services/menuService.ts | awk '{print NR": "$0}'
+1: import { Prisma } from "@prisma/client";
+2: import { AppError } from "../middleware/error.js";
+3: import type { MenuItemCreateBody, MenuItemUpdateBody } from "../middleware/validate.js";
+4: import { isOrderable } from "./menuRules.js";
+5: import { menuRepository, type StoredMenuItem } from "../repositories/menuRepository.js";
+6: 
+7: export interface MenuViewItem extends StoredMenuItem {
+8:   available: boolean;
+9: }
+10: 
+11: function toMenuViewItem(item: StoredMenuItem): MenuViewItem {
+12:   return {
+13:     ...item,
+14:     available: isOrderable(item, 1),
+15:   };
+16: }
+17: 
+18: function mapMenuPrismaError(err: unknown): never {
+19:   if (err instanceof Prisma.PrismaClientKnownRequestError) {
+20:     if (err.code === "P2002") {
+21:       throw new AppError(400, "VALIDATION_ERROR", "Invalid request body", [
+22:         { field: "name", message: "A menu item with this name already exists" },
+23:       ]);
+24:     }
+25:     if (err.code === "P2025") {
+26:       throw new AppError(404, "NOT_FOUND", "Menu item not found");
+27:     }
+28:   }
+29:   throw err;
+30: }
+31: 
+32: export const menuService = {
+33:   /** FR-04/AC-10: the public catalog, with availability computed by the shared rule. */
+34:   async list(): Promise<MenuViewItem[]> {
+35:     const items = await menuRepository.findAll();
+36:     return items.map(toMenuViewItem);
+37:   },
+38: 
+39:   /** FR-10/AC-47: creates a new menu item (Operator only). */
+40:   async create(input: MenuItemCreateBody): Promise<MenuViewItem> {
+41:     try {
+42:       const created = await menuRepository.create(input);
+43:       return toMenuViewItem(created);
+44:     } catch (err) {
+45:       mapMenuPrismaError(err);
+46:     }
+47:   },
+48: 
+49:   /** FR-10/AC-48: updates an existing menu item (Operator only). */
+50:   async update(id: number, input: MenuItemUpdateBody): Promise<MenuViewItem> {
+51:     try {
+52:       const updated = await menuRepository.update(id, input);
+53:       return toMenuViewItem(updated);
+54:     } catch (err) {
+55:       mapMenuPrismaError(err);
+56:     }
+57:   },
+58: };
+[exit 0]
+
+$ git grep -n -E 'stockQty: true|MENU_ITEM_SELECT' d85f1be -- backend/src/repositories/menuRepository.ts
+d85f1be:backend/src/repositories/menuRepository.ts:28:const MENU_ITEM_SELECT = {
+d85f1be:backend/src/repositories/menuRepository.ts:33:  stockQty: true,
+d85f1be:backend/src/repositories/menuRepository.ts:41:      select: MENU_ITEM_SELECT,
+d85f1be:backend/src/repositories/menuRepository.ts:48:      select: MENU_ITEM_SELECT,
+d85f1be:backend/src/repositories/menuRepository.ts:56:      select: MENU_ITEM_SELECT,
+[exit 0]
+
+================================================================
+2.3 d85f1be - orderRules.ts (no quantity or line-limit rule) and request validation (validate.ts)
+================================================================
+
+$ git show d85f1be:backend/src/services/orderRules.ts | awk '{print NR": "$0}'
+1: export interface PricedLine {
+2:   unitPriceSatang: number;
+3:   quantity: number;
+4: }
+5: 
+6: /** BR-03: the server computes the total from the snapshotted unit prices. */
+7: export function calculateOrderTotal(lines: PricedLine[]): number {
+8:   return lines.reduce((total, line) => total + line.unitPriceSatang * line.quantity, 0);
+9: }
+10: 
+11: /** BR-14: order number is "CB-" plus the id padded to six digits. */
+12: export function formatOrderNumber(id: number): string {
+13:   return `CB-${String(id).padStart(6, "0")}`;
+14: }
+[exit 0]
+
+$ git show d85f1be:backend/src/middleware/validate.ts | awk 'NR>=23 && NR<=31 {print NR": "$0}'
+23:     // BR-01: integer quantity from 1 to 10, never a string or a decimal.
+24:     quantity: z.number().int().min(1).max(10),
+25:   })
+26:   .strict();
+27: 
+28: export const orderCreateSchema = z
+29:   .object({
+30:     // BR-01: 1 to 10 lines.
+31:     items: z.array(orderItemSchema).min(1).max(10),
+[exit 0]
+
+================================================================
+2.4 d85f1be - UI selector and order-error handling (Menu.tsx)
+================================================================
+
+$ git grep -n -E 'MAX_LINE_QUANTITY|maxOrderable|lineMax|error\.status === 409|fetchMenu\(\)' d85f1be -- frontend/src/pages/Menu.tsx
+d85f1be:frontend/src/pages/Menu.tsx:9:const MAX_LINE_QUANTITY = 10;
+d85f1be:frontend/src/pages/Menu.tsx:40:    fetchMenu()
+d85f1be:frontend/src/pages/Menu.tsx:66:  const maxOrderable = useCallback(
+d85f1be:frontend/src/pages/Menu.tsx:67:    (stockQty: number) => Math.min(MAX_LINE_QUANTITY, Math.max(0, stockQty)),
+d85f1be:frontend/src/pages/Menu.tsx:74:        const max = maxOrderable(stockQty);
+d85f1be:frontend/src/pages/Menu.tsx:82:    [maxOrderable]
+d85f1be:frontend/src/pages/Menu.tsx:86:    const max = maxOrderable(item.stockQty);
+d85f1be:frontend/src/pages/Menu.tsx:114:    const max = item ? maxOrderable(item.stockQty) : MAX_LINE_QUANTITY;
+d85f1be:frontend/src/pages/Menu.tsx:153:      if (error instanceof ApiRequestError && error.status === 409) {
+d85f1be:frontend/src/pages/Menu.tsx:155:          const refreshed = await fetchMenu();
+d85f1be:frontend/src/pages/Menu.tsx:248:                          disabled={!item.available || quantity >= maxOrderable(item.stockQty)}
+d85f1be:frontend/src/pages/Menu.tsx:281:                    const lineMax = item ? maxOrderable(item.stockQty) : MAX_LINE_QUANTITY;
+d85f1be:frontend/src/pages/Menu.tsx:304:                            disabled={line.quantity >= lineMax}
+[exit 0]
+
+================================================================
+2.5 d85f1be - error codes; the new code and fields do not exist (ITEM_UNAVAILABLE is the positive control)
+================================================================
+
+$ git grep -o -h -E '"[A-Z]+(_[A-Z]+)+"' d85f1be -- backend/src ':!*.test.ts' | sort | uniq -c
+   1 "INTERNAL_ERROR"
+   1 "INVALID_CREDENTIALS"
+   7 "INVALID_TRANSITION"
+   1 "ITEM_UNAVAILABLE"
+  12 "NOT_FOUND"
+  13 "VALIDATION_ERROR"
+[exit 0]
+
+$ git grep -n -E '"(ITEM_UNAVAILABLE|VALIDATION_ERROR)"' d85f1be -- backend/src/services/orderService.ts backend/src/middleware
+d85f1be:backend/src/middleware/error.ts:25:        code: "VALIDATION_ERROR",
+d85f1be:backend/src/middleware/validate.ts:133:    throw new AppError(400, "VALIDATION_ERROR", "Invalid status query parameter");
+d85f1be:backend/src/middleware/validate.ts:149:      next(new AppError(400, "VALIDATION_ERROR", "Invalid request body", details));
+d85f1be:backend/src/services/orderService.ts:270:    throw new AppError(409, "ITEM_UNAVAILABLE", message, {
+d85f1be:backend/src/services/orderService.ts:293:      throw new AppError(400, "VALIDATION_ERROR", "Unknown menu item", [
+[exit 0]
+
+$ git grep -n -E 'QUANTITY_LIMIT_EXCEEDED|maxOrderQuantity|allowedMax' d85f1be
+[exit 1]
+
+================================================================
+2.6 d85f1be - tests that pin the old behaviour
+================================================================
+
+$ git show d85f1be:backend/src/services/orderRules.test.ts | awk -v s='it.each([0, -1' -v e='  });' -v b=0 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+40:   it.each([0, -1, 1.5, "2", 11])("rejects the invalid quantity %s", (quantity) => {
+41:     const result = orderCreateSchema.safeParse({ items: [{ menuItemId: 1, quantity }] });
+42:     expect(result.success).toBe(false);
+43:   });
+[exit 0]
+
+$ git show d85f1be:backend/tests/orders.create.test.ts | awk -v s='it("TEST-18' -v e='order.count()).toBe(0)' -v b=0 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+164:   it("TEST-18: invalid quantities return 400 and save nothing", async () => {
+165:     const cookie = await loginCookie(CUSTOMER1_EMAIL);
+166:     const basilId = await menuItemId("Basil Pork Rice");
+167: 
+168:     for (const quantity of [0, -1, 1.5, "2", 11]) {
+169:       const response = await postOrder(cookie, {
+170:         items: [{ menuItemId: basilId, quantity }],
+171:       });
+172: 
+173:       expect(response.status, `quantity ${String(quantity)}`).toBe(400);
+174:       expect(response.body.error.code).toBe("VALIDATION_ERROR");
+175:     }
+176: 
+177:     expect(await testPrisma.order.count()).toBe(0);
+[exit 0]
+
+$ git show d85f1be:backend/tests/orders.create.test.ts | awk -v s='it("TEST-22' -v e='orderItem.count()).toBe(0)' -v b=0 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+275:   it("TEST-22: a failing line rolls the whole order back and leaves other stock unchanged", async () => {
+276:     const cookie = await loginCookie(CUSTOMER1_EMAIL);
+277:     const basilId = await menuItemId("Basil Pork Rice");
+278:     const soldOutId = await menuItemId("Chicken Sandwich");
+279: 
+280:     await testPrisma.menuItem.update({ where: { id: basilId }, data: { stockQty: 3 } });
+281: 
+282:     const tooMany = await postOrder(cookie, {
+283:       items: [{ menuItemId: basilId, quantity: 4 }],
+284:     });
+285:     expect(tooMany.status).toBe(409);
+286:     expect(tooMany.body.error.code).toBe("ITEM_UNAVAILABLE");
+287: 
+288:     const mixed = await postOrder(cookie, {
+289:       items: [
+290:         { menuItemId: basilId, quantity: 1 },
+291:         { menuItemId: soldOutId, quantity: 1 },
+292:       ],
+293:     });
+294:     expect(mixed.status).toBe(409);
+295:     expect(mixed.body.error.code).toBe("ITEM_UNAVAILABLE");
+296: 
+297:     expect(
+298:       (await testPrisma.menuItem.findUniqueOrThrow({ where: { id: basilId } })).stockQty
+299:     ).toBe(3);
+300:     expect(await testPrisma.order.count()).toBe(0);
+301:     expect(await testPrisma.orderItem.count()).toBe(0);
+[exit 0]
+
+$ git show d85f1be:backend/tests/orders.create.test.ts | awk -v s='it("TEST-24' -v e='attempt + 1}`).toEqual([201, 409])' -v b=0 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+318:   it("TEST-24: two customers ordering the last unit produce exactly one 201 and one 409", async () => {
+319:     const cookieOne = await loginCookie(CUSTOMER1_EMAIL);
+320:     const cookieTwo = await loginCookie(CUSTOMER2_EMAIL);
+321:     const lastUnitId = await menuItemId("Mango Sticky Rice");
+322: 
+323:     for (let attempt = 0; attempt < 10; attempt += 1) {
+324:       await testPrisma.orderStatusHistory.deleteMany();
+325:       await testPrisma.orderItem.deleteMany();
+326:       await testPrisma.order.deleteMany();
+327:       await testPrisma.menuItem.update({
+328:         where: { id: lastUnitId },
+329:         data: { stockQty: 1, isAvailable: true },
+330:       });
+331: 
+332:       const body = { items: [{ menuItemId: lastUnitId, quantity: 1 }] };
+333:       const [first, second] = await Promise.all([
+334:         postOrder(cookieOne, body),
+335:         postOrder(cookieTwo, body),
+336:       ]);
+337: 
+338:       const statuses = [first.status, second.status].sort((a, b) => a - b);
+339:       expect(statuses, `attempt ${attempt + 1}`).toEqual([201, 409]);
+[exit 0]
+
+$ git grep -n -E 'CHECK quantity 1\.\.10|Over Quantity' d85f1be -- backend/tests/constraints.test.ts
+d85f1be:backend/tests/constraints.test.ts:105:  it("4. Rejects order line quantity of 0 (CHECK quantity 1..10)", async () => {
+d85f1be:backend/tests/constraints.test.ts:118:  it("5. Rejects order line quantity of 11 (CHECK quantity 1..10)", async () => {
+d85f1be:backend/tests/constraints.test.ts:124:        VALUES (${initialOrderId}, ${initialItemId}, 'Over Quantity', 5000, 11, 55000);
+[exit 0]
+
+$ git show d85f1be:backend/tests/menu.test.ts | awk -v s='expect(Object.keys(item).sort())' -v e=');' -v b=0 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+29:       expect(Object.keys(item).sort()).toEqual(
+30:         ["available", "description", "id", "isAvailable", "name", "priceSatang", "stockQty"].sort()
+31:       );
+[exit 0]
+
+$ git show d85f1be:frontend/e2e/order.spec.ts | awk -v s='BR-01 caps one line' -v e='remaining -= quantity;' -v b=0 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+127:     // BR-01 caps one line at 10 units, so buy out in chunks.
+128:     let remaining = lastUnit!.stockQty;
+129:     while (remaining > 0) {
+130:       const quantity = Math.min(10, remaining);
+131:       const response = await otherApi.post(`${apiOrigin}/api/orders`, {
+132:         data: { items: [{ menuItemId: lastUnit!.id, quantity }] },
+133:       });
+134:       expect(response.status()).toBe(201);
+135:       remaining -= quantity;
+[exit 0]
+
+$ git show d85f1be:frontend/src/pages/Menu.test.tsx | awk -v s='Follow-up 5: caps the card stepper' -v e='expect(cartIncreaseBtn.disabled).toBe(true);' -v b=0 '{l[NR]=$0} !on && index($0,s){on=1; for(i=NR-b;i<NR;i++) print i": "l[i]} on{print NR": "$0; if(n++ && index($0,e)) exit}'
+251:   it("Follow-up 5: caps the card stepper, Add button, and cart quantity at item.stockQty when stockQty is below 10", async () => {
+252:     mockedFetchMenu.mockResolvedValue({
+253:       items: [
+254:         {
+255:           id: 5,
+256:           name: "Mango Sticky Rice",
+257:           description: "Sweet mango with sticky rice",
+258:           priceSatang: 8000,
+259:           stockQty: 2,
+260:           isAvailable: true,
+261:           available: true,
+262:         },
+263:       ],
+264:     });
+265: 
+266:     renderMenu();
+267: 
+268:     const card = (await screen.findByText("Mango Sticky Rice")).closest("article")!;
+269:     const increaseBtn = within(card).getByRole("button", {
+270:       name: "Increase menu quantity for Mango Sticky Rice",
+271:     }) as HTMLButtonElement;
+272: 
+273:     // Step 1: 1 -> 2
+274:     fireEvent.click(increaseBtn);
+275:     expect(within(card).getByText("2")).toBeTruthy();
+276:     // At stockQty 2, + button on card should be disabled
+277:     expect(increaseBtn.disabled).toBe(true);
+278: 
+279:     // Add 2 to cart
+280:     fireEvent.click(within(card).getByRole("button", { name: "Add Mango Sticky Rice to cart" }));
+281: 
+282:     const cart = screen.getByRole("region", { name: "Cart" });
+283:     const cartIncreaseBtn = within(cart).getByRole("button", {
+284:       name: "Increase quantity in cart for Mango Sticky Rice",
+285:     }) as HTMLButtonElement;
+286:     expect(cartIncreaseBtn.disabled).toBe(true);
+[exit 0]
+
+================================================================
+2.7 d85f1be - requirement, criteria and traceability rows
+================================================================
+
+$ git grep -n -E '^\| Version \||^\| BR-0[125] \|' d85f1be -- docs/srs.md
+d85f1be:docs/srs.md:6:| Version | 1.13 |
+d85f1be:docs/srs.md:14:| Version | Date | Author | Change | Reason |
+d85f1be:docs/srs.md:99:| BR-01 | Each order line has an integer quantity from 1 to 10. An order has 1 to 10 lines, and no menu item appears twice in one order. | Service + schema validation | 1 |
+d85f1be:docs/srs.md:100:| BR-02 | An item can be ordered only if it is enabled and its stock is at least the requested quantity. If any line fails, the whole order is rejected and nothing is saved. | Service (transaction) | 1 |
+d85f1be:docs/srs.md:103:| BR-05 | Stock is reserved (decremented) atomically when an order is submitted. Two concurrent orders for the last unit cannot both succeed, and stock never goes below 0. | Conditional DB update + CHECK constraint | 1 |
+[exit 0]
+
+$ git grep -n -E '^\| BR-0[12] \|' d85f1be -- docs/traceability.md
+d85f1be:docs/traceability.md:80:| BR-01 | F-03 | 1 | AC-18, AC-19 | TEST-18, 19 | backend/src/services/orderRules.test.ts::TEST-18; backend/tests/orders.create.test.ts::TEST-18, ::TEST-19 | PASS | 140c030 (red), 0f3c649 (green) |
+d85f1be:docs/traceability.md:81:| BR-02 | F-02 (defines), F-03 (enforces) | 1 | AC-11, AC-21, AC-22 | TEST-11, 21, 22 | backend/src/services/menuRules.test.ts::TEST-11; backend/tests/orders.create.test.ts::TEST-21, ::TEST-22 | PASS | 140c030 (red), 0f3c649 (green) |
+[exit 0]
+
+$ git grep -n -E '^\| (AC|TEST)-(10|11|18|19|21|22|24) \|' d85f1be -- docs/sprints/sprint-1/features.md
+d85f1be:docs/sprints/sprint-1/features.md:314:| AC-10 | An anonymous `GET /api/menu` returns 200 with all seeded items, each with `id`, `name`, `description`, `priceSatang` (integer), `stockQty` and `available`, ordered by `id`. |
+d85f1be:docs/sprints/sprint-1/features.md:315:| AC-11 | `available` is `false` when `isAvailable` is false or `stockQty` is 0, and `true` only when both `isAvailable` is true and `stockQty` is above 0. |
+d85f1be:docs/sprints/sprint-1/features.md:323:| TEST-10 | AC-10 | Integration | Seeded database, no cookie | GET `/api/menu` | 200; 7 items; every `priceSatang` is an integer; items sorted by `id`; no `createdAt` field; response contains no user data |
+d85f1be:docs/sprints/sprint-1/features.md:324:| TEST-11 | AC-11 | Unit | Items: (enabled, stock 5), (enabled, stock 0), (disabled, stock 5), (disabled, stock 0) | Call `isOrderable(item, 1)` for each; also `isOrderable(enabled stock 5, 6)` | `true`, `false`, `false`, `false`; the quantity-6 call returns `false` |
+d85f1be:docs/sprints/sprint-1/features.md:459:| AC-18 | A quantity of 0, a negative number, a decimal, a string or a value above 10 returns 400; no order is saved. |
+d85f1be:docs/sprints/sprint-1/features.md:460:| AC-19 | An empty item list, more than 10 lines, or the same `menuItemId` twice returns 400; no order is saved. |
+d85f1be:docs/sprints/sprint-1/features.md:462:| AC-21 | Ordering a disabled item or an item with stock 0 returns 409 `ITEM_UNAVAILABLE`; no order is saved and stock is unchanged. |
+d85f1be:docs/sprints/sprint-1/features.md:463:| AC-22 | Ordering more than the available stock returns 409. When one line of a multi-line order fails, **no** line is applied: stock of the other lines is unchanged and no order exists. |
+d85f1be:docs/sprints/sprint-1/features.md:465:| AC-24 | When two customers simultaneously order the last unit of an item, exactly one request succeeds with 201 and the other returns 409; stock ends at 0 (never negative) and only one order contains the item. |
+d85f1be:docs/sprints/sprint-1/features.md:482:| TEST-18 | AC-18 | Unit + Integration | Logged in `customer1` | POST with quantity 0, -1, 1.5, "2", 11 | Each 400 `VALIDATION_ERROR`; order count 0; the schema unit test rejects the same values |
+d85f1be:docs/sprints/sprint-1/features.md:483:| TEST-19 | AC-19 | Integration | Logged in `customer1`; 11 menu items exist (extra created by test helper) | POST with `items: []`; with 11 distinct lines; with item 1 listed twice | Each 400; order count 0 |
+d85f1be:docs/sprints/sprint-1/features.md:485:| TEST-21 | AC-21 | Integration | Seed: item 6 stock 0; item 7 disabled | POST order for item 6; POST order for item 7 | Each 409 `ITEM_UNAVAILABLE` with `details.menuItemId`; order count 0; stock unchanged |
+d85f1be:docs/sprints/sprint-1/features.md:486:| TEST-22 | AC-22 | Integration | Item 1 stock 3 (set by test); item 6 stock 0 | POST item 1 × 4; POST lines [item 1 × 1, item 6 × 1] | Both 409. After the second call item 1 stock is still 3 and no order exists |
+d85f1be:docs/sprints/sprint-1/features.md:488:| TEST-24 | AC-24 | Integration | Item 5 stock 1; `customer1` and `customer2` logged in | Send two `POST /api/orders` for item 5 × 1 at the same time with `Promise.all` | One 201 and one 409 `ITEM_UNAVAILABLE`; stock is 0; exactly one `OrderItem` references item 5. Repeat 10 times: always the same outcome |
+[exit 0]
+
+================================================================
+3. Backend test requests with a quantity above 1 (d85f1be), checked by reading each test's stock setup
+================================================================
+
+$ git grep -n -E 'quantity: *[2-9]|\["[A-Za-z ]+", *[2-9]\]|QUANTITY = *[2-9]' d85f1be -- backend/tests
+d85f1be:backend/tests/menuItems.test.ts:188:      .send({ items: [{ menuItemId: item1.id, quantity: 2 }] });
+d85f1be:backend/tests/orders.cancel.test.ts:111:    const order = await createOrder(customer1Cookie, [["Basil Pork Rice", 2]]);
+d85f1be:backend/tests/orders.cancel.test.ts:154:      ["Basil Pork Rice", 2],
+d85f1be:backend/tests/orders.cancel.test.ts:155:      ["Thai Iced Tea", 3],
+d85f1be:backend/tests/orders.cancel.test.ts:208:      const order = await createOrder(customer1Cookie, [["Basil Pork Rice", 2]]);
+d85f1be:backend/tests/orders.cancel.test.ts:237:      const order = await createOrder(customer1Cookie, [["Basil Pork Rice", 2]]);
+d85f1be:backend/tests/orders.cancel.test.ts:285:      ["Basil Pork Rice", 2],
+d85f1be:backend/tests/orders.cancel.test.ts:286:      ["Thai Iced Tea", 3],
+d85f1be:backend/tests/orders.create.test.ts:55:        { menuItemId: basilId, quantity: 2 },
+d85f1be:backend/tests/orders.create.test.ts:79:      quantity: 2,
+d85f1be:backend/tests/orders.create.test.ts:105:        { menuItemId: basilId, quantity: 2 },
+d85f1be:backend/tests/orders.create.test.ts:145:      items: [{ menuItemId: basilId, quantity: 2 }],
+d85f1be:backend/tests/orders.create.test.ts:207:          { menuItemId: duplicatedId, quantity: 2 },
+d85f1be:backend/tests/orders.create.test.ts:283:      items: [{ menuItemId: basilId, quantity: 4 }],
+d85f1be:backend/tests/orders.create.test.ts:309:      items: [{ menuItemId: basilId, quantity: 2 }],
+d85f1be:backend/tests/orders.fulfilment.test.ts:119:      .send({ items: [{ menuItemId: item.id, quantity: 2 }] });
+d85f1be:backend/tests/orders.journey.test.ts:12:const QUANTITY = 2;
+d85f1be:backend/tests/orders.pay.test.ts:107:      .send({ items: [{ menuItemId: basil.id, quantity: 2 }] });
+d85f1be:backend/tests/orders.reject.test.ts:129:    const order = await createOrder(customer1Cookie, [["Basil Pork Rice", 2]]);
+d85f1be:backend/tests/orders.reject.test.ts:172:      ["Basil Pork Rice", 2],
+d85f1be:backend/tests/orders.reject.test.ts:173:      ["Thai Iced Tea", 3],
+d85f1be:backend/tests/orders.reject.test.ts:226:      const order = await createOrder(customer1Cookie, [["Basil Pork Rice", 2]]);
+d85f1be:backend/tests/orders.reject.test.ts:354:      ["Basil Pork Rice", 2],
+d85f1be:backend/tests/orders.reject.test.ts:355:      ["Thai Iced Tea", 3],
+d85f1be:backend/tests/routes.access.test.ts:304:      items: [{ menuItemId: menuItem1Id, quantity: 2 }],
+[exit 0]
+
+$ git grep -n -E 'menuItem\.update|data: \{ stockQty' d85f1be -- backend/tests
+d85f1be:backend/tests/orders.cancel.test.ts:158:    await testPrisma.menuItem.update({ where: { id: tea.id }, data: { isAvailable: false } });
+d85f1be:backend/tests/orders.create.test.ts:101:    await testPrisma.menuItem.update({ where: { id: basilId }, data: { priceSatang: 7000 } });
+d85f1be:backend/tests/orders.create.test.ts:150:    await testPrisma.menuItem.update({ where: { id: basilId }, data: { priceSatang: 9000 } });
+d85f1be:backend/tests/orders.create.test.ts:280:    await testPrisma.menuItem.update({ where: { id: basilId }, data: { stockQty: 3 } });
+d85f1be:backend/tests/orders.create.test.ts:327:      await testPrisma.menuItem.update({
+d85f1be:backend/tests/orders.create.test.ts:329:        data: { stockQty: 1, isAvailable: true },
+d85f1be:backend/tests/orders.fulfilment.test.ts:104:    await testPrisma.menuItem.update({ where: { name: ITEM_NAME }, data: { stockQty: 100 } });
+d85f1be:backend/tests/orders.pay.test.ts:99:    const basil = await testPrisma.menuItem.update({
+d85f1be:backend/tests/orders.reject.test.ts:176:    await testPrisma.menuItem.update({ where: { id: tea.id }, data: { isAvailable: false } });
+d85f1be:backend/tests/seed.test.ts:147:      await testPrisma.menuItem.update({ where: { name }, data: live });
+[exit 0]
+
+$ git grep -n -A5 -E 'name: "(Basil Pork Rice|Thai Iced Tea|Mango Sticky Rice)"' d85f1be -- backend/prisma/seed.ts | grep -E 'name:|stockQty'
+d85f1be:backend/prisma/seed.ts:81:    name: "Basil Pork Rice",
+d85f1be:backend/prisma/seed.ts-84-    stockQty: 30,
+d85f1be:backend/prisma/seed.ts:102:    name: "Thai Iced Tea",
+d85f1be:backend/prisma/seed.ts-105-    stockQty: 50,
+d85f1be:backend/prisma/seed.ts:116:    name: "Mango Sticky Rice",
+d85f1be:backend/prisma/seed.ts-119-    stockQty: 1,
+[exit 0]
+
+================================================================
+4. Documentation that describes the order and menu behaviour (d85f1be)
+================================================================
+
+$ git grep -n -E 'BR-01 quantity|BR-02 availability|BR-05 stock atomic|^\| 409 \|' d85f1be -- docs/system-sds.md
+d85f1be:docs/system-sds.md:72:| BR-01 quantity and line limits | Yes | CHECK `quantity BETWEEN 1 AND 10`; UNIQUE `(orderId, menuItemId)` | zod also rejects first |
+d85f1be:docs/system-sds.md:73:| BR-02 availability | Yes (inside transaction) | — | Whole order rolls back on failure |
+d85f1be:docs/system-sds.md:76:| BR-05 stock atomic | Conditional `updateMany` where `stockQty >= qty` | CHECK `stockQty >= 0` | Race-safe |
+d85f1be:docs/system-sds.md:250:| 409 | `ITEM_UNAVAILABLE` | Item disabled or stock too low |
+d85f1be:docs/system-sds.md:251:| 409 | `INVALID_TRANSITION` | Status change not allowed |
+[exit 0]
+
+$ git grep -n -E 'same item shape|"available": t' d85f1be -- docs/sprints
+d85f1be:docs/sprints/sprint-1/features.md:291:| 200 | `{ "items": [ { "id": 1, "name": "Basil Pork Rice", "description": "...", "priceSatang": 6000, "stockQty": 30, "isAvailable": true, "available": true } ] }` ordered by `id` ascending. `available = isAvailable AND stockQty > 0` |
+d85f1be:docs/sprints/sprint-2/features.md:222:| 201 | `{ "item": { "id", "name", "description", "priceSatang", "stockQty", "isAvailable", "available" } }` (same item shape as `GET /api/menu`) |
+d85f1be:docs/sprints/sprint-3/features.md:363:| 200 | `{ "orders": [ ...same item shape as F-03... ], "page": 1, "pageSize": 20, "total": 42 }`; newest first (`createdAt`, then `id`, descending); `total` counts all matches of the caller |
+d85f1be:docs/sprints/sprint-3/features.md:371:| 200 | `{ "orders": [ ...same item shape as F-04... ], "page", "pageSize", "total" }`; oldest first (`createdAt`, then `id`, ascending), as FR-08 requires |
+[exit 0]
