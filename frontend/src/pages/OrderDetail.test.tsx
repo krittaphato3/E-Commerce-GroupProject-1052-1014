@@ -54,6 +54,7 @@ const SAMPLE_ORDER = {
       toStatus: "PENDING" as const,
       actorRole: "CUSTOMER" as const,
       createdAt: "2026-11-05T05:00:00.000Z",
+      note: null,
     },
   ],
   createdAt: "2026-11-05T05:00:00.000Z",
@@ -144,6 +145,7 @@ describe("OrderDetail cancellation (AC-66)", () => {
         toStatus: "CANCELLED",
         actorRole: "CUSTOMER",
         createdAt: "2026-11-05T05:05:00.000Z",
+        note: null,
       },
     ],
   };
@@ -420,6 +422,7 @@ describe("OrderDetail fulfilment progress (AC-86)", () => {
           toStatus,
           actorRole: "OPERATOR" as const,
           createdAt: `2026-11-05T05:0${index + 1}:00.000Z`,
+          note: null,
         })),
       ],
     };
@@ -478,5 +481,57 @@ describe("OrderDetail fulfilment progress (AC-86)", () => {
 
     expect(screen.getByText("Preparing", { exact: true })).toBeTruthy();
     expect(mockedFetchOrder).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("OrderDetail rejection reason (AC-103)", () => {
+  // Markup in the note proves it is rendered as plain text.
+  const NOTE = "<b>Sold out</b> of basil today";
+  const REJECTED_ORDER: Order = {
+    ...SAMPLE_ORDER,
+    status: "REJECTED",
+    history: [
+      ...SAMPLE_ORDER.history,
+      {
+        fromStatus: "PENDING",
+        toStatus: "REJECTED",
+        actorRole: "OPERATOR",
+        createdAt: "2026-11-05T05:05:00.000Z",
+        note: NOTE,
+      },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it.each([
+    ["Customer", CUSTOMER_USER],
+    ["Operator", OPERATOR_USER],
+  ])("TEST-103: the %s sees Rejected and the reason as wrapped plain text, with no actions", async (_role, user) => {
+    mockedFetchOrder.mockResolvedValue({ order: REJECTED_ORDER });
+    const { container } = renderOrderDetail(user);
+
+    expect(await screen.findByText("Rejected", { exact: true })).toBeTruthy();
+    expect(screen.getByText("Reason for rejection:")).toBeTruthy();
+    const note = screen.getByText(NOTE, { exact: false });
+    expect(note.textContent).toContain(NOTE);
+    expect(note.closest(".text-break")).not.toBeNull();
+    expect(container.querySelector("b")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Pay" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Cancel order" })).toBeNull();
+  });
+
+  it("TEST-103: an order that is not rejected shows no reason line", async () => {
+    mockedFetchOrder.mockResolvedValue({ order: SAMPLE_ORDER });
+    renderOrderDetail();
+
+    await screen.findByText("CB-000001");
+    expect(screen.queryByText("Reason for rejection:")).toBeNull();
   });
 });

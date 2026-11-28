@@ -130,6 +130,11 @@ export function OrderDetail() {
     );
   }
 
+  const rejectionReason =
+    order.status === "REJECTED"
+      ? order.history.find((entry) => entry.toStatus === "REJECTED")?.note
+      : null;
+
   return (
     <section>
       <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
@@ -156,6 +161,13 @@ export function OrderDetail() {
       )}
 
       <p className="text-muted">Placed on {formatDateTime(order.createdAt)}</p>
+
+      {rejectionReason && (
+        <div className="alert alert-secondary text-break">
+          <span className="fw-semibold">Reason for rejection:</span>{" "}
+          <span>{rejectionReason}</span>
+        </div>
+      )}
 
       {cancelError && (
         <div className="alert alert-danger" role="alert">

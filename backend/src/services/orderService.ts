@@ -26,6 +26,8 @@ export interface OrderHistoryView {
   toStatus: string;
   actorRole: Role;
   createdAt: string;
+  /** The rejection reason (FR-14); null on every other entry. */
+  note: string | null;
 }
 
 export interface CustomerView {
@@ -93,6 +95,7 @@ function toDetailView(
       toStatus: entry.toStatus,
       actorRole: entry.actorRole,
       createdAt: entry.createdAt.toISOString(),
+      note: entry.note,
     })),
     ...(options?.includeCustomer && order.customer
       ? {
@@ -207,6 +210,23 @@ async function advanceFulfilment(
   });
 
   return toDetailView(order, { includeCustomer: true });
+}
+
+/**
+ * BR-05: gives reserved stock back when an order is cancelled or rejected. `lines`
+ * must be in ascending menuItemId order, the same lock order as order creation.
+ * DEC-34: adds to the current stock, disabled items included, with no cap.
+ */
+async function restoreStock(
+  tx: Prisma.TransactionClient,
+  lines: ReadonlyArray<{ menuItemId: number; quantity: number }>
+): Promise<void> {
+  for (const line of lines) {
+    await tx.menuItem.update({
+      where: { id: line.menuItemId },
+      data: { stockQty: { increment: line.quantity } },
+    });
+  }
 }
 
 /**
@@ -480,13 +500,7 @@ export const orderService = {
         );
       }
 
-      // DEC-34: add to the current stock, disabled items included, with no cap.
-      for (const line of existing.items) {
-        await tx.menuItem.update({
-          where: { id: line.menuItemId },
-          data: { stockQty: { increment: line.quantity } },
-        });
-      }
+      await restoreStock(tx, existing.items);
 
       await tx.orderStatusHistory.create({
         data: {
@@ -508,6 +522,77 @@ export const orderService = {
     });
 
     return toDetailView(order);
+  },
+
+  /** FR-14/BR-12/BR-15: reject a PENDING order with a reason, restoring stock in one transaction. */
+  async reject(orderId: number, operatorId: number, reason: string): Promise<OrderDetailView> {
+    const order = await prisma.$transaction(async (tx) => {
+      const existing = await tx.order.findUnique({
+        where: { id: orderId },
+        select: {
+          status: true,
+          items: {
+            select: { menuItemId: true, quantity: true },
+            orderBy: { menuItemId: "asc" },
+          },
+        },
+      });
+
+      if (!existing) {
+        throw new AppError(404, "NOT_FOUND", "Order not found");
+      }
+
+      await assertTransition(existing.status, "REJECTED");
+
+      // Only the request that wins this update may restore stock, so it is restored once.
+      // paymentStatus is never written: a PENDING order is unpaid (BR-11).
+      const updated = await tx.order.updateMany({
+        where: { id: orderId, status: "PENDING" },
+        data: { status: "REJECTED" },
+      });
+
+      if (updated.count === 0) {
+        const latest = await tx.order.findUnique({
+          where: { id: orderId },
+          select: { status: true },
+        });
+
+        if (!latest) {
+          throw new AppError(404, "NOT_FOUND", "Order not found");
+        }
+
+        throw new AppError(
+          409,
+          "INVALID_TRANSITION",
+          `Cannot transition order from ${latest.status} to REJECTED`,
+          { from: latest.status, to: "REJECTED" }
+        );
+      }
+
+      await restoreStock(tx, existing.items);
+
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId,
+          fromStatus: "PENDING",
+          toStatus: "REJECTED",
+          actorId: operatorId,
+          actorRole: "OPERATOR",
+          note: reason,
+        },
+      });
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        include: {
+          items: { orderBy: { id: "asc" } },
+          history: { orderBy: { id: "asc" } },
+          customer: { select: { id: true, displayName: true } },
+        },
+      });
+    });
+
+    return toDetailView(order, { includeCustomer: true });
   },
 
   /**
