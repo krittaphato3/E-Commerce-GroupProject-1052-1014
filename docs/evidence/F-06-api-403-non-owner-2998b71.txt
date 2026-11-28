@@ -1,0 +1,7 @@
+# F-06 API transcript: a non-owner customer cannot cancel (AC-65) — commit 2998b71
+# Run: 2026-11-28 13:43 +0700; local API on the seeded test database; session cookies redacted
+
+customer1 (owner)   POST /api/orders                -> 201, order id 1, PENDING
+customer2 (not owner) POST /api/orders/1/cancel    -> 403
+  {"error":{"code":"FORBIDDEN","message":"You do not have permission to cancel this order"}}
+customer1 (owner)   GET  /api/orders/1               -> 200, status PENDING, history rows 1 (unchanged)
