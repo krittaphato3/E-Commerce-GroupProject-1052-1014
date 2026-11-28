@@ -6,7 +6,7 @@
 | Course / Lab | CPE 334, Lab 7 |
 | Change request | CR-01, register ID CHG-07 |
 | Issue | [#76](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/issues/76) |
-| Version | 1.0 |
+| Version | 1.1 |
 | Date | 2026-11-28 |
 | Status | **PROPOSED, awaiting approval** (§10) |
 | Related | `docs/change-register.md`, `docs/srs.md`, `docs/traceability.md`, `docs/sprints/sprint-1/features.md`, `docs/evidence/CR-01-BASELINE-858ef85-d85f1be.txt` |
@@ -15,6 +15,7 @@
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 1.0 | 2026-11-28 | napatsun | Initial change request record with baseline evidence EV-CR01-01 (Issue #76) |
+| 1.1 | 2026-11-28 | napatsun | Synced with the revised body of Issue #76: SRS version citation; one affected AC and test statement; draft table reduced to D-1 to D-5 and the outdated numbering note removed; database constraint restated as "Known impact" (§6.1). Still PROPOSED |
 
 This record proposes a change. It does not change any requirement, contract, test or source file.
 
@@ -31,14 +32,13 @@ This differs from the corrective maintenance of Lab 6, where software that did n
 | Business rule | BR-01 (`docs/srs.md`, enforced by "Service + schema validation", Sprint 1) |
 | Feature | F-03, Order submission and customer order views (accepted in `sprint-1-v1.0`) |
 | Functional requirement | FR-05 (a Customer submits an order with items, quantities and an optional pickup note) |
-| Acceptance criteria | AC-18, AC-19 |
-| Tests | TEST-18, TEST-19 |
+| Affected acceptance criteria / tests | AC-18 / TEST-18 revised; AC-19 / TEST-19 unchanged (regression protection) |
 
 **BR-01, verbatim from `docs/srs.md`** (same wording at `858ef85` line 84 and `d85f1be` line 99):
 
 > Each order line has an integer quantity from 1 to 10. An order has 1 to 10 lines, and no menu item appears twice in one order.
 
-Issue #76 cites this rule as "SRS v1.2". The SRS document header reads **1.12** at `858ef85` and **1.13** at `d85f1be`.
+This record cites SRS v1.13 at `d85f1be` (v1.12 at `sprint-1-v1.0`), as given in the SRS document header at each version.
 
 **AC-18 and AC-19, verbatim** (`docs/sprints/sprint-1/features.md` lines 459 and 460 at both versions):
 
@@ -54,6 +54,8 @@ TEST-18 posts quantities `0, -1, 1.5, "2", 11` (unit and integration). TEST-19 p
 ```text
 | BR-01 | F-03 | 1 | AC-18, AC-19 | TEST-18, 19 | backend/src/services/orderRules.test.ts::TEST-18; backend/tests/orders.create.test.ts::TEST-18, ::TEST-19 | PASS | 140c030 (red), 0f3c649 (green) |
 ```
+
+The row is quoted as it stands and links BR-01 to both criteria. For CR-01: AC-18 / TEST-18 revised; AC-19 / TEST-19 unchanged (regression protection).
 
 `PASS` is the status recorded in that row. The tests were not re-run for this record.
 
@@ -83,7 +85,7 @@ Line 24 is the rule that CR-01 changes. Line 31 is the lines-per-order rule, whi
 
 The effective cap is `min(10, stockQty)`, never below 0. `MAX_LINE_QUANTITY` is also the fallback cart cap when the item is not in the loaded menu (line 114 at both versions; also line 273 at `858ef85` and line 281 at `d85f1be`). `LOW_STOCK_THRESHOLD = 10` on line 10 controls the "N left" hint and is not the quantity cap.
 
-**Database**, `backend/prisma/migrations/20261105161538_0001_init/migration.sql` line 124 (both versions). Issue #76 does not mention this constraint (§6.1):
+**Database**, `backend/prisma/migrations/20261105161538_0001_init/migration.sql` line 124 (both versions). See the known impact in §6.1:
 
 ```sql
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_quantity_check" CHECK ("quantity" >= 1 AND "quantity" <= 10);
@@ -115,21 +117,25 @@ This is a **synthetic business-owner request** created for the Lab 7 scenario. I
 
 ## 6. Draft acceptance criteria
 
-> **DRAFT.** Final AC and STS wording, including ID assignment, is done in Issue [#77](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/issues/77). The `D-` IDs below are temporary and exist only in this record.
+> **DRAFT.** Final AC and STS wording, including ID assignment, is done in Issue [#77](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/issues/77). The `D-` IDs below are temporary and are the same as in Issue #76.
 
-| Draft ID | Given / When | Then | Label in Issue #76 |
-|---|---|---|---|
-| D-1 | A Customer submits a line with quantity **5** and stock is sufficient | 201, order created, stock decremented by 5 | AC-18 (rev) |
-| D-2 | A Customer submits a line with quantity **6** | 400 `VALIDATION_ERROR`, nothing saved, stock unchanged | AC-19 (rev) |
-| D-3 | A line has quantity 0, a negative number, a decimal or a string | 400 `VALIDATION_ERROR`, nothing saved (unchanged) | AC-19 (rev) |
-| D-4 | A Customer submits **10 lines**, each with quantity ≤ 5, for distinct items with sufficient stock | Order still accepted (201) | Not listed |
-| D-5 | The menu shows an item | UI quantity selector maximum = `min(5, stockQty)`, on the menu card and in the cart | UI |
+| Draft ID | Given / When | Then |
+|---|---|---|
+| D-1 | A Customer submits a line with quantity **5** and stock is sufficient | 201, order created, stock decremented by 5 |
+| D-2 | A Customer submits a line with quantity **6** | 400 `VALIDATION_ERROR`, nothing saved, stock unchanged |
+| D-3 | A line has quantity 0, a negative number, a decimal or a string | 400 `VALIDATION_ERROR`, nothing saved (unchanged) |
+| D-4 | A Customer submits **10 lines**, each with quantity ≤ 5, for distinct items with sufficient stock | Order still accepted (201) |
+| D-5 | The menu shows an item | UI quantity selector maximum = `min(5, stockQty)`, on the menu card and in the cart |
 
-**Numbering conflict to resolve in #77.** The draft table in Issue #76 uses "AC-18 (rev)" for the quantity-5 success case and "AC-19 (rev)" for the rejections. In the accepted contract, quantity rejection belongs to **AC-18**, and **AC-19** is the lines-per-order and duplicate-item rule, which CR-01 does not change (§2). Reusing AC-19 as the Issue labels it would overwrite a rule that must stay. #77 needs to decide the IDs and keep the current AC-19 and TEST-19 behaviour covered.
+Draft IDs; final mapping and ID assignment are done in #77. AC-19 is unchanged by CR-01, and its behaviour must stay covered.
 
-### 6.1 Open point for #77: database constraint
+In the accepted contract, invalid per-line quantity belongs to AC-18. AC-19 covers an empty item list, more than 10 lines and a duplicate item (§2).
 
-`docs/system-sds.md` states that BR-01 is enforced by the database `CHECK quantity BETWEEN 1 AND 10` as well as by schema validation. This record proposes **leaving the constraint at 1 to 10** and enforcing the new cap on order submission: a plain `CHECK ... <= 5` would conflict with any existing row that has a quantity of 6 to 10 (§7). With that choice, the database no longer enforces the new upper limit by itself, and the SDS has to say so. #77 makes the decision.
+### 6.1 Known impact: database constraint
+
+**Known impact: database constraint.** `OrderItem_quantity_check CHECK (quantity 1..10)` in `backend/prisma/migrations/20261105161538_0001_init/migration.sql:124` is proposed to stay, so that historical orders with a line quantity of 6–10 remain valid and no data migration is needed. API request validation on order submission enforces the new cap of 5. The database would then no longer enforce the new upper limit by itself, and the SDS has to say so. The final decision is recorded in #77. (The no-migration conclusion comes from reading the code; it has not been tested, and the deployed data was not queried.)
+
+At present, `docs/system-sds.md` states that BR-01 is enforced by the database `CHECK quantity BETWEEN 1 AND 10` as well as by schema validation. A plain `CHECK ... <= 5` would conflict with any existing row that has a quantity of 6 to 10 (§7).
 
 ## 7. Invalid cases and access expectations
 
