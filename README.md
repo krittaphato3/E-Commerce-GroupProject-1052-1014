@@ -234,7 +234,7 @@ The deliverable document is assembled locally from these Markdown sources and su
 
 ## Known Limitations (Sprint 2 backlog)
 
-Sprint 1 scope stops at `PENDING → ACCEPTED`. Sprint 2 F-06 adds `PENDING → CANCELLED` by the owning customer (`POST /api/orders/:id/cancel`, stock restored); Sprint 2 F-07 adds simulated payment of the owner's `ACCEPTED` order (`POST /api/orders/:id/pay`, `UNPAID → PAID` once, no card data); Sprint 2 F-08 adds operator fulfilment of paid orders, `ACCEPTED → PREPARING → READY → COMPLETED` (`POST /api/orders/:id/start`, `/ready`, `/complete`). Rejection and operator cancellation are Sprint 3 work. The NFR-05 load benchmark (autocannon) has a recorded Sprint 1 baseline in [`docs/evidence/nfr05/`](docs/evidence/nfr05/summary.json); the remaining R-04 hardening and the deployed-build measurement stay in Sprint 3.
+Sprint 1 scope stops at `PENDING → ACCEPTED`. Sprint 2 F-06 adds `PENDING → CANCELLED` by the owning customer (`POST /api/orders/:id/cancel`, stock restored); Sprint 2 F-07 adds simulated payment of the owner's `ACCEPTED` order (`POST /api/orders/:id/pay`, `UNPAID → PAID` once, no card data); Sprint 2 F-08 adds operator fulfilment of paid orders, `ACCEPTED → PREPARING → READY → COMPLETED` (`POST /api/orders/:id/start`, `/ready`, `/complete`). Sprint 3 F-09 adds operator rejection of a `PENDING` order with a 5 to 200 character reason (`POST /api/orders/:id/reject`, stock restored, reason shown on the order). Operator cancellation remains Sprint 3 work. The NFR-05 load benchmark (autocannon) has a recorded Sprint 1 baseline in [`docs/evidence/nfr05/`](docs/evidence/nfr05/summary.json); the remaining R-04 hardening and the deployed-build measurement stay in Sprint 3.
 
 ---
 
