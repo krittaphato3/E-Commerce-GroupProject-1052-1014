@@ -767,6 +767,108 @@ In addition to the Product Definition of Done:
 
 ---
 
+## 12. R-04 — Performance and Final Usability (Engineering Contract)
+
+| Item | Value |
+|---|---|
+| Responsibility | R-04 Performance and final usability |
+| Requirements | NFR-05, NFR-09 (includes enhancement FND-01, Issue #50) |
+| Sprint | 3 |
+| Depends on | F-09 to F-13 (runs against the final build) |
+| Contract version | 1.0 (2026-11-28) |
+| Status | planned |
+| Issue / branch | issue to be opened / `chore/R-04-performance-usability` |
+
+### Revision history
+| Version | Date | Change | Reason |
+|---|---|---|---|
+| 1.0 | 2026-11-28 | Initial contract, status planned | Before implementation |
+
+### 1. Feature design
+
+#### Part A — NFR-05 on the deployed build (LOAD-02)
+
+The Sprint 1 result is `PASS (S1 baseline)`: one local machine (`docs/evidence/nfr05/README.md`). R-04 measures the deployed Cloud Run service with Cloud SQL, using `backend/benchmarks/nfr05-load.js` **unchanged** (DEC-54).
+
+1. Deploy the release build; record the commit from `GET /api/health`, the Cloud Run revision, region and settings (CPU, memory, min and max instances) and the Cloud SQL tier.
+2. Open a Cloud SQL Auth Proxy connection. The script needs `DATABASE_URL` (to find and restock the order-test item and count rows), `BASE_URL` and `SEED_CUSTOMER_PASSWORD`. These are set in the shell only and never saved.
+3. Seed the 500-order baseline and the order-test item: `SEED_DEMO_DATA=false npm run db:seed --workspace=backend -- --with-perf-orders` (DEC-55). Record row counts. The seed tops the first customer up to 500 orders; it does not delete other orders, so the real starting counts are recorded.
+4. Run `npm run bench:nfr05` (20 connections, 30 s, 5 runs per endpoint). Save the console output.
+5. The script writes into `docs/evidence/nfr05/`. Move the new `summary.json` and `raw/` to `docs/evidence/nfr05-s3/`, then restore the Sprint 1 files with git so they are not changed.
+6. Disable "Order Test Item (NFR-05)" through the catalog screen so it leaves the order menu. Record final row counts. Generated orders are not deleted by this procedure (DEC-55).
+7. Write `docs/evidence/nfr05-s3/README.md`: environment, load-generator machine and network, procedure, results per run, verdict and limitations.
+
+**Pass rule.** For each of `GET /api/menu` and `POST /api/orders`: p95 ≤ 500 ms in every run and zero 5xx. The run is valid only if the successful responses are all `200` (GET) and `201` (POST); other status codes, errors and timeouts are reported, and any of them is explained. A failed result is recorded as `FAIL` with the numbers; it is not re-run until it passes without recording the earlier runs.
+
+The latency includes the network between the load generator and Cloud Run; the evidence says so.
+
+#### Part B — NFR-09 on all screens
+
+| Screen | Loading | Empty | Error |
+|---|---|---|---|
+| `/menu` | "Loading menu…" | existing empty text | alert with Retry |
+| `/orders` | "Loading…" | "You have no orders yet." / filtered text | alert with Retry |
+| `/orders/:id` | "Loading order…" | not applicable (one record) | alert with Retry |
+| `/operator/orders` | "Loading orders…" | "No orders to show." / filtered text | alert with Retry |
+| `/operator/menu` | "Loading menu…" | "No menu items yet." | alert with Retry |
+| `/operator/reports` | "Loading report…" | "No orders in this period." | alert with Retry |
+| `/login` | "Logging in…" while submitting | not applicable | alert with the message |
+| Protected route session check | "Loading…" | not applicable | alert asking to refresh |
+
+Every error message is in an element with `role="alert"`. R-04 fixes any screen that does not meet this table. It adds no other redesign.
+
+#### Part C — FND-01 (Issue #50)
+
+An unbroken 200-character pickup note must wrap on the order detail page instead of causing horizontal overflow. Use Bootstrap `text-break` on user-entered text there: the pickup note, and the rejection reason from F-09 (DEC-56). The stored value and the API are unchanged.
+
+**Permissions and validation.** No change.
+
+### 2. API specification
+**No change.** No new route.
+
+### 3. UI specification
+Parts B and C above.
+
+### 4. Data specification
+| Layer | Change |
+|---|---|
+| Prisma schema, indexes, migration, seed code | **No change** |
+| Cloud data | LOAD-02 creates the performance seed and many synthetic orders in Cloud SQL |
+
+If LOAD-02 fails, any code or index change needs a contract revision first, with the measurement as the reason.
+
+**Delivery.** `.github/workflows/ci.yml` already runs on every pull request, including the coverage gate. R-04 adds `sprint-3-staging` to the pull-request branches of `ci-docker.yml` (DEC-57).
+
+### 5. Acceptance criteria
+
+| AC | Statement |
+|---|---|
+| AC-144 | On the deployed release, `GET /api/menu` and `POST /api/orders` each meet p95 ≤ 500 ms with zero 5xx at 20 connections for 30 s in every one of 5 runs, on the seeded database with enough order-test stock; raw output, tested commit and environment are saved, and the Sprint 1 evidence is unchanged. |
+| AC-145 | Every data screen in the Part B table shows its loading state, its empty state where applicable, and an error alert whose Retry loads the data again. |
+| AC-146 | On the deployed release, every row of the Part B table is checked by hand and recorded with screenshots or notes, including any state that could not be produced. |
+| AC-147 | With an unbroken 200-character pickup note, and with an unbroken 200-character rejection reason, the order detail page has no horizontal overflow at a 375 px wide viewport. |
+
+### 6. Software Test Specification (STS)
+
+| Test | AC | Level | Precondition and input | Action | Expected result | Planned file::test name |
+|---|---|---|---|---|---|---|
+| TEST-144 (**LOAD-02**) | AC-144 | Check (post-deployment) | Deployed release; Cloud SQL; proxy | Part A steps 1 to 7 | Pass rule met, or `FAIL` recorded with numbers | `docs/evidence/nfr05-s3/README.md`::LOAD-02 |
+| TEST-145 | AC-145 | UI component | API client mocked per screen: pending, empty, failure then success | Render each data screen; press Retry | States as in the table | `frontend/src/pages/screenStates.test.tsx::TEST-145` |
+| TEST-146 (**UI-CHECK-01**) | AC-146 | Check (post-deployment) | Deployed release; demo accounts | Walk the Part B table | Completed checklist saved | `docs/evidence/UI-CHECK-01-<sha>.md`::UI-CHECK-01 |
+| TEST-147 | AC-147 | E2E | Seeded database; 375 px viewport | Place an order with a 200-character note without spaces; open it; reject it with a 200-character reason without spaces; open it again | `document.documentElement.scrollWidth <= clientWidth` both times, and the line-item table does not force overflow | `frontend/e2e/usability.spec.ts::TEST-147` |
+
+TEST-145 may pass on its first run for screens that already meet the table; that is recorded honestly.
+
+### 7. Definition of Done (feature-specific)
+In addition to the Product Definition of Done:
+- TEST-144 to TEST-147 executed and recorded; TEST-13, TEST-30 and TEST-31 still pass.
+- **TDD evidence** for TEST-147 (it fails before the wrap fix).
+- NFR-05 in traceability records the deployed result separately; the Sprint 1 baseline text stays.
+- Issue #50 is closed by the R-04 PR.
+- Traceability rows NFR-05 and NFR-09 updated.
+
+---
+
 ## 13. Decisions and open questions
 
 These continue the decision numbering (last used: DEC-42). The SRS and SDS do not settle these points; each takes the simplest option consistent with the current code. Status of all entries: **proposed**, confirmed by merging the contracts PR for Issue #59.
@@ -784,6 +886,10 @@ These continue the decision numbering (last used: DEC-42). The SRS and SDS do no
 | DEC-51 | A refund only changes `paymentStatus` from `PAID` to `REFUNDED`, in the same atomic statement that cancels. No refund record. | Payment is simulated and stored only as a status (DEC-35). One statement closes the race with payment. | F-12 | 2026-11-28 |
 | DEC-52 | Throttle state is a new `LoginThrottle` table (migration `0003_login_throttle`). | Cloud Run is configured for 0 to 3 instances, so memory counters would not meet NFR-11. | F-13 | 2026-11-28 |
 | DEC-53 | Sliding 15-minute window; success resets; the 5th failure answers 401 and starts a 15-minute lock that is not extended; attempts are counted before the password check; 400s are not counted; no `Retry-After` header or countdown. | Meets the NFR-11 wording, including under parallel requests, with the least extra behavior. | F-13 | 2026-11-28 |
+| DEC-54 | LOAD-02 runs the unchanged Sprint 1 script against the deployed service; new output moves to `docs/evidence/nfr05-s3/` and the Sprint 1 files are restored. Every run must meet p95 ≤ 500 ms (stricter than the script's median-based verdict). TEST-144 is also named LOAD-02 and TEST-146 UI-CHECK-01. | Keeps the two measurements comparable and the baseline intact. NFR-05 states no "median of runs" allowance. | R-04 | 2026-11-28 |
+| DEC-55 | The cloud performance seed runs with `SEED_DEMO_DATA=false`; afterwards the order-test item is disabled and generated orders are kept. | Avoids adding demo accounts with local passwords; deleting cloud data needs a team decision (OQ-08). | R-04 | 2026-11-28 |
+| DEC-56 | FND-01 is fixed with Bootstrap `text-break` on user-entered text on order detail. | One CSS utility, no data change. | R-04, F-09 | 2026-11-28 |
+| DEC-57 | Sprint 3 PRs are checked by `ci.yml`; R-04 adds `sprint-3-staging` to `ci-docker.yml`. The release PR to `main` runs both. | `ci.yml` already runs tests, coverage and E2E on every PR. | R-04 | 2026-11-28 |
 
 ### Open questions for the team
 
