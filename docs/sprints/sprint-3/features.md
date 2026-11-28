@@ -660,6 +660,113 @@ In addition to the Product Definition of Done:
 
 ---
 
+## 11. F-13 — Login Throttling (Engineering Contract)
+
+| Item | Value |
+|---|---|
+| Feature | F-13 Login throttling |
+| Requirements | NFR-11 |
+| Sprint | 3 |
+| Depends on | F-01 |
+| Contract version | 1.0 (2026-11-28) |
+| Status | planned |
+| Issue / branch | issue to be opened / `feature/F-13-login-throttling` |
+
+### Revision history
+| Version | Date | Change | Reason |
+|---|---|---|---|
+| 1.0 | 2026-11-28 | Initial contract, status planned | Before implementation |
+
+### 1. Feature design
+
+**Behavior.** After 5 consecutive failed logins for one email within 15 minutes, further attempts for that email get 429 `TOO_MANY_ATTEMPTS` for 15 minutes, even with the correct password.
+
+**Where the state lives.** In a database table, because Cloud Run runs up to 3 instances and scales to zero; a counter in memory would be per instance and lost on restart (DEC-52).
+
+**Rules (DEC-53).**
+- The key is the email after trimming and lower-casing (the login schema already does this). Unknown emails are counted and locked in the same way, so 429 does not reveal whether an account exists.
+- A failure counts while it is less than 15 minutes old (a sliding window; a failure exactly 15 minutes old no longer counts).
+- A successful login removes the counter, so only consecutive failures add up.
+- The 5th counted failure still answers 401 and starts the lock: `lockedUntil` = the time of that attempt + 15 minutes. Later attempts answer 429.
+- While locked, the password is not checked, nothing is recorded and the lock is not extended.
+- At `lockedUntil` the lock and the old failures are gone.
+- **Concurrency:** each attempt is recorded as a failure **before** the password is checked, in a short transaction that locks the email's row; a successful check then deletes the row. Parallel requests therefore cannot get more than 5 password checks. No transaction is held open while bcrypt runs.
+- A request that fails validation (400) is not counted.
+- Time comes from the application clock, so tests use a fake clock. The database clock is not used.
+
+The window and lock decision is a pure function in `backend/src/services/loginThrottleRules.ts`.
+
+**Permissions.** No change; login stays public. Existing sessions are not affected by a lock.
+
+**Failure and boundary cases.** 4 failures then success: allowed and reset. At 14 minutes 59.999 seconds after locking: 429. At 15 minutes: the correct password works. A database failure returns 500; it never skips the check.
+
+**Known limitations.** Anyone who knows an email can lock that account for 15 minutes (this follows from NFR-11). There is no per-IP limit. Rows for emails that are never tried again stay until the table is cleared.
+
+### 2. API specification
+
+#### `POST /api/auth/login` (changed)
+| Item | Spec |
+|---|---|
+| 200 / 400 / 401 | Unchanged |
+| 429 | `TOO_MANY_ATTEMPTS`, message "Too many failed login attempts. Try again later." No `details`, no cookie, no session |
+
+**Registry:** no change.
+
+### 3. UI specification
+| Element | Behavior |
+|---|---|
+| `/login` | A 429 shows the API message in the existing alert; the email stays filled; the button is enabled again. No countdown |
+| Loading / empty / error | Existing states |
+
+### 4. Data specification
+| Layer | Change |
+|---|---|
+| Prisma schema | New model `LoginThrottle { email String @id; failedAt DateTime[]; lockedUntil DateTime? }`. No relation to `User` |
+| Migration | New `0003_login_throttle` (one table; additive) |
+| Indexes | The primary key only |
+| Seed | **No change** |
+| Test helpers | `clearTestDatabase` also truncates `LoginThrottle` |
+
+`failedAt` never holds more than 5 timestamps.
+
+### 5. Acceptance criteria
+
+| AC | Statement |
+|---|---|
+| AC-136 | After 5 consecutive wrong passwords (each 401), the 6th attempt and an attempt with the correct password return 429 `TOO_MANY_ATTEMPTS`; no session or cookie is created. |
+| AC-137 | The lock lasts 15 minutes from the 5th failure: 1 ms before the end the answer is 429, even after further attempts during the lock; at the end the correct password returns 200. |
+| AC-138 | Only failures less than 15 minutes old count: 5 failures spread so that no 5 fall within 15 minutes do not lock, and a 5th failure within 15 minutes of the 4 before it does. |
+| AC-139 | A successful login resets the count: 4 failures, a success and 4 more failures do not lock. |
+| AC-140 | The count is per normalized email: case and surrounding spaces do not create a new count, another email is unaffected, and an unknown email behaves exactly like a known one. |
+| AC-141 | 20 simultaneous wrong-password requests for one email give exactly five 401 and fifteen 429. |
+| AC-142 | The state is stored in the database, so a new application instance still applies the lock; requests rejected with 400 are not counted. |
+| AC-143 | The login screen shows the 429 message, keeps the email and re-enables the button. |
+
+### 6. Software Test Specification (STS)
+
+| Test | AC | Level | Precondition and input | Action | Expected result | Planned file::test name |
+|---|---|---|---|---|---|---|
+| TEST-136 | AC-136 | API-DB | Fake clock (`Date` only) | 5 wrong, 1 wrong, 1 correct | 401 × 5, then 429, 429; session count unchanged; no `Set-Cookie` | `backend/tests/auth.throttle.test.ts::TEST-136` |
+| TEST-137 | AC-137 | API-DB | Locked email; fake clock | Try during the lock, at end − 1 ms and at the end | 429, 429, then 200 | `backend/tests/auth.throttle.test.ts::TEST-137` |
+| TEST-138 | AC-138 | Unit + API-DB | Fake clock | Table of attempt times, including exactly 15:00 | As in AC-138 | `backend/src/services/loginThrottleRules.test.ts::TEST-138`; `backend/tests/auth.throttle.test.ts::TEST-138` |
+| TEST-139 | AC-139 | API-DB | Fake clock | 4 wrong, correct, 4 wrong, correct | Both correct logins 200 | `backend/tests/auth.throttle.test.ts::TEST-139` |
+| TEST-140 | AC-140 | API-DB | Known and unknown emails | Mix case and spaces; lock one; log in another | As in AC-140; identical bodies for known and unknown | `backend/tests/auth.throttle.test.ts::TEST-140` |
+| TEST-141 | AC-141 | API-DB | Real PostgreSQL | 20 requests with `Promise.all` | Exactly 5 × 401 and 15 × 429 | `backend/tests/auth.throttle.test.ts::TEST-141` |
+| TEST-142 | AC-142 | API-DB | Locked email; and invalid bodies | Call a second `createApp()`; send 10 invalid bodies for a fresh email, then a wrong password | 429 from the new app; the invalid bodies did not count | `backend/tests/auth.throttle.test.ts::TEST-142` |
+| TEST-143 | AC-143 | UI component | API client mocked: 429 | Submit the form | Message, email kept, button enabled | `frontend/src/pages/Login.test.tsx::TEST-143` |
+
+TEST-143 may pass without a UI change, because the screen already shows API error messages. That is recorded honestly: it has no red run in that case.
+
+### 7. Definition of Done (feature-specific)
+In addition to the Product Definition of Done:
+- TEST-136 to TEST-143 executed and passing; TEST-01 to TEST-09 still pass.
+- **TDD evidence** for TEST-136, TEST-137 and TEST-141.
+- The migration applies to an existing database without data loss (`prisma migrate deploy`).
+- README lists the known limitations; the System SDS data model gains `LoginThrottle`.
+- Traceability row NFR-11 updated.
+
+---
+
 ## 13. Decisions and open questions
 
 These continue the decision numbering (last used: DEC-42). The SRS and SDS do not settle these points; each takes the simplest option consistent with the current code. Status of all entries: **proposed**, confirmed by merging the contracts PR for Issue #59.
@@ -675,6 +782,8 @@ These continue the decision numbering (last used: DEC-42). The SRS and SDS do no
 | DEC-49 | The report is `GET /api/reports/sales`. A sale is a `PAID` order, dated by placement. Status counts cover all orders; top items are the 5 largest by quantity among sales. | No paid time is stored (DEC-35); refunded and unpaid orders are not income. | F-11 | 2026-11-28 |
 | DEC-50 | Operator cancel is a separate `POST /api/orders/:id/operator-cancel` with no body or reason. `orderStateMachine.ts` holds the transition and the two per-role cancel rules. | The Customer endpoint is Customer only and tested (DEC-33, TEST-65, TEST-92); FR-17 asks for no reason. | F-12 | 2026-11-28 |
 | DEC-51 | A refund only changes `paymentStatus` from `PAID` to `REFUNDED`, in the same atomic statement that cancels. No refund record. | Payment is simulated and stored only as a status (DEC-35). One statement closes the race with payment. | F-12 | 2026-11-28 |
+| DEC-52 | Throttle state is a new `LoginThrottle` table (migration `0003_login_throttle`). | Cloud Run is configured for 0 to 3 instances, so memory counters would not meet NFR-11. | F-13 | 2026-11-28 |
+| DEC-53 | Sliding 15-minute window; success resets; the 5th failure answers 401 and starts a 15-minute lock that is not extended; attempts are counted before the password check; 400s are not counted; no `Retry-After` header or countdown. | Meets the NFR-11 wording, including under parallel requests, with the least extra behavior. | F-13 | 2026-11-28 |
 
 ### Open questions for the team
 
