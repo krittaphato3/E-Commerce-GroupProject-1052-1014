@@ -1,0 +1,51 @@
+# F-05 RED evidence (RETROACTIVE) — TEST-47 to TEST-55 against base commit 56fe6f6
+
+Evidence type: RETROACTIVE red run against the pre-F-05 base commit (56fe6f6, sprint-2-staging).
+NOTE: This is a retroactive verification run captured after 2639138 by copying ONLY
+`backend/src/middleware/menuItemSchema.test.ts` and `backend/tests/menuItems.test.ts` into
+a temporary detached git worktree at `56fe6f6`, NOT a TDD-order red commit created before
+implementation.
+
+Base commit under test: 56fe6f6 (Merge pull request #61 from krittaphato3/docs/sprint2-contracts)
+Tests copied from: feature/F-05-catalog (`backend/src/middleware/menuItemSchema.test.ts`, `backend/tests/menuItems.test.ts`)
+Command: npx vitest run src/middleware/menuItemSchema.test.ts tests/menuItems.test.ts (in `wt-f05-red/backend`)
+Date: 2026-11-28
+Exit status: 1
+
+Reason for failure: At base commit 56fe6f6, `POST /api/menu-items` and `PATCH /api/menu-items/:id`
+do not exist (Express returns 404), and `menuItemCreateSchema` / `menuItemUpdateSchema` are not
+exported from `backend/src/middleware/validate.ts`.
+
+--- raw output -------------------------------------------------------------
+
+ RUN  v3.2.7 D:/Library/Uni/Y3T1/Software Eng/wt-f05-red/backend
+
+ ❯ tests/menuItems.test.ts (9 tests | 9 failed) 931ms
+   × F-05 Catalog Management (AC-47 to AC-55) > TEST-47: POST /api/menu-items creates item with default isAvailable=true and appears in GET /api/menu 153ms
+     → expected 404 to be 201 // Object.is equality
+   × F-05 Catalog Management (AC-47 to AC-55) > TEST-48: PATCH /api/menu-items/:id updates only sent fields and persists to DB and GET /api/menu 97ms
+     → expected 404 to be 200 // Object.is equality
+   × F-05 Catalog Management (AC-47 to AC-55) > TEST-49: disabling stops new orders with 409 ITEM_UNAVAILABLE, price patch preserves disabled, re-enabling allows orders 96ms
+     → expected 404 to be 200 // Object.is equality
+   × F-05 Catalog Management (AC-47 to AC-55) > TEST-50: editing item price and name does not change existing order snapshots (BR-04) 145ms
+     → expected 404 to be 200 // Object.is equality
+   × F-05 Catalog Management (AC-47 to AC-55) > TEST-51: API priceSatang boundaries 1 and 1,000,000 accepted; invalid values return 400 without DB change 78ms
+     → expected 404 to be 201 // Object.is equality
+   × F-05 Catalog Management (AC-47 to AC-55) > TEST-52: API stockQty boundaries 0 and 10,000 accepted; invalid values return 400 without DB change 76ms
+     → expected 404 to be 201 // Object.is equality
+   × F-05 Catalog Management (AC-47 to AC-55) > TEST-53: rejects missing/blank/over-length/unknown/empty/duplicate fields with 400 and allows saving own name 84ms
+     → expected 404 to be 400 // Object.is equality
+   × F-05 Catalog Management (AC-47 to AC-55) > TEST-54: PATCH /api/menu-items/:id returns 404 for missing id and 400 for non-numeric id 113ms
+     → Cannot read properties of undefined (reading 'code')
+   × F-05 Catalog Management (AC-47 to AC-55) > TEST-55: Customer gets 403 and anonymous gets 401 on POST and PATCH without changing catalog 88ms
+     → expected 404 to be 403 // Object.is equality
+ ❯ src/middleware/menuItemSchema.test.ts (2 tests | 2 failed) 3ms
+   × F-05 menu item schemas (AC-51, AC-52) > TEST-51: accepts priceSatang boundaries 1 and 1,000,000 and rejects invalid values 2ms
+     → Cannot read properties of undefined (reading 'safeParse')
+   × F-05 menu item schemas (AC-51, AC-52) > TEST-52: accepts stockQty boundaries 0 and 10,000 and rejects invalid values 0ms
+     → Cannot read properties of undefined (reading 'safeParse')
+
+ Test Files  2 failed (2)
+      Tests  11 failed (11)
+   Start at  13:27:35
+   Duration  1.79s (transform 160ms, setup 30ms, collect 498ms, tests 934ms, environment 0ms, prepare 97ms)

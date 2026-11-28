@@ -55,6 +55,35 @@ export const orderCreateSchema = z
 
 export type OrderCreateBody = z.infer<typeof orderCreateSchema>;
 
+export const menuItemCreateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(100),
+    description: z.string().trim().min(1).max(500),
+    priceSatang: z.number().int().min(1).max(1_000_000),
+    stockQty: z.number().int().min(0).max(10_000),
+    isAvailable: z.boolean().default(true),
+  })
+  .strict();
+
+export type MenuItemCreateBody = z.infer<typeof menuItemCreateSchema>;
+
+// Declared field by field: .partial() on the create schema would keep the
+// isAvailable default and silently re-enable an item on every update.
+export const menuItemUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(100).optional(),
+    description: z.string().trim().min(1).max(500).optional(),
+    priceSatang: z.number().int().min(1).max(1_000_000).optional(),
+    stockQty: z.number().int().min(0).max(10_000).optional(),
+    isAvailable: z.boolean().optional(),
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "Provide at least one field",
+  });
+
+export type MenuItemUpdateBody = z.infer<typeof menuItemUpdateSchema>;
+
 /** Parses a positive integer route parameter, returning null when it is not one. */
 export function parsePositiveIntegerParam(value: string | undefined): number | null {
   if (!value || !/^\d+$/.test(value)) {

@@ -3,8 +3,8 @@
 | Item | Value |
 |---|---|
 | Document | `docs/traceability.md` |
-| Version | 1.22 |
-| Date | 2026-11-27 |
+| Version | 1.23 |
+| Date | 2026-11-28 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/sprint-2/features.md` |
 
 ### Revision history
@@ -33,6 +33,7 @@
 | 1.20 | 2026-11-12 | NFR-05 records `PASS (S1 baseline)` with p95 40 ms as the run median and 37–47 ms as the run range, matching `docs/evidence/nfr05/summary.json`; the Result vocabulary now allows a scope qualifier so a Sprint 1 baseline is not read as a completed Sprint 3 requirement; FR-04 cites the AC-12 component test as a case without a TEST-nn ID | PR #20 review round 2: a Sprint 3 requirement showed an unqualified `PASS`, the p95 figures in §3 and §5 differed in form, and `TEST-12-ish` is not a real test ID |
 | 1.21 | 2026-11-12 | New §4.1 separates the five red-then-green pairs the Definition of Done actually requires from the feature-level red suites, and states that TEST-09's red run is retroactive; new §4.2 records that AC-42 / TEST-42 is a UI-navigation check and that access control is proven by AC-37 / AC-38 (TEST-37, TEST-38) | Review round 3: the Version cells implied every row had a first-failure pair, and the AC-42 row did not say where the security is actually proven (PR #20 review) |
 | 1.22 | 2026-11-27 | Sprint 2 contracts added: FR-10 to FR-13, BR-04 (S2 part), BR-06 (S2 part), BR-09, BR-10, BR-11, BR-13 (S2 part), NFR-06 and NFR-10 now name their AC and test IDs; new §4.3 maps AC-47 to AC-92; BR-04, BR-06 and BR-13 read `PASS (S1 only)` because their new Sprint 2 tests are `NOT RUN`; §5 updated | Sprint 2 contracts written before implementation (Issue #53) |
+| 1.23 | 2026-11-28 | F-05 implemented and verified (TEST-47 to TEST-57): FR-10, BR-04 and BR-13 updated to `PASS` with test files and red/green evidence (`56fe6f6` retroactive red, `0a339a1` green); §4.3 F-05 row updated to `PASS` | F-05 Catalog management completed (Issue #54, PR #62) |
 
 ### How to use this file
 - Sprint 1 test IDs follow the rule **TEST-nn verifies AC-nn** (for example TEST-24 verifies AC-24).
@@ -53,7 +54,7 @@
 | FR-07 | F-03 | 1 | AC-28, AC-31 | TEST-28, 31 | backend/tests/orders.access.test.ts::TEST-28; frontend/src/pages/MyOrders.test.tsx::TEST-31 | PASS | 140c030 (red), 0f3c649 (green) |
 | FR-08 | F-04 | 1 | AC-32, AC-33, AC-38, AC-39 | TEST-32, 33, 38, 39 | backend/tests/orders.operator.test.ts::TEST-32, ::TEST-33, ::TEST-38, ::TEST-39 | PASS | c04ca45 (red), 6d1d2f7 (green) |
 | FR-09 | F-04 | 1 | AC-34, AC-35, AC-36, AC-37, AC-40, AC-41, AC-42 | TEST-34, TEST-35, TEST-36, TEST-37, TEST-40, TEST-41, TEST-42 | backend/tests/orders.operator.test.ts::TEST-34, ::TEST-35, ::TEST-36, ::TEST-37, ::TEST-40; backend/src/services/orderStateMachine.test.ts::TEST-35; frontend/e2e/operator.spec.ts::TEST-41, ::TEST-42; frontend/src/pages/OperatorOrders.test.tsx (supporting component tests for AC-32/33/34/35/41; the file has no TEST-nn names) | PASS | c04ca45, a614473 (red); 6d1d2f7 (backend green), 984ddb9, c680623, 8fe7793, 162b413, 37cf31f (green) |
-| FR-10 | F-05 | 2 | AC-47, AC-48, AC-49, AC-50, AC-51, AC-52, AC-53, AC-54, AC-55, AC-56, AC-57 | TEST-47 to TEST-57 | | NOT RUN | |
+| FR-10 | F-05 | 2 | AC-47, AC-48, AC-49, AC-50, AC-51, AC-52, AC-53, AC-54, AC-55, AC-56, AC-57 | TEST-47 to TEST-57 | backend/tests/menuItems.test.ts::TEST-47, ::TEST-48, ::TEST-49, ::TEST-50, ::TEST-51, ::TEST-52, ::TEST-53, ::TEST-54, ::TEST-55; backend/src/middleware/menuItemSchema.test.ts::TEST-51, ::TEST-52; frontend/src/pages/OperatorMenu.test.tsx::TEST-56; frontend/e2e/catalog.spec.ts::TEST-57 | PASS | 56fe6f6 (retroactive red), 2639138 (green), 0a339a1 (review fix & full green) |
 | FR-11 | F-06 | 2 | AC-58, AC-59, AC-60, AC-61, AC-62, AC-63, AC-64, AC-65, AC-66, AC-67 | TEST-58 to TEST-67 | | NOT RUN | |
 | FR-12 | F-08 | 2 | AC-77, AC-78, AC-79, AC-80, AC-81, AC-82, AC-83, AC-84, AC-85, AC-86, AC-87 | TEST-77 to TEST-87 | | NOT RUN | |
 | FR-13 | F-07 | 2 | AC-68, AC-69, AC-70, AC-71, AC-72, AC-73, AC-74, AC-75, AC-76 | TEST-68 to TEST-76 | | NOT RUN | |
@@ -69,7 +70,7 @@
 | BR-01 | F-03 | 1 | AC-18, AC-19 | TEST-18, 19 | backend/src/services/orderRules.test.ts::TEST-18; backend/tests/orders.create.test.ts::TEST-18, ::TEST-19 | PASS | 140c030 (red), 0f3c649 (green) |
 | BR-02 | F-02 (defines), F-03 (enforces) | 1 | AC-11, AC-21, AC-22 | TEST-11, 21, 22 | backend/src/services/menuRules.test.ts::TEST-11; backend/tests/orders.create.test.ts::TEST-21, ::TEST-22 | PASS | 140c030 (red), 0f3c649 (green) |
 | BR-03 | F-03 | 1 | AC-15, AC-16 | TEST-15, 16 | backend/src/services/orderRules.test.ts::TEST-15; backend/tests/orders.create.test.ts::TEST-15, ::TEST-16 | PASS | 140c030 (red), 0f3c649 (green) |
-| BR-04 | F-03, F-05 | 1 (F-03), 2 (F-05) | AC-17 (S1); AC-50 (S2 catalog edits) | TEST-17; TEST-50 (S2, NOT RUN) | backend/tests/orders.create.test.ts::TEST-17 | PASS (S1 only) | 140c030 (red), 0f3c649 (green) |
+| BR-04 | F-03, F-05 | 1 (F-03), 2 (F-05) | AC-17 (S1); AC-50 (S2 catalog edits) | TEST-17; TEST-50 (S2) | backend/tests/orders.create.test.ts::TEST-17; backend/tests/menuItems.test.ts::TEST-50 | PASS | 140c030 (S1 red), 0f3c649 (S1 green); 56fe6f6 (S2 retroactive red), 2639138 (S2 green), 0a339a1 (full green) |
 | BR-05 | F-03 | 1 | AC-23, AC-24, AC-46 | TEST-23, 24, 46 | backend/tests/orders.create.test.ts::TEST-23, ::TEST-24; backend/tests/constraints.test.ts::TEST-46 | PASS | 140c030 (red), 0f3c649 (green) |
 | BR-06 | F-04, F-06, F-08, F-09, F-12 | 1 (F-04); 2 (F-06, F-08); 3 (F-09, F-12) | AC-35 (S1 transitions); S2: AC-60, AC-61, AC-63, AC-77, AC-78, AC-79, AC-81, AC-82, AC-83; S3 in the Sprint 3 contract | TEST-35; TEST-60, 61, 63, 77–79, 81–83 (S2, NOT RUN); S3 TBD | backend/src/services/orderStateMachine.test.ts::TEST-35; backend/tests/orders.operator.test.ts::TEST-35 | PASS (S1 only) | c04ca45, a614473 (red); 6d1d2f7, c680623, 8fe7793, 37cf31f (green) |
 | BR-07 | F-03, F-04, R-01 | 1 | AC-27, AC-28, AC-39 | TEST-27, 28, 39 | backend/tests/orders.access.test.ts::TEST-27, ::TEST-28; backend/tests/orders.operator.test.ts::TEST-39 | PASS | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green) |
@@ -78,7 +79,7 @@
 | BR-10 | F-06 | 2 | AC-58, AC-59, AC-60, AC-61, AC-62, AC-63 | TEST-58 to TEST-63 | | NOT RUN | |
 | BR-11 | F-07 | 2 | AC-68, AC-69, AC-70, AC-71, AC-72, AC-73, AC-74 | TEST-68 to TEST-74 | | NOT RUN | |
 | BR-12 | F-09 | 3 | To be defined in Sprint 3 contract | TBD | | NOT RUN | |
-| BR-13 | F-05, R-03 | 1 (DB), 2 (API) | S1: AC-46 (DB constraints). S2: AC-51, AC-52 (API validation) | TEST-46; TEST-51, 52 (S2, NOT RUN) | backend/tests/constraints.test.ts::TEST-46 | PASS (S1 only) | c215549 (the CHECK constraints and TEST-46 landed together in the scaffold commit, so no separate red commit exists; the test is re-run green in every later suite log) |
+| BR-13 | F-05, R-03 | 1 (DB), 2 (API) | S1: AC-46 (DB constraints). S2: AC-51, AC-52 (API validation) | TEST-46; TEST-51, 52 (S2) | backend/tests/constraints.test.ts::TEST-46; backend/src/middleware/menuItemSchema.test.ts::TEST-51, ::TEST-52; backend/tests/menuItems.test.ts::TEST-51, ::TEST-52 | PASS | c215549 (S1 CHECK + TEST-46); 56fe6f6 (S2 retroactive red), 2639138 (S2 green), 0a339a1 (full green) |
 | BR-14 | F-03 | 1 | AC-14 (order number format) | TEST-14 | backend/tests/orders.create.test.ts::TEST-14; backend/src/services/orderRules.test.ts::TEST-15 | PASS | 140c030 (red), 0f3c649 (green) |
 | BR-15 | F-03, F-04 | 1 | AC-25, AC-34 | TEST-25, 34 | backend/tests/orders.create.test.ts::TEST-25; backend/tests/orders.operator.test.ts::TEST-34 | PASS | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green) |
 
@@ -134,7 +135,7 @@ Defined in `docs/sprints/sprint-2/features.md`. TEST-nn verifies AC-nn.
 
 | AC / TEST | Feature | Requirements | Result |
 |---|---|---|---|
-| 47–57 | F-05 | FR-10, BR-04, BR-13 | NOT RUN |
+| 47–57 | F-05 | FR-10, BR-04, BR-13 | PASS |
 | 58–67 | F-06 | FR-11, BR-06, BR-10 | NOT RUN |
 | 68–76 | F-07 | FR-13, BR-11 | NOT RUN |
 | 77–87 | F-08 | FR-12, BR-06, BR-09 | NOT RUN |
