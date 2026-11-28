@@ -392,6 +392,8 @@ describe("F-05 Catalog Management (AC-47 to AC-55)", () => {
     expect(dupUpdate.body.error.details[0].field).toBe("name");
 
     expect(await testPrisma.menuItem.count()).toBe(initialCount);
+    const afterItem2 = await testPrisma.menuItem.findUniqueOrThrow({ where: { id: item2.id } });
+    expect(afterItem2).toEqual(item2);
 
     const ownNameUpdate = await request(app)
       .patch(`/api/menu-items/${item1.id}`)

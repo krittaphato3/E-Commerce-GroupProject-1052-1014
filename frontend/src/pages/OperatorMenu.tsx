@@ -146,7 +146,14 @@ export function OperatorMenu() {
 
   const editPatch =
     mode === "edit" && editingItem ? buildChangedFields(editingItem, form) : null;
-  const hasEditChanges = editPatch !== null && Object.keys(editPatch).length > 0;
+  const hasRawEditChanges =
+    mode === "edit" && editingItem !== null
+      ? form.name.trim() !== editingItem.name ||
+        form.description.trim() !== editingItem.description ||
+        form.priceThb.trim() !== formatSatangInput(editingItem.priceSatang) ||
+        form.stockQty.trim() !== String(editingItem.stockQty) ||
+        form.isAvailable !== editingItem.isAvailable
+      : false;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -157,11 +164,12 @@ export function OperatorMenu() {
     const stockTrimmed = form.stockQty.trim();
     const stockQty = /^\d+$/.test(stockTrimmed) ? Number(stockTrimmed) : NaN;
 
+    if (priceSatang === null || Number.isNaN(stockQty)) {
+      setFormError("Please enter a valid price and stock quantity.");
+      return;
+    }
+
     if (mode === "create") {
-      if (priceSatang === null || Number.isNaN(stockQty)) {
-        setFormError("Please enter a valid price and stock quantity.");
-        return;
-      }
       setSaving(true);
       try {
         const res = await createMenuItem({
@@ -222,6 +230,9 @@ export function OperatorMenu() {
     try {
       const res = await updateMenuItem(item.id, { isAvailable: !item.isAvailable });
       setItems((prev) => prev.map((it) => (it.id === res.item.id ? res.item : it)));
+      if (mode === "edit" && editingItem?.id === item.id) {
+        closeForm();
+      }
     } catch (err) {
       if (err instanceof ApiRequestError && err.status === 404) {
         setActionError(err.message);
@@ -355,7 +366,7 @@ export function OperatorMenu() {
             <button
               type="submit"
               className="btn btn-primary btn-sm"
-              disabled={saving || (mode === "edit" && !hasEditChanges)}
+              disabled={saving || (mode === "edit" && !hasRawEditChanges)}
             >
               {saving ? "Saving…" : "Save"}
             </button>
@@ -400,22 +411,24 @@ export function OperatorMenu() {
                       {item.isAvailable ? "Enabled" : "Disabled"}
                     </span>
                   </td>
-                  <td className="text-end d-flex justify-content-end gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-outline-primary btn-sm"
-                      onClick={() => openEdit(item)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary btn-sm"
-                      disabled={togglingId === item.id}
-                      onClick={() => handleToggleAvailability(item)}
-                    >
-                      {item.isAvailable ? "Disable" : "Enable"}
-                    </button>
+                  <td className="text-end">
+                    <div className="d-flex justify-content-end gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-outline-primary btn-sm"
+                        onClick={() => openEdit(item)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary btn-sm"
+                        disabled={togglingId === item.id}
+                        onClick={() => handleToggleAvailability(item)}
+                      >
+                        {item.isAvailable ? "Disable" : "Enable"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

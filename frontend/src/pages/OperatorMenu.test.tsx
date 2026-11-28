@@ -128,6 +128,12 @@ describe("F-05 Operator Menu Management UI (AC-56)", () => {
     expect(saveBtn.disabled).toBe(true);
 
     const priceInput = screen.getByLabelText("Price (THB)");
+    fireEvent.change(priceInput, { target: { value: "59.999" } });
+    expect(saveBtn.disabled).toBe(false);
+    fireEvent.click(saveBtn);
+    expect(screen.getByText("Please enter a valid price and stock quantity.")).toBeDefined();
+    expect(menuApi.updateMenuItem).not.toHaveBeenCalled();
+
     fireEvent.change(priceInput, { target: { value: "75.00" } });
     expect(saveBtn.disabled).toBe(false);
 
