@@ -428,6 +428,106 @@ In addition to the Product Definition of Done:
 
 ---
 
+## 9. F-11 — Sales Summary Report (Engineering Contract)
+
+| Item | Value |
+|---|---|
+| Feature | F-11 Sales summary report |
+| Requirements | FR-16, BR-08 |
+| Sprint | 3 |
+| Depends on | F-08 |
+| Contract version | 1.0 (2026-11-28) |
+| Status | planned |
+| Issue / branch | issue to be opened / `feature/F-11-sales-summary` |
+
+### Revision history
+| Version | Date | Change | Reason |
+|---|---|---|---|
+| 1.0 | 2026-11-28 | Initial contract, status planned | Before implementation |
+
+### 1. Feature design
+
+**Behavior.** An Operator picks a date range and sees total sales, the number of orders in each status, and the top-selling items. The report only reads data.
+
+**Definitions (DEC-49).**
+- **Range:** orders whose `createdAt` falls in `from` to `to`, inclusive, as Asia/Bangkok calendar dates (the same rule as DEC-47). No paid time is stored (DEC-35), so the placement date is used.
+- **Sale:** an order with `paymentStatus = PAID`. `UNPAID` and `REFUNDED` orders are not sales.
+- **Total sales:** the sum of `totalSatang` over sales. **Sales order count:** the number of sales.
+- **Count per status:** all orders in the range, for all 7 statuses, with 0 where there is none.
+- **Top-selling items:** order lines of sales, grouped by `menuItemId`, with summed `quantity` and summed `lineTotalSatang` (the stored snapshots, BR-04). Sorted by quantity descending, then amount descending, then `menuItemId` ascending; at most 5. The displayed name is the `itemName` snapshot of the newest line (highest id) in the group.
+
+All figures are computed in the database over every matching order, in one `REPEATABLE READ` transaction so they agree with each other.
+
+**Validation.** `from` and `to` are required real calendar dates, `from <= to`; unknown parameters are rejected.
+
+**Permissions.** Operator only (BR-08).
+
+**Failure and boundary cases.** A range with no orders gives zeros and an empty item list. A paid order that is later refunded (F-12) leaves the total. Date boundaries follow DEC-47.
+
+### 2. API specification
+
+#### `GET /api/reports/sales?from=YYYY-MM-DD&to=YYYY-MM-DD` (Operator)
+| Item | Spec |
+|---|---|
+| 200 | `{ "report": { "from", "to", "totalSalesSatang": 15000, "salesOrderCount": 2, "orderCountByStatus": { "PENDING": 1, "ACCEPTED": 2, "REJECTED": 0, "CANCELLED": 0, "PREPARING": 0, "READY": 0, "COMPLETED": 0 }, "topItems": [ { "menuItemId": 1, "itemName": "Basil Pork Rice", "quantity": 3, "salesSatang": 18000 } ] } }` |
+| 400 | `VALIDATION_ERROR`: missing or invalid parameter, `from` after `to`, unknown parameter |
+| 401 / 403 | `UNAUTHENTICATED` / `FORBIDDEN` (Customer) |
+
+The numbers in the example only show the shape. **Registry:** add the route with `[OPERATOR]` through a new reports router mounted with `mountRouter(app, "/api/reports", ...)`; update TEST-43 and TEST-92 as in §2.1.
+
+### 3. UI specification
+| Element | Behavior |
+|---|---|
+| `/operator/reports` | `ProtectedRoute roles={["OPERATOR"]}`; the Operator header gains a "Sales report" link |
+| Form | From and To date fields, both preset to today in Bangkok, and **Show report**. The first report loads on open |
+| Result | Total sales in ฿, sales order count, a table of counts per status, a table of top items (name, quantity, amount) |
+| Loading | "Loading report…"; the button is disabled |
+| Empty | When every status count is 0: "No orders in this period." |
+| No sales | When there are orders but no sale, totals show ฿0.00 and the items area says "No sales in this period." |
+| Error | Alert with Retry; a 400 shows the `details` messages and keeps the dates |
+
+### 4. Data specification
+| Layer | Change |
+|---|---|
+| Prisma schema, indexes, migration, seed | **No change; no migration** |
+
+The aggregation lives in a service in `backend/src/services` so it is inside the coverage gate.
+
+### 5. Acceptance criteria
+
+| AC | Statement |
+|---|---|
+| AC-116 | Total sales and the sales order count include exactly the `PAID` orders in the range; `UNPAID` and `REFUNDED` orders are excluded. The total equals the sum read from the database. |
+| AC-117 | The report counts all orders in the range for each of the 7 statuses, including zeros. |
+| AC-118 | Top items are computed from sold lines only, summed per item, sorted by quantity, then amount, then id, limited to 5, using stored line amounts so that later catalog price or name changes do not alter amounts. |
+| AC-119 | The range is inclusive in Asia/Bangkok dates; missing, invalid, reversed or unknown parameters return 400. |
+| AC-120 | A period with no orders returns 200 with zero totals, zero counts and an empty item list. |
+| AC-121 | A Customer gets 403 with no report data and an anonymous caller gets 401. |
+| AC-122 | The report screen shows loading, empty, no-sales, error and result states, formats satang as ฿, and keeps the dates after an error. |
+| AC-123 | In the UI an Operator opens the report after an order is paid and sees it in the total, status counts and top items. |
+
+### 6. Software Test Specification (STS)
+
+| Test | AC | Level | Precondition and input | Action | Expected result | Planned file::test name |
+|---|---|---|---|---|---|---|
+| TEST-116 | AC-116 | API-DB | Paid, unpaid, refunded (set in the DB), rejected and cancelled orders with known totals | GET the report | Totals include only paid orders | `backend/tests/reports.sales.test.ts::TEST-116` |
+| TEST-117 | AC-117 | API-DB | Orders in several statuses | GET the report | Exact counts and zeros for all 7 keys | `backend/tests/reports.sales.test.ts::TEST-117` |
+| TEST-118 | AC-118 | API-DB | Six sold items with a quantity tie and an amount tie; an unpaid order for another item; then a catalog price and name change | GET the report | Order, limit 5, amounts from snapshots, newest snapshot name, unsold item absent | `backend/tests/reports.sales.test.ts::TEST-118` |
+| TEST-119 | AC-119 | Unit + API-DB | Orders around Bangkok midnights | Parse invalid queries; GET boundary ranges | As in AC-119 | `backend/src/middleware/salesReportQuerySchema.test.ts::TEST-119`; `backend/tests/reports.sales.test.ts::TEST-119` |
+| TEST-120 | AC-120 | API-DB | A range with no orders | GET the report | Zeros and `topItems: []` | `backend/tests/reports.sales.test.ts::TEST-120` |
+| TEST-121 | AC-121 | API-DB | `customer1`; no-cookie client | GET the report | 403 and 401 with only `error` | `backend/tests/reports.sales.test.ts::TEST-121` |
+| TEST-122 | AC-122 | UI component | API client mocked: pending, empty, no sales, data, 400, 500 | Render and retry | States as specified | `frontend/src/pages/OperatorReports.test.tsx::TEST-122` |
+| TEST-123 | AC-123 | E2E | Seeded database | Order, accept, pay; operator opens the report | Figures include the new order | `frontend/e2e/report.spec.ts::TEST-123` |
+
+### 7. Definition of Done (feature-specific)
+In addition to the Product Definition of Done:
+- TEST-116 to TEST-123 executed and passing; TEST-43 and TEST-92 pass with the new route.
+- **TDD evidence** for TEST-116 (what counts as a sale).
+- Screenshot of the report and the matching order data.
+- Traceability row FR-16 updated.
+
+---
+
 ## 13. Decisions and open questions
 
 These continue the decision numbering (last used: DEC-42). The SRS and SDS do not settle these points; each takes the simplest option consistent with the current code. Status of all entries: **proposed**, confirmed by merging the contracts PR for Issue #59.
@@ -440,6 +540,7 @@ These continue the decision numbering (last used: DEC-42). The SRS and SDS do no
 | DEC-46 | Search and filter are query parameters on the two existing list endpoints, with page-number pagination (`page`, `pageSize` default 20, maximum 100) replacing the 200-row limit. Query parsing is strict. | The SDS says pagination arrives with F-10. No new route; strictness matches DEC-07. | F-10 | 2026-11-28 |
 | DEC-47 | Date filters are inclusive Asia/Bangkok calendar days applied to `createdAt`. | SRS A-03 stores UTC and shows Bangkok time. | F-10, F-11 | 2026-11-28 |
 | DEC-48 | Order number search is exact on the id behind `CB-nnnnnn`; customer name search is a case-insensitive substring of `displayName`. No new index. | The order number is derived from the id (BR-14); data volume is small. | F-10 | 2026-11-28 |
+| DEC-49 | The report is `GET /api/reports/sales`. A sale is a `PAID` order, dated by placement. Status counts cover all orders; top items are the 5 largest by quantity among sales. | No paid time is stored (DEC-35); refunded and unpaid orders are not income. | F-11 | 2026-11-28 |
 
 ### Open questions for the team
 
