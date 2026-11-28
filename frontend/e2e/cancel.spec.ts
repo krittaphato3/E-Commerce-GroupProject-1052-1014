@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { captureEvidence } from "./evidence";
+import globalSetup from "./globalSetup";
 
 const customerEmail = process.env.E2E_CUSTOMER_EMAIL ?? "customer1@campusbites.test";
 
@@ -10,6 +11,14 @@ test.beforeAll(() => {
   if (!process.env.SEED_CUSTOMER_PASSWORD) {
     throw new Error("SEED_CUSTOMER_PASSWORD must be set (backend/.env is loaded by playwright.config.ts)");
   }
+});
+
+/**
+ * The journeys share one database, and TEST-41 counts the rows in the operator
+ * list. Re-seed so the order cancelled here is not left for later spec files.
+ */
+test.afterAll(() => {
+  globalSetup();
 });
 
 async function menuStock(page: Page): Promise<number> {
