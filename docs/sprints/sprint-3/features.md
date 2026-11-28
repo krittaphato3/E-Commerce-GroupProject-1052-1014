@@ -7,7 +7,7 @@
 | Staging branch | `sprint-3-staging` |
 | Release candidate tag (planned) | `sprint-3-rc1` (Deliverable 2) |
 | Release tag (planned) | `sprint-3-v3.0` (13 Dec 2026) |
-| Version | 1.0 |
+| Version | 1.1 |
 | Date | 2026-11-28 |
 | Related | `docs/srs.md`, `docs/features.md` (whole-product inventory), `docs/traceability.md`, `docs/sprints/plan.md`, `docs/system-sds.md`, `docs/sprints/sprint-2/features.md`, `docs/evidence/nfr05/README.md` |
 
@@ -15,6 +15,7 @@
 | Version | Date | Change | Reason |
 |---|---|---|---|
 | 1.0 | 2026-11-28 | Initial contracts F-09 to F-13 and cross-cutting R-04 (AC-93 to AC-147, DEC-43 to DEC-57) | Written before implementation (Issue #59) |
+| 1.1 | 2026-11-28 | §2.1 adds a type-only change to the history sample data in `OrderDetail.test.tsx`; F-09 contract 1.1, status in progress. No AC or STS changed | Found while preparing the F-09 tests: the frontend type check includes test files, and history entries gain a required `note` (§7.2) (Issue #59) |
 
 Each contract below keeps its own revision history and a **Status** line with exactly one of: planned, in progress, implemented, tested, accepted. Log every change there with a reason; do not rewrite earlier entries.
 
@@ -62,6 +63,7 @@ Some Sprint 1 and Sprint 2 tests pin the exact route list, transition table or r
 | TEST-43, TEST-92 | F-09 | Protected routes 13 → 14, mounted routes 18 → 19, the TEST-92 sweep count (and the number in its title) 13 → 14. Add a pinned entry `POST /api/orders/:id/reject [OPERATOR]` with a valid body in the sweep. The pinned list of 7 Sprint 2 routes is unchanged |
 | TEST-81 | F-09 | Allowed pairs gain `PENDING → REJECTED`: 5 → 6 allowed, the other 43 rejected. All 49 pairs are still tested |
 | TEST-86 (operator) | F-09 | A `PENDING` row expects the buttons `Accept`, `Reject` instead of `Accept` only. The exact-button-list assertion stays |
+| TEST-66, TEST-75, TEST-86 (order detail) and the other cases in `OrderDetail.test.tsx` | F-09 | Type only: the shared sample history entries gain `note: null`. No expected value or assertion changes |
 | TEST-43, TEST-92 | F-11 | Protected 14 → 15, mounted 19 → 20; pin `GET /api/reports/sales [OPERATOR]` |
 | TEST-43, TEST-92 | F-12 | Protected 15 → 16, mounted 20 → 21; pin `POST /api/orders/:id/operator-cancel [OPERATOR]` |
 | TEST-60 | F-12 | The `ACCEPTED → CANCELLED` case becomes allowed in the state machine. TEST-61 is unchanged and still proves that the **Customer** gets 409 from `ACCEPTED` |
@@ -152,14 +154,15 @@ The specification commits for Sprint 3 are this document, delivered under Issue 
 | Requirements | FR-14, BR-12, BR-06, BR-05, BR-07, BR-15 |
 | Sprint | 3 |
 | Depends on | F-04 (the race tests also use F-06 cancel and F-04 accept) |
-| Contract version | 1.0 (2026-11-28) |
-| Status | planned |
+| Contract version | 1.1 (2026-11-28) |
+| Status | in progress |
 | Issue / branch | #59 / `feature/F-09-reject` |
 
 ### Revision history
 | Version | Date | Change | Reason |
 |---|---|---|---|
 | 1.0 | 2026-11-28 | Initial contract, status planned | Before implementation |
+| 1.1 | 2026-11-28 | Status in progress; §2.1 lists the type-only `note: null` sample-data change. No AC or STS changed | The required `note` field on history entries makes the existing sample data fail the type check |
 
 ### 1. Feature design
 
