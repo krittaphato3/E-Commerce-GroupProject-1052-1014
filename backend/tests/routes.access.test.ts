@@ -116,8 +116,8 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
   it("TEST-43: every protected route answers 401 anonymously and 403 for each non-allowed role without private data", async () => {
     expect(
       protectedRoutes.length,
-      "the registry must list the nine protected routes"
-    ).toBe(9);
+      "the registry must list the ten protected routes"
+    ).toBe(10);
 
     // Keyed by Role so adding a new schema role requires a seeded account cookie here.
     const cookies: Record<Role, string> = {
@@ -207,12 +207,18 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
     const mounted = extractExpressRoutes(app).map(formatRoute).sort();
 
     expect(publicRoutes.length, "five public routes").toBe(5);
-    expect(protectedRoutes.length, "nine protected routes").toBe(9);
-    expect(mounted).toHaveLength(14);
+    expect(protectedRoutes.length, "ten protected routes").toBe(10);
+    expect(mounted).toHaveLength(15);
     expect(mounted).toContain("POST /api/orders/:id/cancel");
     expect(protectedRoutes).toContainEqual({
       method: "POST",
       path: "/api/orders/:id/cancel",
+      roles: [Role.CUSTOMER],
+    });
+    expect(mounted).toContain("POST /api/orders/:id/pay");
+    expect(protectedRoutes).toContainEqual({
+      method: "POST",
+      path: "/api/orders/:id/pay",
       roles: [Role.CUSTOMER],
     });
 
