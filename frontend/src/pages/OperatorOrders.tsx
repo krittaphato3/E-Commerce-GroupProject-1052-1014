@@ -2,12 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   acceptOrder,
+  completeOrder,
   fetchOperatorOrders,
+  markOrderReady,
+  startOrder,
   type OperatorOrderSummary,
   type OrderStatus,
 } from "../api/orders";
 import { ApiRequestError } from "../api/client";
-import { formatDateTime, formatThb, statusLabel } from "../lib/format";
+import { formatDateTime, formatThb, paymentStatusLabel, statusLabel } from "../lib/format";
 
 const FILTER_OPTIONS: Array<{ label: string; value: OrderStatus | "" }> = [
   { label: "Pending", value: "PENDING" },
@@ -20,6 +23,31 @@ const FILTER_OPTIONS: Array<{ label: string; value: OrderStatus | "" }> = [
   { label: "Rejected", value: "REJECTED" },
 ];
 
+interface FulfilmentAction {
+  label: string;
+  next: OrderStatus;
+  run: (id: number) => Promise<unknown>;
+}
+
+/**
+ * The one fulfilment step a row offers, or null. This only decides which button is
+ * shown; the API enforces the transition and payment rules (BR-06, BR-09).
+ */
+function fulfilmentAction(order: OperatorOrderSummary): FulfilmentAction | null {
+  switch (order.status) {
+    case "ACCEPTED":
+      return order.paymentStatus === "PAID"
+        ? { label: "Start preparing", next: "PREPARING", run: (id) => startOrder(id) }
+        : null;
+    case "PREPARING":
+      return { label: "Mark ready", next: "READY", run: (id) => markOrderReady(id) };
+    case "READY":
+      return { label: "Complete", next: "COMPLETED", run: (id) => completeOrder(id) };
+    default:
+      return null;
+  }
+}
+
 export function OperatorOrders() {
   const [orders, setOrders] = useState<OperatorOrderSummary[]>([]);
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("PENDING");
@@ -27,6 +55,7 @@ export function OperatorOrders() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [acceptingId, setAcceptingId] = useState<number | null>(null);
+  const [updatingIds, setUpdatingIds] = useState<ReadonlySet<number>>(new Set());
   const [reloadKey, setReloadKey] = useState(0);
 
   const statusFilterRef = useRef(statusFilter);
@@ -96,6 +125,83 @@ export function OperatorOrders() {
     }
   }
 
+  async function handleFulfilment(orderId: number, action: FulfilmentAction) {
+    const filterAtClick = statusFilterRef.current;
+    setUpdatingIds((current) => new Set(current).add(orderId));
+    setActionError(null);
+
+    try {
+      await action.run(orderId);
+      const currentFilter = statusFilterRef.current;
+      // Only the unchanged "All" view still matches the new status and can be updated in place.
+      const canUpdateInPlace =
+        currentFilter === "" &&
+        filterAtClick === "" &&
+        ordersRef.current.some((o) => o.id === orderId);
+
+      if (canUpdateInPlace) {
+        setOrders((current) =>
+          current.map((order) =>
+            order.id === orderId ? { ...order, status: action.next } : order
+          )
+        );
+      } else {
+        setReloadKey((k) => k + 1);
+      }
+    } catch (err) {
+      if (err instanceof ApiRequestError && err.status === 409) {
+        setActionError(err.message);
+        setReloadKey((k) => k + 1);
+      } else {
+        setActionError(
+          err instanceof ApiRequestError && err.status < 500
+            ? err.message
+            : "Could not update this order. Please try again."
+        );
+      }
+    } finally {
+      setUpdatingIds((current) => {
+        const remaining = new Set(current);
+        remaining.delete(orderId);
+        return remaining;
+      });
+    }
+  }
+
+  function renderAction(order: OperatorOrderSummary) {
+    if (order.status === "PENDING") {
+      return (
+        <button
+          type="button"
+          className="btn btn-success btn-sm"
+          onClick={() => handleAccept(order.id)}
+          disabled={acceptingId === order.id}
+        >
+          {acceptingId === order.id ? "Accepting…" : "Accept"}
+        </button>
+      );
+    }
+
+    if (order.status === "ACCEPTED" && order.paymentStatus === "UNPAID") {
+      return <span className="text-muted small">Awaiting payment</span>;
+    }
+
+    const action = fulfilmentAction(order);
+    if (!action) return null;
+
+    const updating = updatingIds.has(order.id);
+    return (
+      <button
+        type="button"
+        className="btn btn-success btn-sm"
+        onClick={() => handleFulfilment(order.id, action)}
+        disabled={updating}
+      >
+        {updating ? "Updating…" : action.label}
+      </button>
+    );
+  }
+
   return (
     <section>
       <h1 className="h3 mb-3">Incoming orders</h1>
@@ -149,6 +255,7 @@ export function OperatorOrders() {
                 Total
               </th>
               <th scope="col">Status</th>
+              <th scope="col">Payment</th>
               <th scope="col">Placed</th>
               <th scope="col" className="text-end">
                 Action
@@ -167,19 +274,17 @@ export function OperatorOrders() {
                 <td>
                   <span className="badge bg-primary">{statusLabel(order.status)}</span>
                 </td>
-                <td>{formatDateTime(order.createdAt)}</td>
-                <td className="text-end">
-                  {order.status === "PENDING" && (
-                    <button
-                      type="button"
-                      className="btn btn-success btn-sm"
-                      onClick={() => handleAccept(order.id)}
-                      disabled={acceptingId === order.id}
-                    >
-                      {acceptingId === order.id ? "Accepting…" : "Accept"}
-                    </button>
-                  )}
+                <td>
+                  <span
+                    className={`badge ${
+                      order.paymentStatus === "PAID" ? "bg-success" : "bg-secondary"
+                    }`}
+                  >
+                    {paymentStatusLabel(order.paymentStatus)}
+                  </span>
                 </td>
+                <td>{formatDateTime(order.createdAt)}</td>
+                <td className="text-end">{renderAction(order)}</td>
               </tr>
             ))}
           </tbody>

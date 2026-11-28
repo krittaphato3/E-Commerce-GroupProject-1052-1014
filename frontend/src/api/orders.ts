@@ -95,3 +95,16 @@ export function payOrder(id: number, amountSatang: number): Promise<{ order: Ord
   });
 }
 
+
+/** Fulfilment steps (FR-12, DEC-37): no request body. */
+export function startOrder(id: number): Promise<{ order: Order }> {
+  return apiRequest<{ order: Order }>(`/api/orders/${id}/start`, { method: "POST" });
+}
+
+export function markOrderReady(id: number): Promise<{ order: Order }> {
+  return apiRequest<{ order: Order }>(`/api/orders/${id}/ready`, { method: "POST" });
+}
+
+export function completeOrder(id: number): Promise<{ order: Order }> {
+  return apiRequest<{ order: Order }>(`/api/orders/${id}/complete`, { method: "POST" });
+}

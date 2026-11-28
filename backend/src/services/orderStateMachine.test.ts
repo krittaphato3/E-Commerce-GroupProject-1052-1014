@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { OrderStatus } from "@prisma/client";
 import { assertTransition, canTransition } from "./orderStateMachine.js";
 import { AppError } from "../middleware/error.js";
 
@@ -80,6 +81,49 @@ describe("orderStateMachine cancellation (AC-60, BR-06, BR-10)", () => {
       statusCode: 409,
       code: "INVALID_TRANSITION",
       details: { from, to: "CANCELLED" },
+    });
+  });
+});
+
+describe("orderStateMachine full transition table (AC-81, BR-06)", () => {
+  const STATUSES = Object.values(OrderStatus);
+  const ALLOWED = [
+    "PENDING -> ACCEPTED",
+    "PENDING -> CANCELLED",
+    "ACCEPTED -> PREPARING",
+    "PREPARING -> READY",
+    "READY -> COMPLETED",
+  ];
+  const PAIRS = STATUSES.flatMap((from) => STATUSES.map((to) => [from, to] as const));
+
+  it("TEST-81: the table covers all 49 ordered pairs and lists 5 as allowed", () => {
+    expect(STATUSES).toHaveLength(7);
+    expect(PAIRS).toHaveLength(49);
+    const listed = PAIRS.filter(([from, to]) => ALLOWED.includes(`${from} -> ${to}`));
+    expect(listed).toHaveLength(5);
+  });
+
+  it.each(PAIRS)("TEST-81: %s -> %s", (from, to) => {
+    const allowed = ALLOWED.includes(`${from} -> ${to}`);
+    expect(canTransition(from, to)).toBe(allowed);
+
+    if (allowed) {
+      expect(() => assertTransition(from, to)).not.toThrow();
+      return;
+    }
+
+    let thrown: unknown;
+    try {
+      assertTransition(from, to);
+    } catch (err) {
+      thrown = err;
+    }
+
+    expect(thrown).toBeInstanceOf(AppError);
+    expect(thrown).toMatchObject({
+      statusCode: 409,
+      code: "INVALID_TRANSITION",
+      details: { from, to },
     });
   });
 });

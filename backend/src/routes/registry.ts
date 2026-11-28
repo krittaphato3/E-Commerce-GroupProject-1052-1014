@@ -47,6 +47,9 @@ export const protectedRoutes: ReadonlyArray<ProtectedRoute> = [
   { method: "POST", path: "/api/orders/:id/accept", roles: [Role.OPERATOR] },
   { method: "POST", path: "/api/orders/:id/cancel", roles: [Role.CUSTOMER] },
   { method: "POST", path: "/api/orders/:id/pay", roles: [Role.CUSTOMER] },
+  { method: "POST", path: "/api/orders/:id/start", roles: [Role.OPERATOR] },
+  { method: "POST", path: "/api/orders/:id/ready", roles: [Role.OPERATOR] },
+  { method: "POST", path: "/api/orders/:id/complete", roles: [Role.OPERATOR] },
   { method: "POST", path: "/api/menu-items", roles: [Role.OPERATOR] },
   { method: "PATCH", path: "/api/menu-items/:id", roles: [Role.OPERATOR] },
 ];
