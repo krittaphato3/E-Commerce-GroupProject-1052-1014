@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/srs.md` |
-| Version | 1.13 |
+| Version | 1.14 |
 | Date | 2026-11-28 |
 | Course / Theme | CPE 334, Semester 1/2026 — Theme 4: E-Commerce or Ordering System |
 | Student 1 | Krittaphat Panyasomphan (67070501052) |
@@ -27,6 +27,7 @@
 | 1.11 | 2026-11-12 | Both | §9 note on issue numbering now says that `docs/sprints/sprint-1/features.md` §4 carries the actual GitHub issue, branch and PR beside the planned branch names | The note still said the §4 table was left unchanged, which stopped being true once the actual names were added (PR #20 review) |
 | 1.12 | 2026-11-12 | Both | §6 records the Sprint 1 NFR-05 result with the same wording as the traceability matrix, `PASS (S1 baseline)`, and states that it is a single-host local measurement | The matrix, this document and the submitted PDF must not describe the same result in different terms (PR #20 review round 3) |
 | 1.13 | 2026-11-28 | Both | Deliverable 2 update: new §1.1 implementation status; §7 states which transitions and payment changes are implemented; A-05 restated now that catalog management is released; new §9.2 references DEC-28 to DEC-57 and open questions OQ-01 to OQ-10; new §11 points to the approved baseline revisions CHG-03 to CHG-06. No FR, BR or NFR wording changed | Align the SRS with the product at `dad286b` (Issue #60) |
+| 1.14 | 2026-11-28 | Both | CR-01 (CHG-07): BR-01 and BR-02 text revised for the stock-aware per-line cap, with old and new values in new §11.1; new §9.3 decisions DEC-58 to DEC-66; §1.1 status row. **Proposed: team approval and teammate review pending; not implemented.** No FR or NFR wording changed (FR-05 states no quantity limit) | Lab 7 change request: stop one customer from taking most of a low-stock item (Issues #76, #77) |
 
 ---
 
@@ -51,6 +52,7 @@ This section reports status; it changes no requirement. Per-requirement and per-
 | Sprint 3, F-10 to F-12 | FR-15 to FR-17 | Planned; not implemented; tests NOT RUN |
 | Sprint 3, F-13 | NFR-11 | Planned; not implemented; tests NOT RUN |
 | Sprint 3, R-04 | NFR-05 (deployed re-measurement), NFR-09 (all screens) | Planned. NFR-05 remains `PASS (S1 baseline)`; NFR-09 is incomplete |
+| CR-01 (revision to BR-01 and BR-02) | BR-01, BR-02 | Contract revision proposed (§11.1); **not implemented**. The code on `sprint-3-staging` and on `main` still allows 1 to 10 per line with no stock-aware maximum |
 
 ## 2. Actors
 
@@ -96,8 +98,8 @@ Real payment gateway or card data; delivery; multiple shops or branches; self-re
 
 | ID | Rule | Enforced in | Sprint |
 |---|---|---|---|
-| BR-01 | Each order line has an integer quantity from 1 to 10. An order has 1 to 10 lines, and no menu item appears twice in one order. | Service + schema validation | 1 |
-| BR-02 | An item can be ordered only if it is enabled and its stock is at least the requested quantity. If any line fails, the whole order is rejected and nothing is saved. | Service (transaction) | 1 |
+| BR-01 | Each order line has an integer quantity from 1 to 5. For an orderable item, the maximum quantity of a line is `min(5, max(1, floor(stockQty / 2)))`, where `stockQty` is the item's stock when it is reserved, before the decrement. An order has 1 to 10 lines, and no menu item appears twice in one order. *Revised by CR-01 (§11.1): proposed, not implemented.* | Schema validation (1 to 5) + service (stock-aware maximum, inside the reservation statement) | 1 |
+| BR-02 | An item can be ordered only if it is enabled and its stock is at least the requested quantity. Each line must also be within the BR-01 maximum. If any line fails either condition, the whole order is rejected and nothing is saved. *Revised by CR-01 (§11.1): proposed, not implemented.* | Service (transaction) | 1 |
 | BR-03 | The order total is calculated by the server from current database prices: total = sum(unit price × quantity). Prices or totals sent by the client are rejected. | Service + schema | 1 |
 | BR-04 | The unit price and item name at order time are stored on the order line. Later catalog changes do not alter existing orders. | Data model + service | 1 (snapshot), 2 (catalog edits) |
 | BR-05 | Stock is reserved (decremented) atomically when an order is submitted. Two concurrent orders for the last unit cannot both succeed, and stock never goes below 0. | Conditional DB update + CHECK constraint | 1 |
@@ -233,6 +235,22 @@ These continue the §9 numbering. The decision text lives in the sprint contract
 
 Open questions: OQ-01 to OQ-05 are in the Sprint 2 contract §12, each with the default the contract applies. For Sprint 3 (contract revision 1.2): OQ-06 yes; OQ-07 yes, recorded as a known limitation; OQ-08 (data left by the load test) deferred to R-04 and **still open**; OQ-09 left to the release; OQ-10 (owners and dates) has a proposal in `docs/sprints/sprint-3/release-readiness.md` that the team still has to confirm.
 
+### 9.3 CR-01 decisions (DEC-58 to DEC-66)
+
+These continue the numbering after DEC-57. They are **team decisions** for CR-01 (CHG-07, Issues #76 and #77). Every entry is **proposed and not implemented**: the teammate review is recorded in `docs/labs/lab-07/CR-01-contract-review.md` and on the contract pull request, and the team approval as a comment on Issue #76. Neither is recorded yet. Earlier entries are not rewritten; where an entry below supersedes part of one, it says so.
+
+| ID | Decision | Rationale | Affected files / requirements | Status | Date |
+|---|---|---|---|---|---|
+| DEC-58 (team) | **Rule.** For an orderable item the maximum quantity per line is `min(5, max(1, floor(stockQty / 2)))`. Lines per order stay 1 to 10 and duplicate items stay forbidden. | One customer cannot take most of a low-stock item, and the last unit can still be bought. Synthetic business request for Lab 7. | BR-01, BR-02; F-02, F-03; AC-18, AC-148 to AC-153; AC-19 unchanged | Proposed; not implemented | 2026-11-28 |
+| DEC-59 (team) | **Atomicity.** The cap is added to the single conditional `UPDATE` that reserves stock (raw SQL in `orderService`): besides `"stockQty" >= quantity`, the requested quantity must be at most `LEAST(5, GREATEST(1, "stockQty" / 2))`, using PostgreSQL integer division. No new isolation level and no explicit row lock. The ascending `menuItemId` order is kept. If the `UPDATE` changes 0 rows, the item is read and the error is chosen as in DEC-60. | Check and decrement stay one statement, so there is no read-then-update window. The cost is that the formula appears in SQL too (DEC-61). | `backend/src/services/orderService.ts`; BR-05; AC-154, AC-160 | Proposed; not implemented; concurrency not tested | 2026-11-28 |
+| DEC-60 (team) | **Errors and precedence.** Request validation (zod) accepts an integer from 1 to 5; 0, a negative number, a decimal, a string or a value above 5 returns 400 `VALIDATION_ERROR`. After a zero-row `UPDATE`: if the item is disabled, has stock 0, or the quantity is above `stockQty`, the existing 409 `ITEM_UNAVAILABLE` is returned with its message and details unchanged. If the quantity is at most `stockQty` but above the allowed maximum, the new 409 `QUANTITY_LIMIT_EXCEEDED` is returned with `details: { "itemId", "allowedMax" }` and the message `You can order at most {allowedMax} of {name} in one order.` In any other case (stock rose between the two statements) the answer stays `ITEM_UNAVAILABLE`, as today. Any failing line rolls back the whole order. | TEST-22 (stock 3, quantity 4) stays valid and unchanged. Static validation runs before the service, so a quantity of 6 or more is 400 whatever the stock or availability is. | `backend/src/middleware/validate.ts`, `orderService.ts`; AC-149, AC-152, AC-157 | Proposed; not implemented | 2026-11-28 |
+| DEC-61 (team) | **One readable definition.** A pure function `maxLineQuantity(stockQty)` = `Math.min(5, Math.max(1, Math.floor(stockQty / 2)))` is placed next to `isOrderable` in `backend/src/services/menuRules.ts`. It is the formula only: it returns 1 for stock 0, and callers decide orderability first. A test compares it with the behaviour of the real SQL condition for every stock from 0 to 30. | The rule is about a menu item's stock, like `isOrderable`; `orderRules.ts` holds totals and order numbers. A test that retyped the SQL would not detect a change to the production statement. | `menuRules.ts`; AC-160 | Proposed; not implemented | 2026-11-28 |
+| DEC-62 (team) | **Menu API.** Each menu item gains `maxOrderQuantity`: `maxLineQuantity(stockQty)` for an orderable item, and 0 for a sold-out or disabled item. The shared mapper also adds it to the Operator create and update responses. It is computed, not stored, and is not accepted in a request. | The UI does not repeat the rule. TEST-10 asserts the exact key set, so its expected value changes (versioned change, `docs/sprints/sprint-1/features.md` F-02 Revision 1.4). TEST-47 and TEST-48 cover the Operator responses and use partial matching, so no change is expected there (not run). | `backend/src/services/menuService.ts`, `frontend/src/api/menu.ts`; AC-10, AC-158 | Proposed; not implemented | 2026-11-28 |
+| DEC-63 (team) | **UI.** The selector maximum is the item's `maxOrderQuantity`, replacing `Math.min(MAX_LINE_QUANTITY, Math.max(0, stockQty))`. After 409 `QUANTITY_LIMIT_EXCEEDED` the alert shows the server message, which contains `allowedMax`; the cart line for `details.itemId` is reduced to `allowedMax`; other lines and the pickup note are kept; the menu reloads as today. If a cart item is missing from the loaded menu, the fallback maximum is the static ceiling 5. Supersedes the `Math.min(10, stockQty)` part of DEC-23 only. | The customer can submit again without finding the allowed number by trial. | `frontend/src/pages/Menu.tsx`; AC-30 (unchanged), AC-155, AC-159 | Proposed; not implemented | 2026-11-28 |
+| DEC-64 (team) | **Database.** `OrderItem_quantity_check CHECK (quantity 1..10)` stays and there is no migration. Historical order lines with 6 to 10 stay valid. The database no longer enforces the new upper limit by itself, and the SDS says so. | Tightening the constraint would conflict with existing rows. **The no-migration conclusion comes from reading the code and has not been tested**; deployed data was not queried. | `docs/system-sds.md` §9; TEST-46 unchanged | Proposed | 2026-11-28 |
+| DEC-65 (team) | **Known limitation, not solved by CR-01.** The cap is per line of one order. A customer can place several orders in a row, each capped against the stock then remaining, and can still take all of it. | A per-customer or per-period limit is a separate rule and is out of scope. | BR-01 | Accepted limitation, proposed with CR-01 | 2026-11-28 |
+| DEC-66 (team) | **E2E buy-out.** In the `AC-21 / AC-30` journey each buy-out chunk is the allowed maximum for the remaining stock, `min(5, max(1, floor(remaining / 2)))`. From 30 the chunks are 5, 5, 5, 5, 5, 2, 1, 1, 1. Supersedes the "chunked at the BR-01 cap of 10 per line" part of DEC-27 and its UI cap statement `Math.min(10, stockQty)`; the rest of DEC-27 stands. No new TEST ID. | The cap shrinks with the stock, so a constant chunk of 10 or 5 can be refused. | `frontend/e2e/order.spec.ts`; AC-21, AC-30 | Proposed; not implemented | 2026-11-28 |
+
 ## 10. Questions and resolutions
 
 | ID | Question | Resolution / status |
@@ -244,7 +262,7 @@ Open questions: OQ-01 to OQ-05 are in the Sprint 2 contract §12, each with the 
 
 ## 11. Approved baseline revisions
 
-The FR, BR and NFR wording above is unchanged since `sprint-1-v1.0`. Approved revisions to how requirements are verified or elaborated are recorded with their rationale in `docs/change-register.md` §2 and `docs/traceability.md` §6:
+Apart from BR-01 and BR-02, which carry the proposed CR-01 revision (§11.1), the FR, BR and NFR wording above is unchanged since `sprint-1-v1.0`. Approved revisions to how requirements are verified or elaborated are recorded with their rationale in `docs/change-register.md` §2 and `docs/traceability.md` §6:
 
 | ID | Summary |
 |---|---|
@@ -252,3 +270,28 @@ The FR, BR and NFR wording above is unchanged since `sprint-1-v1.0`. Approved re
 | CHG-04 | Sprint 3 extends transition and route facts pinned by earlier tests, each change listed by name |
 | CHG-05 | Order detail history entries carry `note` (the rejection reason) |
 | CHG-06 | The 200-row list limit is to be replaced by pagination with F-10 (not implemented) |
+
+### 11.1 CR-01 revision of BR-01 and BR-02 (SRS 1.14) — proposed, not approved
+
+This revision is **not** one of the approved revisions in the table above. It is CHG-07: proposed, with team approval and teammate review pending, and not implemented. It is a requirement change (adaptive maintenance), not a defect fix. A test that changes because of a fact below is a legitimate requirement change; each such test is listed with its old and new value in `docs/sprints/sprint-1/features.md` (F-02 and F-03, Revision 1.4).
+
+**Wording before CR-01** (SRS 1.13, `d85f1be` lines 99-100):
+
+> **BR-01:** Each order line has an integer quantity from 1 to 10. An order has 1 to 10 lines, and no menu item appears twice in one order. *(Enforced in: Service + schema validation)*
+>
+> **BR-02:** An item can be ordered only if it is enabled and its stock is at least the requested quantity. If any line fails, the whole order is rejected and nothing is saved.
+
+| Changed fact | Old value | New value |
+|---|---|---|
+| Static range of a line quantity | Integer 1 to 10 | Integer 1 to 5 |
+| Maximum quantity of a line of an orderable item | 10, whatever the stock (the stock itself limits it through BR-02) | `min(5, max(1, floor(stockQty / 2)))` |
+| When an order line fails | Item disabled, or stock below the quantity | Also: quantity above the line maximum |
+| Quantity 6 to 10 | Accepted when stock covers it; 409 `ITEM_UNAVAILABLE` when disabled or short | 400 `VALIDATION_ERROR` in every case |
+| Quantity at most the stock but above the line maximum | Accepted (up to 10) | 409 `QUANTITY_LIMIT_EXCEEDED` (new code) |
+
+| Stock before the order | 12 | 10 | 8 | 4 | 3 | 2 | 1 | 0 |
+|---|---|---|---|---|---|---|---|---|
+| Old maximum accepted | 10 | 10 | 8 | 4 | 3 | 2 | 1 | none |
+| New maximum accepted | 5 | 5 | 4 | 2 | 1 | 1 | 1 | none (409 `ITEM_UNAVAILABLE`) |
+
+**Unchanged:** 1 to 10 lines per order and no duplicate item; disabled or sold-out items and a quantity above the stock (within 1 to 5) answer 409 `ITEM_UNAVAILABLE`; all-or-nothing; BR-03, BR-05, BR-07 and R-01. FR-05 needs no change. The SRS has no error-code list; the codes are listed in `docs/system-sds.md` §4. Design: `docs/system-sds.md` §9. Impact: `docs/labs/lab-07/CR-01-impact-analysis.md`.
