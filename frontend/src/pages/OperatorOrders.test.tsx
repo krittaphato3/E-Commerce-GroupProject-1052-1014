@@ -6,6 +6,7 @@ import { OperatorOrders } from "./OperatorOrders";
 import {
   fetchOperatorOrders,
   acceptOrder,
+  rejectOrder,
   startOrder,
   markOrderReady,
   completeOrder,
@@ -19,6 +20,7 @@ import { ApiRequestError } from "../api/client";
 vi.mock("../api/orders", () => ({
   fetchOperatorOrders: vi.fn(),
   acceptOrder: vi.fn(),
+  rejectOrder: vi.fn(),
   startOrder: vi.fn(),
   markOrderReady: vi.fn(),
   completeOrder: vi.fn(),
@@ -26,6 +28,7 @@ vi.mock("../api/orders", () => ({
 
 const mockedFetchOperatorOrders = vi.mocked(fetchOperatorOrders);
 const mockedAcceptOrder = vi.mocked(acceptOrder);
+const mockedRejectOrder = vi.mocked(rejectOrder);
 const mockedStartOrder = vi.mocked(startOrder);
 const mockedMarkOrderReady = vi.mocked(markOrderReady);
 const mockedCompleteOrder = vi.mocked(completeOrder);
@@ -265,12 +268,12 @@ describe("OperatorOrders fulfilment actions (AC-86)", () => {
     summary(index * 2 + 2, status, "PAID"),
   ]);
 
-  function expectedAction(order: OperatorOrderSummary): string | null {
-    if (order.status === "PENDING") return "Accept";
-    if (order.status === "ACCEPTED") return order.paymentStatus === "PAID" ? "Start preparing" : null;
-    if (order.status === "PREPARING") return "Mark ready";
-    if (order.status === "READY") return "Complete";
-    return null;
+  function expectedActions(order: OperatorOrderSummary): string[] {
+    if (order.status === "PENDING") return ["Accept", "Reject"];
+    if (order.status === "ACCEPTED") return order.paymentStatus === "PAID" ? ["Start preparing"] : [];
+    if (order.status === "PREPARING") return ["Mark ready"];
+    if (order.status === "READY") return ["Complete"];
+    return [];
   }
 
   const detail = (order: OperatorOrderSummary, status: OrderStatus): Order => ({
@@ -318,8 +321,7 @@ describe("OperatorOrders fulfilment actions (AC-86)", () => {
       expect(within(row).getByText(paymentText, { exact: true }).className, label).toContain("badge");
 
       const buttons = within(row).queryAllByRole("button").map((button) => button.textContent);
-      const action = expectedAction(order);
-      expect(buttons, label).toEqual(action ? [action] : []);
+      expect(buttons, label).toEqual(expectedActions(order));
       expect(within(row).queryByText("Awaiting payment") !== null, label).toBe(
         order.status === "ACCEPTED" && order.paymentStatus === "UNPAID"
       );
@@ -425,6 +427,248 @@ describe("OperatorOrders fulfilment actions (AC-86)", () => {
     );
     const button = within(row).getByRole("button", { name: "Start preparing" }) as HTMLButtonElement;
     expect(button.disabled).toBe(false);
+    expect(mockedFetchOperatorOrders).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("OperatorOrders rejection (AC-102)", () => {
+  const STATUSES: OrderStatus[] = [
+    "PENDING",
+    "ACCEPTED",
+    "REJECTED",
+    "CANCELLED",
+    "PREPARING",
+    "READY",
+    "COMPLETED",
+  ];
+  const INVALID_MESSAGE = "Reason must be 5 to 200 characters.";
+  const REASON = "Sold out of basil today";
+
+  const summary = (id: number, status: OrderStatus): OperatorOrderSummary => ({
+    ...SAMPLE_ORDERS[0],
+    id,
+    orderNumber: `CB-${String(id).padStart(6, "0")}`,
+    status,
+    paymentStatus: "UNPAID",
+  });
+
+  const rejectedDetail = (order: OperatorOrderSummary): Order => ({
+    ...order,
+    status: "REJECTED",
+    pickupNote: null,
+    items: [],
+    history: [],
+    updatedAt: "2026-11-28T06:00:00.000Z",
+  });
+
+  async function rowOf(orderNumber: string) {
+    return (await screen.findByText(orderNumber)).closest("tr")!;
+  }
+
+  const queryDialog = () => screen.queryByRole("dialog");
+  const reasonField = () =>
+    within(screen.getByRole("dialog")).getByRole("textbox", { name: "Reason" }) as HTMLTextAreaElement;
+  const dialogButton = (name: string) =>
+    within(screen.getByRole("dialog")).getByRole("button", { name }) as HTMLButtonElement;
+  const typeReason = (value: string) => fireEvent.change(reasonField(), { target: { value } });
+  const submit = () => fireEvent.click(dialogButton("Reject order"));
+
+  async function openDialog(orderNumber = "CB-000001") {
+    fireEvent.click(within(await rowOf(orderNumber)).getByRole("button", { name: "Reject" }));
+    return screen.getByRole("dialog", { name: `Reject order ${orderNumber}` });
+  }
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockedFetchOrderList([summary(1, "PENDING")]);
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  function mockedFetchOrderList(orders: OperatorOrderSummary[]) {
+    mockedFetchOperatorOrders.mockResolvedValue({ orders });
+  }
+
+  it("TEST-102: Reject appears only on PENDING rows", async () => {
+    const rows = STATUSES.map((status, index) => summary(index + 1, status));
+    mockedFetchOrderList(rows);
+    renderOperatorOrders();
+    await screen.findByText("CB-000001");
+
+    for (const order of rows) {
+      const button = within(await rowOf(order.orderNumber)).queryByRole("button", { name: "Reject" });
+      expect(button !== null, order.status).toBe(order.status === "PENDING");
+    }
+    expect(queryDialog()).toBeNull();
+  });
+
+  it("TEST-102: the dialog is named after the order, starts empty, and only one is open", async () => {
+    mockedFetchOrderList([summary(1, "PENDING"), summary(2, "PENDING")]);
+    renderOperatorOrders();
+
+    const dialog = await openDialog("CB-000001");
+    expect(reasonField().tagName).toBe("TEXTAREA");
+    expect(reasonField().value).toBe("");
+    expect(within(dialog).getByText("0/200")).toBeTruthy();
+    expect(dialogButton("Reject order").disabled).toBe(false);
+    expect(dialogButton("Back").disabled).toBe(false);
+
+    typeReason("Typed for the first order");
+    await openDialog("CB-000002");
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    expect(reasonField().value).toBe("");
+  });
+
+  it("TEST-102: the counter shows the trimmed length, turns into an error above 200 and does not cut text", async () => {
+    renderOperatorOrders();
+    const dialog = await openDialog();
+
+    typeReason("  abcd  ");
+    expect(within(dialog).getByText("4/200").className).not.toContain("text-danger");
+
+    typeReason("a".repeat(200));
+    expect(within(dialog).getByText("200/200").className).not.toContain("text-danger");
+
+    typeReason("a".repeat(201));
+    expect(within(dialog).getByText("201/200").className).toContain("text-danger");
+    expect(reasonField().value).toHaveLength(201);
+    expect(reasonField().getAttribute("maxlength")).toBeNull();
+  });
+
+  it.each([
+    ["4 characters", "abcd"],
+    ["201 characters", "a".repeat(201)],
+    ["whitespace only", "        "],
+  ])("TEST-102: %s shows a validation message and sends nothing", async (_label, value) => {
+    renderOperatorOrders();
+    const dialog = await openDialog();
+    expect(within(dialog).queryByText(INVALID_MESSAGE)).toBeNull();
+
+    typeReason(value);
+    submit();
+
+    expect(within(dialog).getByText(INVALID_MESSAGE)).toBeTruthy();
+    expect(mockedRejectOrder).not.toHaveBeenCalled();
+
+    typeReason(`${value}x`);
+    expect(within(dialog).queryByText(INVALID_MESSAGE)).toBeNull();
+  });
+
+  it("TEST-102: Back closes the dialog, sends nothing and clears the reason", async () => {
+    renderOperatorOrders();
+    await openDialog();
+    typeReason(REASON);
+
+    fireEvent.click(dialogButton("Back"));
+
+    expect(queryDialog()).toBeNull();
+    expect(mockedRejectOrder).not.toHaveBeenCalled();
+    await openDialog();
+    expect(reasonField().value).toBe("");
+  });
+
+  it("TEST-102: a valid submit sends the trimmed reason, shows Rejecting…, then the row shows Rejected", async () => {
+    let resolveReject!: (value: { order: Order }) => void;
+    mockedRejectOrder.mockReturnValue(
+      new Promise((resolve) => {
+        resolveReject = resolve;
+      })
+    );
+    renderOperatorOrders();
+    await screen.findByText("CB-000001");
+    fireEvent.click(within(screen.getByRole("group", { name: "Status filter" })).getByRole("button", { name: "All" }));
+    await openDialog();
+    const fetchesBefore = mockedFetchOperatorOrders.mock.calls.length;
+
+    typeReason(`  ${REASON}  `);
+    submit();
+
+    expect(mockedRejectOrder).toHaveBeenCalledTimes(1);
+    expect(mockedRejectOrder).toHaveBeenCalledWith(1, REASON);
+    expect(dialogButton("Rejecting…").disabled).toBe(true);
+    expect(dialogButton("Back").disabled).toBe(true);
+    expect(reasonField().disabled).toBe(true);
+    const row = await rowOf("CB-000001");
+    expect((within(row).getByRole("button", { name: "Accept" }) as HTMLButtonElement).disabled).toBe(true);
+
+    resolveReject({ order: rejectedDetail(summary(1, "PENDING")) });
+
+    expect(await within(row).findByText("Rejected", { exact: true })).toBeTruthy();
+    expect(queryDialog()).toBeNull();
+    expect(within(row).queryAllByRole("button")).toHaveLength(0);
+    expect(mockedFetchOperatorOrders).toHaveBeenCalledTimes(fetchesBefore);
+  });
+
+  it("TEST-102: under the Pending filter a successful reject reloads the list", async () => {
+    mockedFetchOperatorOrders.mockImplementation(async () => ({
+      orders: mockedRejectOrder.mock.calls.length > 0 ? [] : [summary(1, "PENDING")],
+    }));
+    mockedRejectOrder.mockResolvedValue({ order: rejectedDetail(summary(1, "PENDING")) });
+    renderOperatorOrders();
+    await openDialog();
+
+    typeReason(REASON);
+    submit();
+
+    expect(await screen.findByText("No orders to show.")).toBeTruthy();
+    expect(queryDialog()).toBeNull();
+    expect(mockedFetchOperatorOrders).toHaveBeenCalledTimes(2);
+    expect(mockedFetchOperatorOrders).toHaveBeenLastCalledWith("PENDING");
+  });
+
+  it("TEST-102: a 409 closes the dialog, shows an alert and reloads the list", async () => {
+    mockedRejectOrder.mockRejectedValue(
+      new ApiRequestError(409, "INVALID_TRANSITION", "Cannot transition order from ACCEPTED to REJECTED")
+    );
+    renderOperatorOrders();
+    await openDialog();
+
+    typeReason(REASON);
+    submit();
+
+    expect((await screen.findByRole("alert")).textContent).toBe("This order was already handled.");
+    await screen.findByText("CB-000001");
+    expect(queryDialog()).toBeNull();
+    expect(mockedFetchOperatorOrders).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    [
+      "a 400 with a reason detail",
+      new ApiRequestError(400, "VALIDATION_ERROR", "Invalid request body", [
+        { field: "reason", message: "String must contain at least 5 character(s)" },
+      ]),
+      "String must contain at least 5 character(s)",
+    ],
+    [
+      "a 400 without details",
+      new ApiRequestError(400, "VALIDATION_ERROR", "Malformed request"),
+      "Malformed request",
+    ],
+    [
+      "a 403",
+      new ApiRequestError(403, "FORBIDDEN", "You do not have permission to do this"),
+      "You do not have permission to do this",
+    ],
+    [
+      "a 500",
+      new ApiRequestError(500, "INTERNAL_ERROR", "Something went wrong."),
+      "Could not reject this order. Please try again.",
+    ],
+    ["a network error", new Error("Network failed"), "Could not reject this order. Please try again."],
+  ])("TEST-102: %s keeps the dialog and the typed text", async (_label, error, message) => {
+    mockedRejectOrder.mockRejectedValue(error);
+    renderOperatorOrders();
+    await openDialog();
+
+    typeReason(REASON);
+    submit();
+
+    expect(await within(screen.getByRole("dialog")).findByText(message)).toBeTruthy();
+    expect(reasonField().value).toBe(REASON);
+    expect(dialogButton("Reject order").disabled).toBe(false);
     expect(mockedFetchOperatorOrders).toHaveBeenCalledTimes(1);
   });
 });

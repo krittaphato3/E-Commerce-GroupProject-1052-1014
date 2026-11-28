@@ -116,8 +116,8 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
   it("TEST-43: every protected route answers 401 anonymously and 403 for each non-allowed role without private data", async () => {
     expect(
       protectedRoutes.length,
-      "the registry must list the thirteen protected routes"
-    ).toBe(13);
+      "the registry must list the fourteen protected routes"
+    ).toBe(14);
 
     // Keyed by Role so adding a new schema role requires a seeded account cookie here.
     const cookies: Record<Role, string> = {
@@ -207,8 +207,14 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
     const mounted = extractExpressRoutes(app).map(formatRoute).sort();
 
     expect(publicRoutes.length, "five public routes").toBe(5);
-    expect(protectedRoutes.length, "thirteen protected routes").toBe(13);
-    expect(mounted).toHaveLength(18);
+    expect(protectedRoutes.length, "fourteen protected routes").toBe(14);
+    expect(mounted).toHaveLength(19);
+    expect(mounted).toContain("POST /api/orders/:id/reject");
+    expect(protectedRoutes).toContainEqual({
+      method: "POST",
+      path: "/api/orders/:id/reject",
+      roles: [Role.OPERATOR],
+    });
     for (const action of ["start", "ready", "complete"]) {
       const path = `/api/orders/:id/${action}`;
       expect(mounted).toContain(`POST ${path}`);
@@ -264,7 +270,7 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
     expect(rawUnregistered.some((route) => route.startsWith("GET "))).toBe(true);
   });
 
-  it("TEST-92: sweeps all 13 protected routes, pins the 7 Sprint 2 guards and changes no data", async () => {
+  it("TEST-92: sweeps all 14 protected routes, pins the 7 Sprint 2 guards and changes no data", async () => {
     const sprint2Routes = [
       "POST /api/menu-items [OPERATOR]",
       "POST /api/orders/:id/cancel [CUSTOMER]",
@@ -279,11 +285,16 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
       .filter((route) => sprint2Keys.has(formatRoute(route)))
       .map((route) => `${formatRoute(route)} [${route.roles.join(",")}]`);
     expect(pinned.sort()).toEqual([...sprint2Routes].sort());
+    expect(
+      protectedRoutes
+        .filter((route) => formatRoute(route) === "POST /api/orders/:id/reject")
+        .map((route) => `${formatRoute(route)} [${route.roles.join(",")}]`)
+    ).toEqual(["POST /api/orders/:id/reject [OPERATOR]"]);
 
     expect(publicRoutes.length, "five public routes").toBe(5);
-    expect(protectedRoutes.length, "thirteen protected routes").toBe(13);
+    expect(protectedRoutes.length, "fourteen protected routes").toBe(14);
     const mounted = extractExpressRoutes(app).map(formatRoute).sort();
-    expect(mounted).toHaveLength(18);
+    expect(mounted).toHaveLength(19);
     expect(mounted).toEqual([...publicRoutes, ...protectedRoutes].map(formatRoute).sort());
     expect(findUnregisteredRoutes(app)).toEqual([]);
 
@@ -319,6 +330,7 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
     const validBodies: Record<string, object> = {
       "POST /api/orders": { items: [{ menuItemId: menuItem1Id, quantity: 1 }] },
       "POST /api/orders/:id/pay": { amountSatang: payableTotal },
+      "POST /api/orders/:id/reject": { reason: "TEST-92 must never reject" },
       "POST /api/menu-items": {
         name: "TEST-92 Probe Dish",
         description: "Must never be created",
@@ -356,7 +368,7 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
       }
       swept += 1;
     }
-    expect(swept).toBe(13);
+    expect(swept).toBe(14);
 
     const foreignCancel = await requestApp(
       "POST",
