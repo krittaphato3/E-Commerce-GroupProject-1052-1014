@@ -3,10 +3,10 @@
 # ##############################################################################
 # WHAT THIS WORKFLOW DOES
 #   Runs the project's checks and is used in two ways:
-#     1) directly on every pull request to `staging` or `main` (and manually), and
+#     1) directly on every pull request to a staging branch or `main` (and manually), and
 #     2) as a REUSABLE workflow called by deploy.yml (`workflow_call`) so the
 #        deploy only starts after these checks pass (deploy.yml scheduled for Ep.7).
-#   Steps: offline deploy-script tests -> backend tests (real PostgreSQL service)
+#   Steps: offline deploy-script tests -> backend tests + coverage gate (real PostgreSQL service)
 #          -> frontend tests + build -> verify the production Dockerfile builds.
 #   It does NOT deploy anything.
 #
@@ -28,13 +28,13 @@ name: CI & Docker Build
 # ------------------------------------------------------------------------------
 # Triggers
 #   workflow_call     : lets deploy.yml reuse this workflow (do not remove).
-#   pull_request      : checks every PR into staging or main before merge.
+#   pull_request      : checks every PR into a staging branch or main before merge.
 #   workflow_dispatch : manual "Run workflow" button.
 # ------------------------------------------------------------------------------
 on:
   workflow_call:
   pull_request:
-    branches: [main, staging, lab5-staging]
+    branches: [main, staging, lab5-staging, sprint-2-staging]
   workflow_dispatch:
 
 # Least privilege: this workflow only needs to read the repository.
@@ -109,7 +109,8 @@ jobs:
           python3 -m unittest discover -s deploy/tests -p 'test_smoke.py'
 
       # ------------------------------------------------------------------------
-      # 4. Backend: install -> migrate -> test
+      # 4. Backend: install -> migrate -> test with the COV-01 coverage gate
+      #    (fails below 85% line coverage of backend/src/services)
       # ------------------------------------------------------------------------
       - name: Install dependencies & Test Backend (Prisma Migrate + Vitest)
         env:
@@ -119,7 +120,7 @@ jobs:
         run: |
           npm ci
           npm run db:generate
-          npm test --workspace=backend
+          npm run coverage --workspace=backend
 
       # ------------------------------------------------------------------------
       # 5. Frontend: test -> production build

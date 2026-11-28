@@ -131,6 +131,7 @@ Playwright (TEST-09) reads the same two variables from `backend/.env`, so log in
 | **Unit + API/database integration** (default) | `npm test` | Runs both workspaces. The backend `pretest` migrates `campusbites_test` first. Sprint 1 backend: TEST-01 to TEST-08, TEST-10, TEST-11, TEST-14 to TEST-28, TEST-32 to TEST-40, TEST-43 to TEST-46; frontend components: TEST-13, TEST-30, TEST-31 |
 | **Backend only** | `npm test --workspace=backend` | Vitest + Supertest against the real PostgreSQL test database (no mocked SQL) |
 | **Frontend components** | `npm test --workspace=frontend` | Vitest + Testing Library: TEST-13, TEST-30, TEST-31 and the app shell |
+| **Coverage gate (COV-01)** | `npm run coverage --workspace=backend` | All backend tests with line coverage of `backend/src/services`; fails below 85% (NFR-10). Report in `backend/coverage/` (CI artifact `backend-coverage`) |
 | **Route access meta-test (R-01)** | `npm run test --workspace=backend -- tests/routes.access.test.ts` | TEST-43: every protected route answers 401 anonymously and 403 for each disallowed role, and the route registry matches the mounted Express routes |
 | **End-to-end** | `npm run e2e` | Playwright journeys: TEST-09, TEST-12, TEST-29, TEST-41, TEST-42, plus the AC-21/AC-30 stale-cart journey |
 | **Type check** | `npm run typecheck` | `tsc --noEmit` across both workspaces |
