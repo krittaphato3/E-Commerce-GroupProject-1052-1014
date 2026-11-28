@@ -1,16 +1,17 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { OrderDetail } from "./OrderDetail";
-import { fetchOrder } from "../api/orders";
+import { cancelOrder, fetchOrder, type Order } from "../api/orders";
 import { ApiRequestError } from "../api/client";
 import * as AuthContextModule from "../auth/AuthContext";
 import type { User } from "../api/auth";
 
-vi.mock("../api/orders", () => ({ fetchOrder: vi.fn() }));
+vi.mock("../api/orders", () => ({ fetchOrder: vi.fn(), cancelOrder: vi.fn() }));
 
 const mockedFetchOrder = vi.mocked(fetchOrder);
+const mockedCancelOrder = vi.mocked(cancelOrder);
 
 const CUSTOMER_USER: User = {
   id: 1,
@@ -124,5 +125,142 @@ describe("OrderDetail screen (Follow-ups 1 & 2, AC-27, AC-39)", () => {
     const link = screen.getByRole("link", { name: /orders/i });
     expect(link.getAttribute("href")).toBe("/operator/orders");
     expect(screen.getByText("Alice Customer")).toBeTruthy();
+  });
+});
+
+describe("OrderDetail cancellation (AC-66)", () => {
+  const CANCELLED_ORDER: Order = {
+    ...SAMPLE_ORDER,
+    status: "CANCELLED",
+    history: [
+      ...SAMPLE_ORDER.history,
+      {
+        fromStatus: "PENDING",
+        toStatus: "CANCELLED",
+        actorRole: "CUSTOMER",
+        createdAt: "2026-11-05T05:05:00.000Z",
+      },
+    ],
+  };
+  const ACCEPTED_ORDER: Order = { ...SAMPLE_ORDER, status: "ACCEPTED" };
+
+  const button = (name: string) => screen.queryByRole("button", { name }) as HTMLButtonElement | null;
+
+  async function openConfirmation() {
+    fireEvent.click(await screen.findByRole("button", { name: "Cancel order" }));
+    expect(screen.getByText("Cancel this order?")).toBeTruthy();
+  }
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("TEST-66: shows Cancel order only to a Customer on a PENDING order", async () => {
+    const cases = [
+      { user: CUSTOMER_USER, order: SAMPLE_ORDER as Order, visible: true },
+      { user: CUSTOMER_USER, order: ACCEPTED_ORDER, visible: false },
+      { user: OPERATOR_USER, order: SAMPLE_ORDER as Order, visible: false },
+      { user: OPERATOR_USER, order: ACCEPTED_ORDER, visible: false },
+    ];
+
+    for (const { user, order, visible } of cases) {
+      mockedFetchOrder.mockResolvedValue({ order });
+      renderOrderDetail(user);
+      await screen.findByText("CB-000001");
+      expect(button("Cancel order") !== null, `${user.role} ${order.status}`).toBe(visible);
+      cleanup();
+    }
+  });
+
+  it("TEST-66: Keep order closes the confirmation and sends nothing", async () => {
+    mockedFetchOrder.mockResolvedValue({ order: SAMPLE_ORDER });
+    renderOrderDetail();
+
+    await openConfirmation();
+    expect(mockedCancelOrder).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Keep order" }));
+
+    expect(screen.queryByText("Cancel this order?")).toBeNull();
+    expect(button("Cancel order")).not.toBeNull();
+    expect(mockedCancelOrder).not.toHaveBeenCalled();
+  });
+
+  it("TEST-66: confirming shows Cancelling… with buttons disabled, then the returned order", async () => {
+    mockedFetchOrder.mockResolvedValue({ order: SAMPLE_ORDER });
+    let resolveCancel!: (value: { order: Order }) => void;
+    mockedCancelOrder.mockReturnValue(
+      new Promise((resolve) => {
+        resolveCancel = resolve;
+      })
+    );
+    renderOrderDetail();
+
+    await openConfirmation();
+    fireEvent.click(screen.getByRole("button", { name: "Yes, cancel" }));
+
+    expect(mockedCancelOrder).toHaveBeenCalledTimes(1);
+    expect(mockedCancelOrder).toHaveBeenCalledWith(1);
+    expect(button("Cancelling…")?.disabled).toBe(true);
+    expect(button("Keep order")?.disabled).toBe(true);
+
+    resolveCancel({ order: CANCELLED_ORDER });
+
+    expect(await screen.findByText("Cancelled", { exact: true })).toBeTruthy();
+    expect(within(screen.getByRole("list")).getByText(/Pending → Cancelled/)).toBeTruthy();
+    expect(button("Cancel order")).toBeNull();
+    expect(screen.queryByText("Cancel this order?")).toBeNull();
+    // The returned order is rendered directly; no second load is needed.
+    expect(mockedFetchOrder).toHaveBeenCalledTimes(1);
+  });
+
+  it("TEST-66: a 409 shows the alert and refetches the order", async () => {
+    mockedFetchOrder
+      .mockResolvedValueOnce({ order: SAMPLE_ORDER })
+      .mockResolvedValue({ order: ACCEPTED_ORDER });
+    mockedCancelOrder.mockRejectedValue(
+      new ApiRequestError(409, "INVALID_TRANSITION", "Cannot transition order from ACCEPTED to CANCELLED")
+    );
+    renderOrderDetail();
+
+    await openConfirmation();
+    fireEvent.click(screen.getByRole("button", { name: "Yes, cancel" }));
+
+    expect(await screen.findByText("Accepted", { exact: true })).toBeTruthy();
+    expect(screen.getByRole("alert").textContent).toContain("This order can no longer be cancelled.");
+    expect(mockedFetchOrder).toHaveBeenCalledTimes(2);
+    expect(button("Cancel order")).toBeNull();
+  });
+
+  it.each([
+    [
+      "API message",
+      new ApiRequestError(403, "FORBIDDEN", "You do not have permission to cancel this order"),
+      "You do not have permission to cancel this order",
+    ],
+    [
+      "generic message for 500",
+      new ApiRequestError(500, "INTERNAL_ERROR", "Something went wrong."),
+      "Could not cancel this order. Please try again.",
+    ],
+    [
+      "generic message for a network error",
+      new Error("Network failed"),
+      "Could not cancel this order. Please try again.",
+    ],
+  ])("TEST-66: other errors show an alert (%s) and keep the button", async (_label, error, message) => {
+    mockedFetchOrder.mockResolvedValue({ order: SAMPLE_ORDER });
+    mockedCancelOrder.mockRejectedValue(error);
+    renderOrderDetail();
+
+    await openConfirmation();
+    fireEvent.click(screen.getByRole("button", { name: "Yes, cancel" }));
+
+    expect((await screen.findByRole("alert")).textContent).toContain(message);
+    expect(button("Cancel order")).not.toBeNull();
+    expect(mockedFetchOrder).toHaveBeenCalledTimes(1);
   });
 });
