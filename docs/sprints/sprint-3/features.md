@@ -303,6 +303,131 @@ In addition to the Product Definition of Done:
 
 ---
 
+## 8. F-10 — Order Search and Filter (Engineering Contract)
+
+| Item | Value |
+|---|---|
+| Feature | F-10 Order search and filter |
+| Requirements | FR-15, BR-07 |
+| Sprint | 3 |
+| Depends on | F-03, F-04 |
+| Contract version | 1.0 (2026-11-28) |
+| Status | planned |
+| Issue / branch | issue to be opened / `feature/F-10-search-filter` |
+
+### Revision history
+| Version | Date | Change | Reason |
+|---|---|---|---|
+| 1.0 | 2026-11-28 | Initial contract, status planned | Before implementation |
+
+### 1. Feature design
+
+**Behavior.** Customers filter their own orders, and Operators filter all orders, by status, date range and order number. Operators can also search by customer name. Filters combine with AND. Both lists are paginated. The two existing list endpoints gain query parameters; no new endpoint is added (DEC-46).
+
+**Business and security rules.** BR-07: `GET /api/orders/mine` always restricts to the session user, whatever the parameters. Parameters never widen what a caller may read.
+
+**Date range.** `from` and `to` are calendar dates (`YYYY-MM-DD`) in Asia/Bangkok (SRS A-03) and apply to `createdAt`, the time the order was placed. Both ends are inclusive: an order matches when `createdAt >= from 00:00:00+07:00` and `createdAt < (to + 1 day) 00:00:00+07:00`. Either may be given alone (DEC-47).
+
+**Order number.** The input is `CB-000012` (the `CB-` prefix in any letter case) or just the digits (`000012` or `12`). It matches exactly one order id (BR-14). It is not a partial match (DEC-48).
+
+**Customer name** (Operator only). Case-insensitive "contains" match on the customer's display name. `%` and `_` match literally (DEC-48).
+
+**Validation (zod, strict).** An empty parameter value counts as not given. A repeated parameter or an unknown parameter is 400.
+
+| Parameter | `/mine` | `/api/orders` | Rule |
+|---|---|---|---|
+| `status` | yes | yes | one of the 7 order statuses |
+| `from`, `to` | yes | yes | real calendar date `YYYY-MM-DD`; when both are given, `from <= to` |
+| `orderNumber` | yes | yes | after trimming, matches `^(CB-)?\d+$` (prefix case-insensitive) and the number is 1 to 2,147,483,647 |
+| `customerName` | **rejected (400)** | yes | trimmed, 1 to 100 characters |
+| `page` | yes | yes | integer 1 to 100,000; default 1 |
+| `pageSize` | yes | yes | integer 1 to 100; default 20 |
+
+**Dependencies.** `Order`, `User.displayName`.
+
+**Permissions.** Unchanged: `/mine` is `CUSTOMER`; `GET /api/orders` is `OPERATOR`.
+
+**Failure and boundary cases.** An order at 00:00:00.000 Bangkok time on `from` is included; one 1 ms earlier is not. An order at 23:59:59.999 on `to` is included; midnight of the next day is not. A well-formed order number that does not exist, or that belongs to another customer on `/mine`, gives an empty list, not 403 or 404. A page past the end gives an empty list with the correct `total`.
+
+### 2. API specification
+
+#### `GET /api/orders/mine` (Customer)
+| Item | Spec |
+|---|---|
+| Query | `status`, `from`, `to`, `orderNumber`, `page`, `pageSize` |
+| 200 | `{ "orders": [ ...same item shape as F-03... ], "page": 1, "pageSize": 20, "total": 42 }`; newest first (`createdAt`, then `id`, descending); `total` counts all matches of the caller |
+| 400 | `VALIDATION_ERROR` with `details` naming the parameter |
+| 401 / 403 | `UNAUTHENTICATED` / `FORBIDDEN` (Operator) |
+
+#### `GET /api/orders` (Operator)
+| Item | Spec |
+|---|---|
+| Query | `status`, `from`, `to`, `orderNumber`, `customerName`, `page`, `pageSize` |
+| 200 | `{ "orders": [ ...same item shape as F-04... ], "page", "pageSize", "total" }`; oldest first (`createdAt`, then `id`, ascending), as FR-08 requires |
+| 400 / 401 / 403 | As above (403 for a Customer) |
+
+The fixed limit of 200 rows is replaced by pagination. **Registry:** no change.
+
+### 3. UI specification
+| Element | Behavior |
+|---|---|
+| `/orders` (My orders) | A filter form: Status (default All), From, To, Order number, **Search**, **Clear** |
+| `/operator/orders` | The existing status buttons stay (default Pending) and gain From, To, Order number, Customer name, **Search**, **Clear**. **Clear** empties those four fields and keeps the status |
+| Applying | Typing does not send a request; **Search** or Enter does. A changed filter returns to page 1 |
+| Pagination | "Previous" and "Next" with "Page x of y"; disabled at the ends; hidden when there is one page |
+| Validation | An API 400 shows its `details` messages; the typed values are kept |
+| Loading / empty / error | Existing states. With any filter applied (other than the screen's default), the empty text is "No orders match these filters."; without, the existing texts "You have no orders yet." and "No orders to show." |
+| Actions | Accept, Reject and fulfilment actions behave as before; a reload keeps the filters and page. If a reload leaves a page past the end, the screen moves to the last page |
+| API client | `fetchMyOrders(query?)` and `fetchOperatorOrders(status?, query?)`; `query` is passed only when it holds a filter or a page above 1, so the existing calls are unchanged |
+
+### 4. Data specification
+| Layer | Change |
+|---|---|
+| Prisma schema | **No change** |
+| Indexes and migration | **No change; no migration.** Order number search uses the primary key. At coursework data volume no new index is needed (DEC-48) |
+| Seed | **No change** |
+
+### 5. Acceptance criteria
+
+| AC | Statement |
+|---|---|
+| AC-105 | Both list endpoints filter by each order status; without filters they return the same orders and order as before (newest first for `/mine`, oldest first for the Operator list). |
+| AC-106 | `from` and `to` select orders by their placement date in Asia/Bangkok, inclusive at both ends, alone or together, including the boundaries to the millisecond. |
+| AC-107 | Invalid parameters return 400 `VALIDATION_ERROR`: a bad or impossible date, `from` after `to`, an unknown status, `page` or `pageSize` out of range or not an integer, a repeated or unknown parameter. Empty values are ignored. |
+| AC-108 | The order number forms `CB-000012`, `cb-000012`, `000012` and `12` identify order 12 only; any other form, 0 or a value above 2,147,483,647 is invalid. |
+| AC-109 | An Operator's `customerName` search matches part of a display name without regard to case; `%` and `_` are literal; a name with no match gives an empty list. |
+| AC-110 | `/mine` returns only the caller's orders under every filter: searching another customer's order number gives an empty list with `total` 0, and `customerName` is rejected with 400. Anonymous and wrong-role calls with filters get 401 and 403. |
+| AC-111 | Both lists paginate: defaults 1 and 20, `total` counts all matches, pages do not overlap and keep the sort order, and a page past the end is empty. |
+| AC-112 | Filters combine with AND, and `total` matches the combined result. |
+| AC-113 | The operator list screen sends the chosen filters, resets to page 1 when they change, paginates, keeps them across a reload, shows 400 messages, and shows the filtered empty text. |
+| AC-114 | The My orders screen does the same for its filters, without a customer name field. |
+| AC-115 | In the UI a Customer finds their order by number, and an Operator finds it by customer name and status. |
+
+### 6. Software Test Specification (STS)
+
+| Test | AC | Level | Precondition and input | Action | Expected result | Planned file::test name |
+|---|---|---|---|---|---|---|
+| TEST-105 | AC-105 | API-DB | Orders of two customers in every status | List with each `status` and with none, on both endpoints | Only matching orders; unfiltered order as before | `backend/tests/orders.search.test.ts::TEST-105` |
+| TEST-106 | AC-106 | API-DB | `createdAt` set in the DB around two Bangkok midnights | List with `from`, `to`, both, and a one-day range | Exact sets including the millisecond boundaries | `backend/tests/orders.search.test.ts::TEST-106` |
+| TEST-107 | AC-107 | Unit + API-DB | None | Parse each invalid and empty case; send them to both endpoints | Invalid rejected with 400 and `details`; empty ignored | `backend/src/middleware/orderListQuerySchema.test.ts::TEST-107`; `backend/tests/orders.search.test.ts::TEST-107` |
+| TEST-108 | AC-108 | Unit | None | Table-driven parse of valid forms and `CB-`, `CB-12x`, `-1`, `0`, `1.5`, `XX-000012`, `2147483648` | Valid forms give 12; the rest are rejected | `backend/src/services/orderRules.test.ts::TEST-108` |
+| TEST-109 | AC-109 | API-DB | Customers with distinct names, one containing `_` | Search lower case, partial, `%`, `_`, no match | As in AC-109 | `backend/tests/orders.search.test.ts::TEST-109` |
+| TEST-110 | AC-110 | API-DB | `customer1` and `customer2` orders | `customer1` searches `customer2`'s number and uses every filter; `customerName` on `/mine`; wrong role and anonymous | No foreign order ever returned; 400; 401; 403 | `backend/tests/orders.search.test.ts::TEST-110` |
+| TEST-111 | AC-111 | API-DB | 25 matching orders | Default page, page 2, `pageSize` 10 and 100, page 99 | Sizes, `total`, ordering and no overlap | `backend/tests/orders.search.test.ts::TEST-111` |
+| TEST-112 | AC-112 | API-DB | Mixed data | Status + dates + name; status + order number | Intersection only; `total` matches | `backend/tests/orders.search.test.ts::TEST-112` |
+| TEST-113 | AC-113 | UI component | API client mocked: pages, filtered empty, 400 | Apply, page, clear, run an action | As in AC-113 | `frontend/src/pages/OperatorOrders.test.tsx::TEST-113` |
+| TEST-114 | AC-114 | UI component | API client mocked: pages, filtered empty, 400 | Apply, page, clear | As in AC-114 | `frontend/src/pages/MyOrders.test.tsx::TEST-114` |
+| TEST-115 | AC-115 | E2E | Seeded database | Customer places an order and searches its number; operator filters by name and status | The order is found in both screens | `frontend/e2e/search.spec.ts::TEST-115` |
+
+### 7. Definition of Done (feature-specific)
+In addition to the Product Definition of Done:
+- TEST-105 to TEST-115 executed and passing; TEST-31, TEST-32, TEST-33 and TEST-28 still pass without changes.
+- **TDD evidence** for TEST-106 (date boundaries) and TEST-110 (ownership).
+- Screenshots of both filter forms and a paginated result.
+- Traceability row FR-15 updated.
+
+---
+
 ## 13. Decisions and open questions
 
 These continue the decision numbering (last used: DEC-42). The SRS and SDS do not settle these points; each takes the simplest option consistent with the current code. Status of all entries: **proposed**, confirmed by merging the contracts PR for Issue #59.
@@ -312,6 +437,9 @@ These continue the decision numbering (last used: DEC-42). The SRS and SDS do no
 | DEC-43 | Reject is `POST /api/orders/:id/reject` with `{ reason }`, trimmed, 5–200 by JavaScript string length. The reason is stored in `OrderStatusHistory.note`; every history entry in order detail gains `note` (string or null). No new column or error code. | The path is in the System SDS, the column already exists, and `pickupNote` uses the same length measure. | F-09 | 2026-11-28 |
 | DEC-44 | Reject is offered only on the operator list, in a small in-page dialog with a counter of the trimmed length. The submit button stays enabled and validates when pressed. | FR-14 needs one place to reject; fulfilment actions are also list-only (DEC-38). A pressed button can show why the input is wrong. | F-09 | 2026-11-28 |
 | DEC-45 | Earlier tests that pin route counts, the transition table or row buttons are updated only as listed in §2.1. Sprint 2 contract text is not rewritten. | The Sprint 3 requirements change those facts; naming each change keeps it reviewable and separate from weakening a test. | F-09, F-11, F-12 | 2026-11-28 |
+| DEC-46 | Search and filter are query parameters on the two existing list endpoints, with page-number pagination (`page`, `pageSize` default 20, maximum 100) replacing the 200-row limit. Query parsing is strict. | The SDS says pagination arrives with F-10. No new route; strictness matches DEC-07. | F-10 | 2026-11-28 |
+| DEC-47 | Date filters are inclusive Asia/Bangkok calendar days applied to `createdAt`. | SRS A-03 stores UTC and shows Bangkok time. | F-10, F-11 | 2026-11-28 |
+| DEC-48 | Order number search is exact on the id behind `CB-nnnnnn`; customer name search is a case-insensitive substring of `displayName`. No new index. | The order number is derived from the id (BR-14); data volume is small. | F-10 | 2026-11-28 |
 
 ### Open questions for the team
 
