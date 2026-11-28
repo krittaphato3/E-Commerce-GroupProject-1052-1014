@@ -71,10 +71,13 @@ const EXPRESS_METHODS = new Set([
 ]);
 
 /**
- * Prefixes recorded by `mountRouter`. A WeakMap keeps this bookkeeping off the
- * Express objects and lets weak references disappear with the routers.
+ * Prefixes recorded by `mountRouter`: parent (application or router) -> child
+ * router -> every recorded prefix, in mount order. Records are kept per parent
+ * because the same router modules are mounted again by every `createApp` call;
+ * one application's mounts must never account for a raw mount in another. A
+ * WeakMap keeps this bookkeeping off the Express objects.
  */
-const routerMountPaths = new WeakMap<object, string>();
+const routerMountPaths = new WeakMap<object, Map<object, string[]>>();
 
 /**
  * Returns the guard chain for a protected route.
@@ -102,15 +105,17 @@ export function guardsFor(method: HttpMethod, fullPath: string): RequestHandler[
 }
 
 /**
- * Mounts a router and records its prefix so `extractExpressRoutes` can rebuild
- * the full path of every route it serves. Always mount application routers with
- * this helper; a raw `app.use` is deliberately reported as unregistered.
- *
- * A router mounted at two different prefixes keeps only the last prefix.
+ * Mounts a router on an application or on a parent router and records the prefix
+ * so `extractExpressRoutes` can rebuild the full path of every route it serves.
+ * Always mount routers with this helper; a raw `app.use` or `router.use` is
+ * deliberately reported as unregistered.
  */
-export function mountRouter(app: Express, prefix: string, router: Router): void {
-  routerMountPaths.set(router, prefix);
-  app.use(prefix, router);
+export function mountRouter(parent: Express | Router, prefix: string, router: Router): void {
+  const children = routerMountPaths.get(parent) ?? new Map<object, string[]>();
+  children.set(router, [...(children.get(router) ?? []), prefix]);
+  routerMountPaths.set(parent, children);
+  // Both share `use(path, router)`; TypeScript cannot call the union of their overloads.
+  (parent as Router).use(prefix, router);
 }
 
 function expressStack(app: Express): unknown[] {
@@ -128,10 +133,6 @@ interface ExpressLayer {
   name?: string;
 }
 
-interface ExpressChildLayer {
-  route?: { path: string; methods: Record<string, boolean> };
-}
-
 /** Joins a mount prefix and a router-relative path into one canonical path. */
 function joinPaths(prefix: string, suffix: string): string {
   const base = prefix.endsWith("/") ? prefix.slice(0, -1) : prefix;
@@ -147,23 +148,29 @@ function methodsOf(route: { methods: Record<string, boolean> }): HttpMethod[] {
     .map((method) => method.toUpperCase() as HttpMethod);
 }
 
-/**
- * Lists every route the Express application actually serves.
- *
- * Top-level routes carry `layer.route`. A mounted sub-router carries its route
- * layers on `layer.handle.stack`; its prefix comes from `mountRouter`. A router
- * mounted with a raw `app.use` has no recorded prefix, so it is reported under
- * the `<unregistered-mount>` pseudo-prefix, which no registry entry can match.
- */
-export function extractExpressRoutes(app: Express): ExpressRoute[] {
-  const routes: ExpressRoute[] = [];
+const UNREGISTERED_MOUNT = "<unregistered-mount>";
 
-  for (const rawLayer of expressStack(app)) {
+/**
+ * Appends the routes of one stack, joined onto `base`. `parent` is the
+ * application or router that owns the stack, which is the key `mountRouter`
+ * recorded its child prefixes under.
+ */
+function collectRoutes(
+  parent: object,
+  stack: unknown[],
+  base: string,
+  routes: ExpressRoute[]
+): void {
+  // How many times each child router has appeared in this stack so far. The nth
+  // appearance takes the nth recorded prefix.
+  const appearances = new Map<object, number>();
+
+  for (const rawLayer of stack) {
     const layer = rawLayer as ExpressLayer;
 
     if (layer.route) {
       for (const method of methodsOf(layer.route)) {
-        routes.push({ method, path: layer.route.path });
+        routes.push({ method, path: joinPaths(base, layer.route.path) });
       }
       continue;
     }
@@ -174,30 +181,35 @@ export function extractExpressRoutes(app: Express): ExpressRoute[] {
       continue;
     }
 
-    const prefix = routerMountPaths.get(handle);
-    const children = handle.stack as ExpressChildLayer[];
+    const seen = appearances.get(handle) ?? 0;
+    appearances.set(handle, seen + 1);
+    const prefix = routerMountPaths.get(parent)?.get(handle)?.[seen];
 
-    if (!prefix) {
+    if (prefix === undefined) {
       // One marker for the mount itself so an empty unregistered router is
-      // still caught, then one entry per child route for a readable diagnosis.
-      routes.push({ method: "GET", path: "<unregistered-mount>" });
-      for (const child of children) {
-        if (!child.route) continue;
-        for (const method of methodsOf(child.route)) {
-          routes.push({ method, path: `<unregistered-mount>${child.route.path}` });
-        }
-      }
+      // still caught; its routes follow for a readable diagnosis.
+      routes.push({ method: "GET", path: UNREGISTERED_MOUNT });
+      collectRoutes(handle, handle.stack, UNREGISTERED_MOUNT, routes);
       continue;
     }
 
-    for (const child of children) {
-      if (!child.route) continue;
-      for (const method of methodsOf(child.route)) {
-        routes.push({ method, path: joinPaths(prefix, child.route.path) });
-      }
-    }
+    collectRoutes(handle, handle.stack, joinPaths(base, prefix), routes);
   }
+}
 
+/**
+ * Lists every route the Express application actually serves, at any depth.
+ *
+ * Routes carry `layer.route`. A mounted sub-router carries its own layers on
+ * `layer.handle.stack`, which is walked recursively; its prefixes come from
+ * `mountRouter`, and each route is reported once per recorded prefix. A router
+ * that appears in a stack more often than `mountRouter` recorded it there (a raw
+ * `app.use` or `router.use`) is reported under the `<unregistered-mount>`
+ * pseudo-prefix, which no registry entry can match.
+ */
+export function extractExpressRoutes(app: Express): ExpressRoute[] {
+  const routes: ExpressRoute[] = [];
+  collectRoutes(app, expressStack(app), "", routes);
   return routes;
 }
 

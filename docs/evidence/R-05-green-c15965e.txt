@@ -1,0 +1,608 @@
+# R-05 GREEN evidence (typecheck, build, tests, coverage, docker) — tested at commit c15965e
+# Run: 2026-11-28 14:43 +0700; real PostgreSQL test database
+# Counts: npm run test: backend 214 passed (26 files), frontend 71 passed (9 files); coverage run: backend 214 passed, lines 97.9%.
+# 0 failed, 0 skipped. typecheck, build and docker compose build exit 0. The "Readiness check failed: down" lines are expected test output.
+
+## npm run typecheck
+
+> campusbites@1.0.0 typecheck
+> npm run typecheck --workspaces
+
+
+> campusbites-backend@1.0.0 typecheck
+> tsc --noEmit
+
+
+> campusbites-frontend@1.0.0 typecheck
+> tsc --noEmit
+
+# exit code: 0
+
+## npm run build
+
+> campusbites@1.0.0 build
+> npm run build --workspaces
+
+
+> campusbites-backend@1.0.0 build
+> tsc -p tsconfig.json
+
+
+> campusbites-frontend@1.0.0 build
+> tsc && vite build
+
+vite v6.4.5 building for production...
+transforming...
+✓ 46 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.39 kB │ gzip:  0.27 kB
+dist/assets/index-BL5QWnkG.css  231.14 kB │ gzip: 30.69 kB
+dist/assets/index-DExuzhhU.js   197.41 kB │ gzip: 61.94 kB
+✓ built in 387ms
+# exit code: 0
+
+## npm run test
+
+> campusbites@1.0.0 test
+> npm run test --workspaces
+
+
+> campusbites-backend@1.0.0 pretest
+> npm run db:migrate:test
+
+
+> campusbites-backend@1.0.0 db:migrate:test
+> tsx scripts/migrate-test-db.ts
+
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "campusbites_test", schema "public" at "localhost:5432"
+
+2 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+
+> campusbites-backend@1.0.0 test
+> vitest run
+
+
+ RUN  v3.2.7 /Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/backend
+
+ ✓ tests/orders.fulfilment.test.ts (7 tests) 486ms
+ ✓ tests/orders.cancel.test.ts (7 tests) 500ms
+ ✓ tests/orders.pay.test.ts (7 tests) 398ms
+ ✓ tests/orders.create.test.ts (12 tests) 398ms
+ ✓ tests/orders.operator.test.ts (9 tests) 343ms
+ ✓ tests/auth.test.ts (14 tests) 321ms
+ ✓ tests/menuItems.test.ts (9 tests) 293ms
+ ✓ tests/orders.access.test.ts (3 tests) 148ms
+ ✓ tests/routes.access.test.ts (3 tests) 223ms
+ ✓ tests/seed.test.ts (9 tests) 169ms
+ ✓ tests/constraints.test.ts (7 tests) 104ms
+ ✓ tests/menu.test.ts (4 tests) 120ms
+ ✓ tests/orders.journey.test.ts (1 test) 128ms
+stderr | tests/health.test.ts > Readiness API Endpoint > GET /api/ready returns 503 when the database query fails
+[Omazon Server] Readiness check failed: down
+
+ ✓ tests/health.test.ts (7 tests) 78ms
+ ✓ tests/error.test.ts (7 tests) 21ms
+stderr | tests/static.test.ts > Single-Container Static Serving & SPA Fallback > throws in production if dist directory is missing
+[Omazon Server] Frontend dist directory not found for static serving.
+
+ ✓ tests/static.test.ts (2 tests) 19ms
+ ✓ tests/routes.registry.test.ts (2 tests) 16ms
+ ✓ src/services/password.test.ts (3 tests) 11ms
+ ✓ tests/testDbGuardSync.test.ts (1 test) 2ms
+ ✓ src/services/orderStateMachine.test.ts (60 tests) 4ms
+ ✓ src/services/orderRules.test.ts (12 tests) 2ms
+ ✓ tests/env.test.ts (7 tests) 3ms
+ ✓ src/services/paymentRules.test.ts (8 tests) 2ms
+ ✓ src/middleware/menuItemSchema.test.ts (2 tests) 2ms
+ ✓ src/middleware/paymentSchema.test.ts (8 tests) 2ms
+ ✓ src/services/menuRules.test.ts (3 tests) 1ms
+
+ Test Files  26 passed (26)
+      Tests  214 passed (214)
+   Start at  14:43:50
+   Duration  7.46s (transform 139ms, setup 85ms, collect 1.38s, tests 3.79s, environment 1ms, prepare 550ms)
+
+
+> campusbites-frontend@1.0.0 test
+> vitest run
+
+
+ RUN  v3.2.7 /Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/frontend
+
+ ✓ src/auth/roles.test.ts (2 tests) 1ms
+ ✓ src/auth/AuthContext.test.ts (3 tests) 6ms
+stderr | src/components/ProtectedRoute.test.tsx > ProtectedRoute > renders loading indicator when auth is loading
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at MemoryRouter (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1097:7)
+
+stderr | src/components/ProtectedRoute.test.tsx > ProtectedRoute > renders error alert instead of redirecting when auth check fails with error
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at MemoryRouter (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1097:7)
+
+stderr | src/components/ProtectedRoute.test.tsx > ProtectedRoute > redirects to /login when unauthenticated without error
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at MemoryRouter (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1097:7)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at Navigate (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1144:7)
+    at div
+    at Inspector
+    at Router (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1203:17)
+    at MemoryRouter (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1097:7)
+
+stderr | src/components/ProtectedRoute.test.tsx > ProtectedRoute > renders protected content when user has allowed role
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at MemoryRouter (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1097:7)
+
+stderr | src/components/ProtectedRoute.test.tsx > ProtectedRoute > renders in-place 403 forbidden message and does not Navigate when user role is not allowed (current path != destination)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at MemoryRouter (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1097:7)
+
+stderr | src/components/ProtectedRoute.test.tsx > ProtectedRoute > renders in-place 403 forbidden message and does not Navigate when user role is not allowed (current path == destination)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at MemoryRouter (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1097:7)
+
+ ✓ src/components/ProtectedRoute.test.tsx (6 tests) 12ms
+stderr | src/App.test.tsx > Frontend app shell > renders the Omazon header and the login form
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at MemoryRouter (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1097:7)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at Header (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/frontend/src/components/Header.tsx:61:61)
+    at AppShell (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/frontend/src/App.tsx:23:67)
+    at AuthProvider (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/frontend/src/auth/AuthContext.tsx:23:25)
+    at Router (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1203:17)
+    at MemoryRouter (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1097:7)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at LinkWithRef (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router-dom/dist/umd/react-router-dom.development.js:807:9)
+    at div
+    at header
+    at Header (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/frontend/src/components/Header.tsx:61:61)
+    at AppShell (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/frontend/src/App.tsx:23:67)
+    at AuthProvider (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/frontend/src/auth/AuthContext.tsx:23:25)
+    at Router (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1203:17)
+    at MemoryRouter (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1097:7)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at Login (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/frontend/src/pages/Login.tsx:28:60)
+    at RenderedRoute (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:535:7)
+    at Routes (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1269:7)
+    at main
+    at AppShell (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/frontend/src/App.tsx:23:67)
+    at AuthProvider (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/frontend/src/auth/AuthContext.tsx:23:25)
+    at Router (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1203:17)
+    at MemoryRouter (/Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/node_modules/react-router/dist/umd/react-router.development.js:1097:7)
+
+ ✓ src/App.test.tsx (2 tests) 13ms
+stderr | src/pages/MyOrders.test.tsx > My orders screen (AC-31) > TEST-31: shows a loading state while the request is pending
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+stderr | src/pages/OperatorMenu.test.tsx > F-05 Operator Menu Management UI (AC-56) > TEST-56: renders loading, empty, error, list states, field errors, exact satang conversion, and minimal PATCH payload
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+stderr | src/pages/OperatorOrders.test.tsx > OperatorOrders screen (AC-32, AC-33, AC-34, AC-35, AC-41) > shows Loading orders… while the request is pending
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+stderr | src/pages/Menu.test.tsx > F-02 Menu screen (AC-12, AC-13) > TEST-13: shows the loading message while the menu request is pending
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+stderr | src/pages/OrderDetail.test.tsx > OrderDetail screen (Follow-ups 1 & 2, AC-27, AC-39) > displays the server-provided error message when fetchOrder rejects with 403 ApiRequestError
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ ✓ src/pages/MyOrders.test.tsx (4 tests) 72ms
+ ✓ src/pages/OperatorMenu.test.tsx (1 test) 93ms
+ ✓ src/pages/Menu.test.tsx (10 tests) 135ms
+ ✓ src/pages/OrderDetail.test.tsx (24 tests) 236ms
+ ✓ src/pages/OperatorOrders.test.tsx (19 tests) 275ms
+
+ Test Files  9 passed (9)
+      Tests  71 passed (71)
+   Start at  14:43:58
+   Duration  1.35s (transform 437ms, setup 0ms, collect 1.67s, tests 842ms, environment 2.90s, prepare 689ms)
+
+# exit code: 0
+
+## npm run coverage --workspace=backend
+
+> campusbites-backend@1.0.0 coverage
+> npm run db:migrate:test && vitest run --coverage
+
+
+> campusbites-backend@1.0.0 db:migrate:test
+> tsx scripts/migrate-test-db.ts
+
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "campusbites_test", schema "public" at "localhost:5432"
+
+2 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+
+ RUN  v3.2.7 /Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/backend
+      Coverage enabled with v8
+
+ ✓ tests/orders.cancel.test.ts (7 tests) 412ms
+ ✓ tests/orders.fulfilment.test.ts (7 tests) 557ms
+ ✓ tests/orders.pay.test.ts (7 tests) 417ms
+ ✓ tests/orders.create.test.ts (12 tests) 376ms
+ ✓ tests/orders.operator.test.ts (9 tests) 360ms
+ ✓ tests/auth.test.ts (14 tests) 325ms
+ ✓ tests/menuItems.test.ts (9 tests) 328ms
+ ✓ tests/routes.access.test.ts (3 tests) 250ms
+ ✓ tests/seed.test.ts (9 tests) 163ms
+ ✓ tests/orders.access.test.ts (3 tests) 146ms
+ ✓ tests/orders.journey.test.ts (1 test) 125ms
+ ✓ tests/menu.test.ts (4 tests) 122ms
+ ✓ tests/constraints.test.ts (7 tests) 126ms
+stderr | tests/health.test.ts > Readiness API Endpoint > GET /api/ready returns 503 when the database query fails
+[Omazon Server] Readiness check failed: down
+
+ ✓ tests/health.test.ts (7 tests) 78ms
+ ✓ tests/error.test.ts (7 tests) 24ms
+stderr | tests/static.test.ts > Single-Container Static Serving & SPA Fallback > throws in production if dist directory is missing
+[Omazon Server] Frontend dist directory not found for static serving.
+
+ ✓ tests/static.test.ts (2 tests) 19ms
+ ✓ tests/routes.registry.test.ts (2 tests) 16ms
+ ✓ src/services/password.test.ts (3 tests) 11ms
+ ✓ src/services/orderStateMachine.test.ts (60 tests) 5ms
+ ✓ tests/env.test.ts (7 tests) 3ms
+ ✓ src/services/orderRules.test.ts (12 tests) 3ms
+ ✓ src/services/paymentRules.test.ts (8 tests) 3ms
+ ✓ src/middleware/menuItemSchema.test.ts (2 tests) 2ms
+ ✓ tests/testDbGuardSync.test.ts (1 test) 2ms
+ ✓ src/middleware/paymentSchema.test.ts (8 tests) 2ms
+ ✓ src/services/menuRules.test.ts (3 tests) 1ms
+
+ Test Files  26 passed (26)
+      Tests  214 passed (214)
+   Start at  14:44:01
+   Duration  7.97s (transform 135ms, setup 82ms, collect 1.39s, tests 3.87s, environment 2ms, prepare 690ms)
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |    97.9 |     93.7 |     100 |    97.9 |                   
+ authService.ts    |     100 |      100 |     100 |     100 |                   
+ menuRules.ts      |     100 |      100 |     100 |     100 |                   
+ menuService.ts    |   95.55 |     92.3 |     100 |   95.55 | 29-30             
+ orderRules.ts     |     100 |      100 |     100 |     100 |                   
+ orderService.ts   |   97.56 |       92 |     100 |   97.56 | ...72-473,553-554 
+ ...tateMachine.ts |     100 |      100 |     100 |     100 |                   
+ password.ts       |     100 |      100 |     100 |     100 |                   
+ paymentRules.ts   |     100 |      100 |     100 |     100 |                   
+-------------------|---------|----------|---------|---------|-------------------
+# exit code: 0
+
+## docker compose build
+ Image e-commerce-groupproject-1052-1014-backend Building 
+ Image e-commerce-groupproject-1052-1014-frontend Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.25kB done
+#1 DONE 0.0s
+
+#2 [frontend internal] load build definition from Dockerfile
+#2 transferring dockerfile: 635B done
+#2 DONE 0.0s
+
+#3 [backend internal] load build definition from Dockerfile
+#3 transferring dockerfile: 834B done
+#3 DONE 0.0s
+
+#4 [frontend internal] load metadata for docker.io/library/node:22-alpine
+#4 ...
+
+#5 [auth] library/nginx:pull token for registry-1.docker.io
+#5 DONE 0.0s
+
+#6 [auth] library/node:pull token for registry-1.docker.io
+#6 DONE 0.0s
+
+#7 [frontend internal] load metadata for docker.io/library/nginx:alpine
+#7 ...
+
+#4 [backend internal] load metadata for docker.io/library/node:22-alpine
+#4 DONE 5.1s
+
+#8 [backend internal] load .dockerignore
+#8 transferring context: 250B 0.1s done
+#8 DONE 0.1s
+
+#9 [backend  1/11] FROM docker.io/library/node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a
+#9 resolve docker.io/library/node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a done
+#9 DONE 0.0s
+
+#10 [backend internal] load build context
+#10 transferring context: 692.95kB 0.0s done
+#10 DONE 0.0s
+
+#11 [backend  2/11] WORKDIR /app
+#11 CACHED
+
+#12 [backend  3/11] COPY package.json package-lock.json ./
+#12 DONE 0.0s
+
+#13 [backend  4/11] COPY backend/package.json ./backend/
+#13 DONE 0.0s
+
+#14 [backend  5/11] COPY backend/prisma ./backend/prisma/
+#14 DONE 0.0s
+
+#15 [backend  6/11] RUN npm ci --workspace=backend
+#15 ...
+
+#7 [frontend internal] load metadata for docker.io/library/nginx:alpine
+#7 DONE 6.9s
+
+#8 [frontend internal] load .dockerignore
+#8 transferring context: 250B 0.1s done
+#8 DONE 0.1s
+
+#9 [frontend  1/11] FROM docker.io/library/node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a
+#9 resolve docker.io/library/node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a done
+#9 DONE 0.0s
+
+#11 [frontend  2/11] WORKDIR /app
+#11 CACHED
+
+#16 [frontend internal] load build context
+#16 transferring context: 397.36kB 0.0s done
+#16 DONE 0.1s
+
+#17 [frontend stage-1 1/3] FROM docker.io/library/nginx:alpine@sha256:7fc0fb4af7bf006aeb31aea88069976060f8f0a0a86b667126742cc17f4e31ae
+#17 resolve docker.io/library/nginx:alpine@sha256:7fc0fb4af7bf006aeb31aea88069976060f8f0a0a86b667126742cc17f4e31ae 0.0s done
+#17 DONE 0.2s
+
+#12 [frontend  3/11] COPY package.json package-lock.json ./
+#12 DONE 0.0s
+
+#18 [frontend build 3/8] COPY package.json package-lock.json ./
+#18 CACHED
+
+#19 [frontend build 4/8] COPY frontend/package.json ./frontend/
+#19 DONE 0.1s
+
+#20 [frontend build 5/8] RUN npm ci --workspace=frontend
+#20 ...
+
+#17 [frontend stage-1 1/3] FROM docker.io/library/nginx:alpine@sha256:7fc0fb4af7bf006aeb31aea88069976060f8f0a0a86b667126742cc17f4e31ae
+#17 sha256:1a46f3b7807fd49b508752150adefbf290fff1035ad8698d6ec98355a7f7b0b5 1.40kB / 1.40kB 1.1s done
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 0B / 20.11MB 5.0s
+#17 sha256:a92e12d42cfdc2e3d405fc7cd8905f7ef9d1fe5d00b759696ff38b38fd80e044 0B / 404B 5.0s
+#17 sha256:cb328168f337d311718ae5e6e342b1156175e4dabbd0350e98ce27bbd80ebea5 0B / 1.21kB 5.0s
+#17 sha256:e7bda7a8a8370353a9dd17ea1febddc631e65d7c439308a15ede3cf586c1747f 0B / 963B 3.9s
+#17 sha256:a92e12d42cfdc2e3d405fc7cd8905f7ef9d1fe5d00b759696ff38b38fd80e044 404B / 404B 5.8s done
+#17 sha256:e7bda7a8a8370353a9dd17ea1febddc631e65d7c439308a15ede3cf586c1747f 963B / 963B 4.7s done
+#17 sha256:6d14a3e596f278fbe99f7c3e405390684e93451e9cf35c816e52c210191f622c 0B / 4.74MB 0.2s
+#17 sha256:ae710004b1edc1315170e70d34d6dbefb56737bf89dd37ad6fdf641fd7b13bb0 0B / 628B 0.2s
+#17 ...
+
+#15 [backend  6/11] RUN npm ci --workspace=backend
+#15 9.157 npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#15 ...
+
+#17 [frontend stage-1 1/3] FROM docker.io/library/nginx:alpine@sha256:7fc0fb4af7bf006aeb31aea88069976060f8f0a0a86b667126742cc17f4e31ae
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 0B / 20.11MB 12.3s
+#17 sha256:cb328168f337d311718ae5e6e342b1156175e4dabbd0350e98ce27bbd80ebea5 0B / 1.21kB 12.3s
+#17 sha256:6d14a3e596f278fbe99f7c3e405390684e93451e9cf35c816e52c210191f622c 0B / 4.74MB 6.6s
+#17 sha256:ae710004b1edc1315170e70d34d6dbefb56737bf89dd37ad6fdf641fd7b13bb0 628B / 628B 1.9s done
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 0B / 20.11MB 17.4s
+#17 sha256:cb328168f337d311718ae5e6e342b1156175e4dabbd0350e98ce27bbd80ebea5 0B / 1.21kB 17.4s
+#17 sha256:6d14a3e596f278fbe99f7c3e405390684e93451e9cf35c816e52c210191f622c 0B / 4.74MB 11.7s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 0B / 20.11MB 22.5s
+#17 sha256:cb328168f337d311718ae5e6e342b1156175e4dabbd0350e98ce27bbd80ebea5 0B / 1.21kB 22.5s
+#17 sha256:6d14a3e596f278fbe99f7c3e405390684e93451e9cf35c816e52c210191f622c 0B / 4.74MB 16.8s
+#17 sha256:6d14a3e596f278fbe99f7c3e405390684e93451e9cf35c816e52c210191f622c 1.05MB / 4.74MB 21.5s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 0B / 20.11MB 27.6s
+#17 sha256:cb328168f337d311718ae5e6e342b1156175e4dabbd0350e98ce27bbd80ebea5 0B / 1.21kB 27.6s
+#17 sha256:6d14a3e596f278fbe99f7c3e405390684e93451e9cf35c816e52c210191f622c 2.10MB / 4.74MB 24.6s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 0B / 20.11MB 32.7s
+#17 sha256:cb328168f337d311718ae5e6e342b1156175e4dabbd0350e98ce27bbd80ebea5 0B / 1.21kB 32.7s
+#17 sha256:6d14a3e596f278fbe99f7c3e405390684e93451e9cf35c816e52c210191f622c 2.10MB / 4.74MB 29.7s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 0B / 20.11MB 37.8s
+#17 sha256:cb328168f337d311718ae5e6e342b1156175e4dabbd0350e98ce27bbd80ebea5 0B / 1.21kB 37.8s
+#17 sha256:6d14a3e596f278fbe99f7c3e405390684e93451e9cf35c816e52c210191f622c 3.15MB / 4.74MB 32.9s
+#17 sha256:6d14a3e596f278fbe99f7c3e405390684e93451e9cf35c816e52c210191f622c 4.19MB / 4.74MB 33.5s
+#17 sha256:6d14a3e596f278fbe99f7c3e405390684e93451e9cf35c816e52c210191f622c 4.74MB / 4.74MB 33.7s done
+#17 extracting sha256:6d14a3e596f278fbe99f7c3e405390684e93451e9cf35c816e52c210191f622c 0.1s done
+#17 extracting sha256:ae710004b1edc1315170e70d34d6dbefb56737bf89dd37ad6fdf641fd7b13bb0 done
+#17 extracting sha256:e7bda7a8a8370353a9dd17ea1febddc631e65d7c439308a15ede3cf586c1747f done
+#17 extracting sha256:a92e12d42cfdc2e3d405fc7cd8905f7ef9d1fe5d00b759696ff38b38fd80e044 done
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 0B / 20.11MB 42.9s
+#17 sha256:cb328168f337d311718ae5e6e342b1156175e4dabbd0350e98ce27bbd80ebea5 0B / 1.21kB 42.9s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 0B / 20.11MB 48.0s
+#17 sha256:cb328168f337d311718ae5e6e342b1156175e4dabbd0350e98ce27bbd80ebea5 0B / 1.21kB 48.0s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 0B / 20.11MB 53.1s
+#17 sha256:cb328168f337d311718ae5e6e342b1156175e4dabbd0350e98ce27bbd80ebea5 0B / 1.21kB 53.1s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 0B / 20.11MB 58.2s
+#17 sha256:cb328168f337d311718ae5e6e342b1156175e4dabbd0350e98ce27bbd80ebea5 0B / 1.21kB 58.2s
+#17 sha256:cb328168f337d311718ae5e6e342b1156175e4dabbd0350e98ce27bbd80ebea5 1.21kB / 1.21kB 62.1s done
+#17 extracting sha256:cb328168f337d311718ae5e6e342b1156175e4dabbd0350e98ce27bbd80ebea5 0.0s done
+#17 extracting sha256:1a46f3b7807fd49b508752150adefbf290fff1035ad8698d6ec98355a7f7b0b5 done
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 0B / 20.11MB 63.3s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 1.05MB / 20.11MB 65.7s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 2.10MB / 20.11MB 67.2s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 3.15MB / 20.11MB 68.9s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 4.19MB / 20.11MB 70.2s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 5.24MB / 20.11MB 71.9s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 6.29MB / 20.11MB 72.8s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 7.34MB / 20.11MB 73.2s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 8.39MB / 20.11MB 76.5s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 9.44MB / 20.11MB 78.2s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 10.49MB / 20.11MB 79.5s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 11.53MB / 20.11MB 80.7s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 12.58MB / 20.11MB 81.3s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 13.63MB / 20.11MB 82.2s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 14.68MB / 20.11MB 84.0s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 15.73MB / 20.11MB 86.6s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 16.78MB / 20.11MB 87.3s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 17.83MB / 20.11MB 87.8s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 18.87MB / 20.11MB 88.5s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 19.92MB / 20.11MB 88.8s
+#17 sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 20.11MB / 20.11MB 88.9s done
+#17 extracting sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404
+#17 extracting sha256:bbafeec41f96c994d0421c3f4d1a73697e0ba9f2b1ee72d2bf54f0c41e530404 0.3s done
+#17 DONE 89.4s
+
+#15 [backend  6/11] RUN npm ci --workspace=backend
+#15 ...
+
+#20 [frontend build 5/8] RUN npm ci --workspace=frontend
+#20 104.9 
+#20 104.9 added 161 packages, and audited 163 packages in 2m
+#20 104.9 
+#20 104.9 31 packages are looking for funding
+#20 104.9   run `npm fund` for details
+#20 104.9 
+#20 104.9 5 vulnerabilities (3 moderate, 2 critical)
+#20 104.9 
+#20 104.9 To address all issues (including breaking changes), run:
+#20 104.9   npm audit fix --force
+#20 104.9 
+#20 104.9 Run `npm audit` for details.
+#20 104.9 npm notice
+#20 104.9 npm notice New major version of npm available! 10.9.9 -> 12.2.3
+#20 104.9 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.3
+#20 104.9 npm notice To update run: npm install -g npm@12.2.3
+#20 104.9 npm notice
+#20 DONE 105.2s
+
+#15 [backend  6/11] RUN npm ci --workspace=backend
+#15 ...
+
+#21 [frontend build 6/8] COPY frontend ./frontend
+#21 DONE 0.1s
+
+#22 [frontend build 7/8] WORKDIR /app/frontend
+#22 DONE 0.0s
+
+#23 [frontend build 8/8] RUN npm run build
+#23 0.263 
+#23 0.263 > campusbites-frontend@1.0.0 build
+#23 0.263 > tsc && vite build
+#23 0.263 
+#23 ...
+
+#15 [backend  6/11] RUN npm ci --workspace=backend
+#15 108.6 
+#15 108.6 added 331 packages, and audited 333 packages in 2m
+#15 108.6 
+#15 108.6 86 packages are looking for funding
+#15 108.6   run `npm fund` for details
+#15 108.6 
+#15 108.6 12 vulnerabilities (5 moderate, 5 high, 2 critical)
+#15 108.6 
+#15 108.6 To address issues that do not require attention, run:
+#15 108.6   npm audit fix
+#15 108.6 
+#15 108.6 To address all issues (including breaking changes), run:
+#15 108.6   npm audit fix --force
+#15 108.6 
+#15 108.6 Run `npm audit` for details.
+#15 108.6 npm notice
+#15 108.6 npm notice New major version of npm available! 10.9.9 -> 12.2.3
+#15 108.6 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.3
+#15 108.6 npm notice To update run: npm install -g npm@12.2.3
+#15 108.6 npm notice
+#15 DONE 108.8s
+
+#24 [backend  7/11] COPY backend ./backend
+#24 DONE 0.1s
+
+#23 [frontend build 8/8] RUN npm run build
+#23 ...
+
+#25 [backend  8/11] WORKDIR /app/backend
+#25 DONE 0.0s
+
+#23 [frontend build 8/8] RUN npm run build
+#23 2.003 vite v6.4.5 building for production...
+#23 2.042 transforming...
+#23 2.626 ✓ 46 modules transformed.
+#23 2.707 rendering chunks...
+#23 2.712 computing gzip size...
+#23 2.720 dist/index.html                   0.39 kB │ gzip:  0.27 kB
+#23 2.720 dist/assets/index-BL5QWnkG.css  231.14 kB │ gzip: 30.69 kB
+#23 2.720 dist/assets/index-DExuzhhU.js   197.41 kB │ gzip: 61.94 kB
+#23 2.721 ✓ built in 699ms
+#23 DONE 2.7s
+
+#26 [backend  9/11] RUN npx prisma generate
+#26 0.653 warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+#26 0.653 For more information, see: https://pris.ly/prisma-config
+#26 0.653 
+#26 0.754 Prisma schema loaded from prisma/schema.prisma
+#26 0.881 
+#26 0.881 ✔ Generated Prisma Client (v6.19.3) to ./../node_modules/@prisma/client in 62ms
+#26 0.881 
+#26 0.881 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#26 0.881 
+#26 0.881 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+#26 0.881 
+#26 DONE 0.9s
+
+#27 [backend 10/11] RUN npm run build
+#27 ...
+
+#28 [frontend stage-1 2/3] COPY --from=build /app/frontend/dist /usr/share/nginx/html
+#28 DONE 0.0s
+
+#29 [frontend stage-1 3/3] COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+#29 DONE 0.0s
+
+#30 [frontend] exporting to image
+#30 exporting layers 0.0s done
+#30 exporting manifest sha256:177035c83aa548059bf127487c0d5755ad93f2bbf3f7b7bc5fc61357a7927d2f done
+#30 exporting config sha256:c1a6485adad5608e0033adb29de2b43edf667058ad792ea9c18d3220d1495235 done
+#30 exporting attestation manifest sha256:98f352923816ae2d9c347c883a1de0c3a7149914c997b00f9997f5ad06d1b988 done
+#30 exporting manifest list sha256:3b6027668dfb0eab58ad7de46391f3dbb24f3e5b51e48325c37e44b1223b5b70 done
+#30 naming to docker.io/library/e-commerce-groupproject-1052-1014-frontend:latest done
+#30 unpacking to docker.io/library/e-commerce-groupproject-1052-1014-frontend:latest 0.0s done
+#30 DONE 0.1s
+
+#31 [frontend] resolving provenance for metadata file
+#31 DONE 0.0s
+
+#27 [backend 10/11] RUN npm run build
+#27 0.258 
+#27 0.258 > campusbites-backend@1.0.0 build
+#27 0.258 > tsc -p tsconfig.json
+#27 0.258 
+#27 DONE 1.5s
+
+#32 [backend 11/11] RUN sed -i 's/\r$//' ./docker-entrypoint.sh && chmod +x ./docker-entrypoint.sh
+#32 DONE 0.2s
+
+#33 [backend] exporting to image
+#33 exporting layers 10.1s done
+#33 exporting manifest sha256:8aa29fb5103d9445baef5e716b6b2038ee623385e344faca639fd4013a35fe80 0.0s done
+#33 exporting config sha256:5026b81d3ba164e61587c18a5e5c022813c864b99d54d0641c456f074649da0a done
+#33 exporting attestation manifest sha256:cd0a91d13b92e60bf162d6dcc3b1eedaa2a016a27b9a53453e82da1d96b92248 0.0s done
+#33 exporting manifest list sha256:944a4f073c35a7bab746c633b8122c585c7b13b98ba13d66ce786aab35f7b416 done
+#33 naming to docker.io/library/e-commerce-groupproject-1052-1014-backend:latest done
+#33 unpacking to docker.io/library/e-commerce-groupproject-1052-1014-backend:latest
+#33 unpacking to docker.io/library/e-commerce-groupproject-1052-1014-backend:latest 3.5s done
+#33 DONE 13.7s
+
+#34 [backend] resolving provenance for metadata file
+#34 DONE 0.0s
+ Image e-commerce-groupproject-1052-1014-backend Built 
+ Image e-commerce-groupproject-1052-1014-frontend Built 
+# exit code: 0

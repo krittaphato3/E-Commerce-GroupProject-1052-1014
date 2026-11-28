@@ -80,8 +80,9 @@ npm run e2e                              # Playwright (needs e2e:install once)
 
 ## 4. CI/CD and Deployment
 
-- **`test-and-docker`** (in `.github/workflows/ci-docker.yml`): The required PR check gate. Runs deploy script static validation (`bash -n`, stub tests, smoke tests), backend unit/integration tests against a real PostgreSQL 16 service container, frontend tests and production build, and verifies root `Dockerfile` build. It does not deploy anything. It is also a reusable workflow (`workflow_call`), which `deploy.yml` calls.
+- **`test-and-docker`** (in `.github/workflows/ci-docker.yml`): The required PR check gate. Runs deploy script static validation (`bash -n`, stub tests, smoke tests), backend unit/integration tests against a real PostgreSQL 16 service container with the COV-01 coverage gate (see below), frontend tests and production build, and verifies root `Dockerfile` build. It does not deploy anything. It is also a reusable workflow (`workflow_call`), which `deploy.yml` calls.
 - **`ci.yml`**: Continues to run on pull requests for full unit, integration, and Playwright E2E test coverage across browsers.
+- **Coverage gate (COV-01)**: both workflows run `npm run coverage --workspace=backend` as their backend test step. It fails below 85% line coverage of `backend/src/services` (settings in `backend/vitest.config.ts`). Because the step is part of `test-and-docker`, it also blocks the deployment. `ci.yml` uploads `backend/coverage/` as the run artifact `backend-coverage`. `ci-docker.yml` also runs on pull requests into `sprint-2-staging`.
 - **Concurrency**: PR runs automatically cancel prior runs for the same branch (`cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}`). Runs on `main` complete without cancellation.
 - **`deploy.yml` (workflow name: Deploy demo)**: Deploys to Cloud Run.
   - **Triggers**: every push to `main`, and manual `workflow_dispatch` with two inputs: `rollback` (boolean, default `false`) and `image_tag` (string, the commit SHA to deploy in rollback mode).
