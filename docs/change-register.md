@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/change-register.md` |
-| Version | 1.0 |
+| Version | 1.4 |
 | Date | 2026-11-28 |
 | Related | `docs/traceability.md` (§6 approved changes), `docs/srs.md`, `docs/sprints/sprint-3/features.md`, `docs/sprints/sprint-3/release-readiness.md` |
 
@@ -11,6 +11,10 @@
 | Version | Date | Change | Reason |
 |---|---|---|---|
 | 1.0 | 2026-11-28 | Initial register: FND-01, FND-02, Issue #49, CHG-01, CHG-02, DEF-01, approved baseline revisions CHG-03 to CHG-06, and the Sprint 1 continuity record | Deliverable 2, Parts A and D (Issue #60) |
+| 1.1 | 2026-11-28 | Added CHG-07 (CR-01, BR-01 per-line cap 10 → 5) to §2 as proposed, not approved | Lab 7 change request (Issue #76) |
+| 1.2 | 2026-11-28 | CHG-07: restated the affected acceptance criteria and tests and added the database constraint note; status unchanged (Proposed) | Sync with the revised body of Issue #76 |
+| 1.3 | 2026-11-28 | CHG-07 rewritten for the stock-aware per-line cap (BR-01 and BR-02). It supersedes the earlier "10 → 5" wording in rows 1.1 and 1.2. Status: proposed, team approval pending | Instructor announcement dated 24 Nov 2026; the earlier proposal was judged trivial (Issue #76) |
+| 1.4 | 2026-11-28 | CHG-07: the contract revision is committed on `docs/CR-01-contract` (Issue #77), with final criteria AC-148 to AC-160 and decisions DEC-58 to DEC-66. Status unchanged: proposed, team approval pending. Teammate review not yet done; nothing implemented | CR-01 contract revision |
 
 Only items with evidence in this repository, its Issues or its pull requests are listed. Findings from Lab 6 or Lab 7 that are not recorded there are not included.
 
@@ -37,6 +41,9 @@ Only items with evidence in this repository, its Issues or its pull requests are
 | CHG-04 | 2026-11-28 | BR-06; AC-60, AC-81; TEST-43, TEST-92, TEST-81, TEST-86, TEST-60 | Sprint 3 extends transition and route facts that earlier tests pin (AC-95 and AC-127 extend AC-60 and AC-81). Each earlier test change is listed with its new value in the Sprint 3 contract §2.1. The Sprint 2 contract text is not rewritten | The Sprint 3 requirements change those facts; naming each change keeps it separate from weakening a test (DEC-45) | PR #71 approved; F-09 type-only addition (contract revision 1.1) in PR [#72](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/72), approved 2026-11-28 | F-09 rows applied and passing at `15ea606`; F-11 and F-12 rows not yet applied |
 | CHG-05 | 2026-11-28 | Order detail response (F-03, F-04 API); FR-14 | Every history entry in order detail gains `note` (string or null), which carries the rejection reason | The `OrderStatusHistory.note` column already exists and the customer must see the reason (DEC-43) | PR #71 and PR #72 approved | Implemented on `sprint-3-staging`; TEST-93 and TEST-103 PASS |
 | CHG-06 | 2026-11-28 | FR-07, FR-08 list endpoints; System SDS §4 | The 200-row list limit is to be replaced by page-number pagination when F-10 is built | The System SDS already states that pagination arrives with F-10 (DEC-46) | PR #71 approved | Approved, **not implemented**; lists still return at most 200 rows |
+| CHG-07 | 2026-11-28 | CR-01: BR-01 and BR-02; F-02, F-03; AC-10 / TEST-10 and AC-18 / TEST-18 revised; new AC-148 to AC-160 / TEST-148 to TEST-160 (AC-148 to AC-156 are draft D-1 to D-9); AC-19 / TEST-19 and TEST-22 unchanged; new error code `QUANTITY_LIMIT_EXCEEDED` | Proposed: stock-aware per-line cap. Maximum quantity per line = `min(5, max(1, floor(stockQty / 2)))` for an orderable item, enforced inside the single reserving `UPDATE`. Above 5 or invalid: 400 `VALIDATION_ERROR`; disabled, stock 0 or above the stock: 409 `ITEM_UNAVAILABLE`; within the stock but above the maximum: 409 `QUANTITY_LIMIT_EXCEEDED` with `{ itemId, allowedMax }`. Any failing line rejects the whole order. Lines per order stay 1 to 10, with no duplicate item. The menu API is to expose `maxOrderQuantity`. `OrderItem_quantity_check` (1 to 10) stays, so the database does not enforce the new upper limit by itself. No data migration, concluded from reading the code only (not tested). Known limitation: several orders are not limited. **Contract revision committed** (not yet reviewed or merged): `docs/srs.md` §9.3 (DEC-58 to DEC-66) and §11.1, `docs/system-sds.md` §9, `docs/sprints/sprint-1/features.md` F-02 and F-03 Revision 1.4; [impact analysis](labs/lab-07/CR-01-impact-analysis.md); [review sheet](labs/lab-07/CR-01-contract-review.md); [CR-01 v2.0](labs/lab-07/CR-01-change-request.md). **Supersedes the earlier "10 → 5" wording of this row** | Stop one customer from taking most of a low-stock item, so that more customers can order it (synthetic business request for Lab 7) | None recorded yet. Team approval is to be recorded as a comment on Issue [#76](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/issues/76). Instructor announcement dated 24 Nov 2026 (quoted in the CR record §11): instructor/TA approval is not required | Proposed, team approval pending (Issue #76); instructor/TA approval waived per 24 Nov 2026 announcement. Contract revision committed; teammate review pending; not implemented |
+
+**CHG-07 is a proposal.** The section heading and the statements above about approval and mirroring in `docs/traceability.md` §6 do not yet apply to it. It is not in that approved-changes log. Its contract revision is committed on `docs/CR-01-contract` as a proposal (SRS, System SDS, Sprint 1 contracts, and `docs/traceability.md` §2, §4.5 and §7, marked not implemented and `NOT RUN`). No source code or test has been changed for it.
 
 Detailed Sprint 2 and Sprint 3 acceptance criteria (AC-47 to AC-147) and decisions DEC-28 to DEC-57 elaborate allocated requirements. They are recorded in the sprint contracts and are not repeated here.
 

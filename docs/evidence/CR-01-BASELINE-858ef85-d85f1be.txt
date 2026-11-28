@@ -1,0 +1,248 @@
+EV-CR01-01  CR-01 baseline: BR-01 per-line quantity 1 to 10 before the change (Issue #76)
+Captured: 2026-11-28 23:05:10 +0700
+Branch: docs/CR-01-contract   HEAD at capture: 36a04b3
+Refs: sprint-1-v1.0 = 858ef85 (accepted Sprint 1 baseline); d85f1be (origin/main, deployed per docs/evidence/POSTDEPLOY-d85f1be.txt)
+Method: read-only git commands. Nothing was built, run or deployed. Each block shows the command, its output and exit status.
+
+================================================================
+0. Branch base and code identity
+================================================================
+
+$ git rev-parse HEAD origin/sprint-3-staging origin/main 'sprint-1-v1.0^{commit}'
+36a04b3cd4910eec78d89fc531398db931b7246e
+36a04b3cd4910eec78d89fc531398db931b7246e
+d85f1be3e287c47af8ba1e4c8461bd24d339a8de
+858ef85c71c9ac56a6fe41bad360e86e3841ddaf
+[exit 0]
+
+$ git log -1 --format='%h %s' origin/sprint-3-staging
+36a04b3 Merge pull request #75 from krittaphato3/docs/postdeploy-rc1
+[exit 0]
+
+$ git merge-base --is-ancestor origin/sprint-3-staging HEAD
+[exit 0]
+
+$ git log --oneline origin/sprint-3-staging..HEAD
+[exit 0]
+
+$ git diff --stat d85f1be origin/sprint-3-staging
+ docs/evidence/POSTDEPLOY-d85f1be.txt | 157 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 157 insertions(+)
+[exit 0]
+
+$ git diff --stat d85f1be 36a04b3 -- . ':!docs'
+[exit 0]
+
+================================================================
+1. Old behaviour at sprint-1-v1.0
+================================================================
+
+$ git grep -n -E 'BR-01|\.max\(10\)' sprint-1-v1.0 -- backend/src/middleware/validate.ts
+sprint-1-v1.0:backend/src/middleware/validate.ts:23:    // BR-01: integer quantity from 1 to 10, never a string or a decimal.
+sprint-1-v1.0:backend/src/middleware/validate.ts:24:    quantity: z.number().int().min(1).max(10),
+sprint-1-v1.0:backend/src/middleware/validate.ts:30:    // BR-01: 1 to 10 lines.
+sprint-1-v1.0:backend/src/middleware/validate.ts:31:    items: z.array(orderItemSchema).min(1).max(10),
+sprint-1-v1.0:backend/src/middleware/validate.ts:32:    // BR-01: empty notes become null; 200 characters is the maximum.
+[exit 0]
+
+$ git show sprint-1-v1.0:backend/src/middleware/validate.ts | awk 'NR>=20 && NR<=31 {print NR": "$0}'
+20: export const orderItemSchema = z
+21:   .object({
+22:     menuItemId: z.number().int().positive(),
+23:     // BR-01: integer quantity from 1 to 10, never a string or a decimal.
+24:     quantity: z.number().int().min(1).max(10),
+25:   })
+26:   .strict();
+27: 
+28: export const orderCreateSchema = z
+29:   .object({
+30:     // BR-01: 1 to 10 lines.
+31:     items: z.array(orderItemSchema).min(1).max(10),
+[exit 0]
+
+$ git grep -n -E 'MAX_LINE_QUANTITY|Math\.min\(' sprint-1-v1.0 -- frontend/src/pages/Menu.tsx
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:9:const MAX_LINE_QUANTITY = 10;
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:67:    (stockQty: number) => Math.min(MAX_LINE_QUANTITY, Math.max(0, stockQty)),
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:75:        const next = Math.min(
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:87:    const quantity = Math.min(max, quantityFor(item.id));
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:95:            ? { ...line, quantity: Math.min(max, line.quantity + quantity) }
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:114:    const max = item ? maxOrderable(item.stockQty) : MAX_LINE_QUANTITY;
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:122:        .map((line) => ({ ...line, quantity: Math.min(max, line.quantity) }))
+sprint-1-v1.0:frontend/src/pages/Menu.tsx:273:                    const lineMax = item ? maxOrderable(item.stockQty) : MAX_LINE_QUANTITY;
+[exit 0]
+
+$ git grep -n -E '^\| Version \||^\| BR-01 \|' sprint-1-v1.0 -- docs/srs.md
+sprint-1-v1.0:docs/srs.md:6:| Version | 1.12 |
+sprint-1-v1.0:docs/srs.md:14:| Version | Date | Author | Change | Reason |
+sprint-1-v1.0:docs/srs.md:84:| BR-01 | Each order line has an integer quantity from 1 to 10. An order has 1 to 10 lines, and no menu item appears twice in one order. | Service + schema validation | 1 |
+[exit 0]
+
+$ git grep -n -E '^\| BR-01 \|' sprint-1-v1.0 -- docs/traceability.md
+sprint-1-v1.0:docs/traceability.md:68:| BR-01 | F-03 | 1 | AC-18, AC-19 | TEST-18, 19 | backend/src/services/orderRules.test.ts::TEST-18; backend/tests/orders.create.test.ts::TEST-18, ::TEST-19 | PASS | 140c030 (red), 0f3c649 (green) |
+[exit 0]
+
+$ git grep -n -E '^\| (AC|TEST)-1[89] \|' sprint-1-v1.0 -- docs/sprints/sprint-1/features.md
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:459:| AC-18 | A quantity of 0, a negative number, a decimal, a string or a value above 10 returns 400; no order is saved. |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:460:| AC-19 | An empty item list, more than 10 lines, or the same `menuItemId` twice returns 400; no order is saved. |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:482:| TEST-18 | AC-18 | Unit + Integration | Logged in `customer1` | POST with quantity 0, -1, 1.5, "2", 11 | Each 400 `VALIDATION_ERROR`; order count 0; the schema unit test rejects the same values |
+sprint-1-v1.0:docs/sprints/sprint-1/features.md:483:| TEST-19 | AC-19 | Integration | Logged in `customer1`; 11 menu items exist (extra created by test helper) | POST with `items: []`; with 11 distinct lines; with item 1 listed twice | Each 400; order count 0 |
+[exit 0]
+
+$ git grep -n -E 'OrderItem_quantity_check' sprint-1-v1.0 -- backend/prisma/migrations
+sprint-1-v1.0:backend/prisma/migrations/20261105161538_0001_init/migration.sql:124:ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_quantity_check" CHECK ("quantity" >= 1 AND "quantity" <= 10);
+[exit 0]
+
+================================================================
+2. Old behaviour at d85f1be
+================================================================
+
+$ git grep -n -E 'BR-01|\.max\(10\)' d85f1be -- backend/src/middleware/validate.ts
+d85f1be:backend/src/middleware/validate.ts:23:    // BR-01: integer quantity from 1 to 10, never a string or a decimal.
+d85f1be:backend/src/middleware/validate.ts:24:    quantity: z.number().int().min(1).max(10),
+d85f1be:backend/src/middleware/validate.ts:30:    // BR-01: 1 to 10 lines.
+d85f1be:backend/src/middleware/validate.ts:31:    items: z.array(orderItemSchema).min(1).max(10),
+d85f1be:backend/src/middleware/validate.ts:32:    // BR-01: empty notes become null; 200 characters is the maximum.
+[exit 0]
+
+$ git show d85f1be:backend/src/middleware/validate.ts | awk 'NR>=20 && NR<=31 {print NR": "$0}'
+20: export const orderItemSchema = z
+21:   .object({
+22:     menuItemId: z.number().int().positive(),
+23:     // BR-01: integer quantity from 1 to 10, never a string or a decimal.
+24:     quantity: z.number().int().min(1).max(10),
+25:   })
+26:   .strict();
+27: 
+28: export const orderCreateSchema = z
+29:   .object({
+30:     // BR-01: 1 to 10 lines.
+31:     items: z.array(orderItemSchema).min(1).max(10),
+[exit 0]
+
+$ git grep -n -E 'MAX_LINE_QUANTITY|Math\.min\(' d85f1be -- frontend/src/pages/Menu.tsx
+d85f1be:frontend/src/pages/Menu.tsx:9:const MAX_LINE_QUANTITY = 10;
+d85f1be:frontend/src/pages/Menu.tsx:67:    (stockQty: number) => Math.min(MAX_LINE_QUANTITY, Math.max(0, stockQty)),
+d85f1be:frontend/src/pages/Menu.tsx:75:        const next = Math.min(
+d85f1be:frontend/src/pages/Menu.tsx:87:    const quantity = Math.min(max, quantityFor(item.id));
+d85f1be:frontend/src/pages/Menu.tsx:95:            ? { ...line, quantity: Math.min(max, line.quantity + quantity) }
+d85f1be:frontend/src/pages/Menu.tsx:114:    const max = item ? maxOrderable(item.stockQty) : MAX_LINE_QUANTITY;
+d85f1be:frontend/src/pages/Menu.tsx:122:        .map((line) => ({ ...line, quantity: Math.min(max, line.quantity) }))
+d85f1be:frontend/src/pages/Menu.tsx:281:                    const lineMax = item ? maxOrderable(item.stockQty) : MAX_LINE_QUANTITY;
+[exit 0]
+
+$ git grep -n -E '^\| Version \||^\| BR-01 \|' d85f1be -- docs/srs.md
+d85f1be:docs/srs.md:6:| Version | 1.13 |
+d85f1be:docs/srs.md:14:| Version | Date | Author | Change | Reason |
+d85f1be:docs/srs.md:99:| BR-01 | Each order line has an integer quantity from 1 to 10. An order has 1 to 10 lines, and no menu item appears twice in one order. | Service + schema validation | 1 |
+[exit 0]
+
+$ git grep -n -E '^\| BR-01 \|' d85f1be -- docs/traceability.md
+d85f1be:docs/traceability.md:80:| BR-01 | F-03 | 1 | AC-18, AC-19 | TEST-18, 19 | backend/src/services/orderRules.test.ts::TEST-18; backend/tests/orders.create.test.ts::TEST-18, ::TEST-19 | PASS | 140c030 (red), 0f3c649 (green) |
+[exit 0]
+
+$ git grep -n -E '^\| (AC|TEST)-1[89] \|' d85f1be -- docs/sprints/sprint-1/features.md
+d85f1be:docs/sprints/sprint-1/features.md:459:| AC-18 | A quantity of 0, a negative number, a decimal, a string or a value above 10 returns 400; no order is saved. |
+d85f1be:docs/sprints/sprint-1/features.md:460:| AC-19 | An empty item list, more than 10 lines, or the same `menuItemId` twice returns 400; no order is saved. |
+d85f1be:docs/sprints/sprint-1/features.md:482:| TEST-18 | AC-18 | Unit + Integration | Logged in `customer1` | POST with quantity 0, -1, 1.5, "2", 11 | Each 400 `VALIDATION_ERROR`; order count 0; the schema unit test rejects the same values |
+d85f1be:docs/sprints/sprint-1/features.md:483:| TEST-19 | AC-19 | Integration | Logged in `customer1`; 11 menu items exist (extra created by test helper) | POST with `items: []`; with 11 distinct lines; with item 1 listed twice | Each 400; order count 0 |
+[exit 0]
+
+$ git grep -n -E 'OrderItem_quantity_check' d85f1be -- backend/prisma/migrations
+d85f1be:backend/prisma/migrations/20261105161538_0001_init/migration.sql:124:ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_quantity_check" CHECK ("quantity" >= 1 AND "quantity" <= 10);
+[exit 0]
+
+================================================================
+3. Other places that hard-code or depend on the per-line limit (d85f1be) - listed only, not modified
+================================================================
+
+$ git grep -n -E '0, -1, 1\.5, "2", 11' d85f1be -- backend
+d85f1be:backend/src/services/orderRules.test.ts:40:  it.each([0, -1, 1.5, "2", 11])("rejects the invalid quantity %s", (quantity) => {
+d85f1be:backend/tests/orders.create.test.ts:168:    for (const quantity of [0, -1, 1.5, "2", 11]) {
+[exit 0]
+
+$ git grep -n -E 'more than ten lines|more than 10 lines|more than ten|elevenLines|elevenItems' d85f1be -- backend
+d85f1be:backend/src/services/orderRules.test.ts:45:  it("rejects an empty item list, more than ten lines and a duplicated item", () => {
+d85f1be:backend/src/services/orderRules.test.ts:48:    const elevenLines = Array.from({ length: 11 }, (_, index) => ({
+d85f1be:backend/src/services/orderRules.test.ts:52:    expect(orderCreateSchema.safeParse({ items: elevenLines }).success).toBe(false);
+d85f1be:backend/tests/orders.create.test.ts:180:  it("TEST-19: an empty list, more than ten lines or a duplicated item returns 400", async () => {
+d85f1be:backend/tests/orders.create.test.ts:197:    const elevenItems = await testPrisma.menuItem.findMany({ orderBy: { id: "asc" } });
+d85f1be:backend/tests/orders.create.test.ts:198:    expect(elevenItems).toHaveLength(11);
+d85f1be:backend/tests/orders.create.test.ts:200:    const duplicatedId = elevenItems[0].id;
+d85f1be:backend/tests/orders.create.test.ts:203:      { items: elevenItems.map((item) => ({ menuItemId: item.id, quantity: 1 })) },
+[exit 0]
+
+$ git grep -n -E 'CHECK quantity 1\.\.10|Over Quantity' d85f1be -- backend/tests/constraints.test.ts
+d85f1be:backend/tests/constraints.test.ts:105:  it("4. Rejects order line quantity of 0 (CHECK quantity 1..10)", async () => {
+d85f1be:backend/tests/constraints.test.ts:118:  it("5. Rejects order line quantity of 11 (CHECK quantity 1..10)", async () => {
+d85f1be:backend/tests/constraints.test.ts:124:        VALUES (${initialOrderId}, ${initialItemId}, 'Over Quantity', 5000, 11, 55000);
+[exit 0]
+
+$ git grep -n -E 'BR-01 caps|Math\.min\(10' d85f1be -- frontend/e2e
+d85f1be:frontend/e2e/order.spec.ts:127:    // BR-01 caps one line at 10 units, so buy out in chunks.
+d85f1be:frontend/e2e/order.spec.ts:130:      const quantity = Math.min(10, remaining);
+[exit 0]
+
+$ git grep -n -E 'DEC-27 \|' d85f1be -- docs/srs.md
+d85f1be:docs/srs.md:215:| DEC-27 | A separate self-contained Playwright test in `frontend/e2e/order.spec.ts`, titled `AC-21 / AC-30` and placed after `TEST-29`, drives the 409 `ITEM_UNAVAILABLE` path with no mocking. The journey prepares its own sold-out state instead of inheriting it: it reads the public menu and picks the orderable item with the smallest positive stock plus a second item that stays available, `customer1` puts both in the cart, a dedicated API request context has `customer2` buy every remaining unit of the first item (chunked at the BR-01 cap of 10 per line), and `customer1` then presses Place order. Because the item is chosen at run time, the test does not depend on Playwright's spec-file order, and `globalSetup` re-seeds before every run so the depletion never accumulates. It adds no new `TEST-nn` id, so the 46 acceptance criteria / 46 tests table is unchanged. | F-03's evidence set needs the real 409 state, and a single-user click sequence cannot reach it because the UI caps quantity at `Math.min(10, stockQty)`; a two-customer race is the only deterministic way to reproduce a stale cart without mocking the backend. | `frontend/e2e/order.spec.ts`; AC-21, AC-30, TEST-29 | Implemented in d266329 | 2026-11-07 |
+[exit 0]
+
+$ git grep -n -E 'stockQty is below 10' d85f1be -- frontend/src
+d85f1be:frontend/src/pages/Menu.test.tsx:251:  it("Follow-up 5: caps the card stepper, Add button, and cart quantity at item.stockQty when stockQty is below 10", async () => {
+[exit 0]
+
+$ git grep -n -i -E 'quantity[: =]+([6-9]|[1-9][0-9])([^0-9]|$)' d85f1be -- backend/prisma/seed.ts backend/benchmarks backend/tests frontend/e2e frontend/src frontend/src/pages/Menu.tsx
+d85f1be:frontend/src/pages/Menu.tsx:9:const MAX_LINE_QUANTITY = 10;
+[exit 0]
+
+$ git grep -n -E 'quantity: *[0-9]' d85f1be -- backend/prisma/seed.ts backend/benchmarks
+d85f1be:backend/benchmarks/nfr05-load.js:185:        body: JSON.stringify({ items: [{ menuItemId: perfItem.id, quantity: 1 }] }),
+d85f1be:backend/prisma/seed.ts:253:        quantity: 1,
+[exit 0]
+
+$ git grep -n -E '1 to 10|1–10|1\.\.10|BETWEEN 1 AND 10|above 10' d85f1be -- frontend backend docs README.md ':!docs/evidence'
+d85f1be:backend/src/middleware/validate.ts:23:    // BR-01: integer quantity from 1 to 10, never a string or a decimal.
+d85f1be:backend/src/middleware/validate.ts:30:    // BR-01: 1 to 10 lines.
+d85f1be:backend/tests/constraints.test.ts:105:  it("4. Rejects order line quantity of 0 (CHECK quantity 1..10)", async () => {
+d85f1be:backend/tests/constraints.test.ts:118:  it("5. Rejects order line quantity of 11 (CHECK quantity 1..10)", async () => {
+d85f1be:docs/sprints/sprint-1/features.md:373:**Business rules.** BR-01 (quantity 1–10, 1–10 lines, no duplicate item), BR-02, BR-03, BR-04, BR-05, BR-07, BR-14 (order number `CB-` + id padded to 6 digits, computed when building the response), BR-15.
+d85f1be:docs/sprints/sprint-1/features.md:378:| `items` | array of 1 to 10 objects |
+d85f1be:docs/sprints/sprint-1/features.md:380:| `items[].quantity` | integer 1 to 10 (not a string, not a decimal) |
+d85f1be:docs/sprints/sprint-1/features.md:387:- Quantity 0, negative, decimal, string or above 10 returns 400 and nothing is saved (AC-18); an empty item list, more than 10 lines or a duplicated item returns 400 (AC-19).
+d85f1be:docs/sprints/sprint-1/features.md:459:| AC-18 | A quantity of 0, a negative number, a decimal, a string or a value above 10 returns 400; no order is saved. |
+d85f1be:docs/sprints/sprint-1/features.md:673:- Prisma schema and migration `0001_init` create all Sprint 1 tables with CHECK constraints added as raw SQL (price above 0, stock at least 0, quantity 1 to 10) and UNIQUE constraints.
+d85f1be:docs/sprints/sprint-1/features.md:700:| CHECK constraints | `MenuItem.priceSatang > 0`; `MenuItem.stockQty >= 0`; `OrderItem.quantity BETWEEN 1 AND 10`; `Order.totalSatang >= 0` |
+d85f1be:docs/sprints/sprint-2/features.md:166:| `name` | required | optional | string, trimmed, 1 to 100 characters, unique (exact match after trimming, DEC-30) |
+d85f1be:docs/sprints/sprint-2/features.md:847:| DEC-29 | Limits: `name` 1–100 and `description` 1–500 characters after trimming; `priceSatang` 1–1,000,000; `stockQty` 0–10,000. Upper bounds are API validation only. | BR-13 sets lower bounds only. The price cap keeps the largest order (10 lines × 10 × price = 100,000,000) inside the 32-bit `totalSatang` column. | F-05 | 2026-11-27 |
+d85f1be:docs/sprints/sprint-3/features.md:347:| `customerName` | **rejected (400)** | yes | trimmed, 1 to 100 characters |
+d85f1be:docs/sprints/sprint-3/features.md:348:| `page` | yes | yes | integer 1 to 100,000; default 1 |
+d85f1be:docs/sprints/sprint-3/features.md:349:| `pageSize` | yes | yes | integer 1 to 100; default 20 |
+d85f1be:docs/srs.md:99:| BR-01 | Each order line has an integer quantity from 1 to 10. An order has 1 to 10 lines, and no menu item appears twice in one order. | Service + schema validation | 1 |
+d85f1be:docs/system-sds.md:72:| BR-01 quantity and line limits | Yes | CHECK `quantity BETWEEN 1 AND 10`; UNIQUE `(orderId, menuItemId)` | zod also rejects first |
+d85f1be:docs/system-sds.md:139:        int quantity "CHECK 1..10"
+d85f1be:docs/system-sds.md:161:| OrderItem | UNIQUE `(orderId, menuItemId)`; CHECK `quantity BETWEEN 1 AND 10`, `unitPriceSatang > 0`, `lineTotalSatang > 0`; price and name snapshot | Follows the order |
+d85f1be:docs/system-sds.md:223:| Validation | Client checks (quantity 1–10, note length) for convenience only; the server is authoritative |
+[exit 0]
+
+================================================================
+4. Access control and use of the order schema (d85f1be)
+================================================================
+
+$ git grep -n -E 'path: "/api/orders"' d85f1be -- backend/src/routes/registry.ts
+d85f1be:backend/src/routes/registry.ts:43:  { method: "POST", path: "/api/orders", roles: [Role.CUSTOMER] },
+d85f1be:backend/src/routes/registry.ts:44:  { method: "GET", path: "/api/orders", roles: [Role.OPERATOR] },
+[exit 0]
+
+$ git grep -n -E '401, "UNAUTHENTICATED"|403, "FORBIDDEN"' d85f1be -- backend/src/middleware/auth.ts
+d85f1be:backend/src/middleware/auth.ts:19:    next(new AppError(401, "UNAUTHENTICATED", "Authentication required"));
+d85f1be:backend/src/middleware/auth.ts:31:      next(new AppError(401, "UNAUTHENTICATED", "Authentication required"));
+d85f1be:backend/src/middleware/auth.ts:36:      next(new AppError(403, "FORBIDDEN", "You do not have permission to perform this action"));
+[exit 0]
+
+$ git grep -n -E 'orderCreateSchema|orderItemSchema' d85f1be -- backend/src ':!*.test.ts'
+d85f1be:backend/src/middleware/validate.ts:20:export const orderItemSchema = z
+d85f1be:backend/src/middleware/validate.ts:28:export const orderCreateSchema = z
+d85f1be:backend/src/middleware/validate.ts:31:    items: z.array(orderItemSchema).min(1).max(10),
+d85f1be:backend/src/middleware/validate.ts:56:export type OrderCreateBody = z.infer<typeof orderCreateSchema>;
+d85f1be:backend/src/routes/orders.ts:16:  orderCreateSchema,
+d85f1be:backend/src/routes/orders.ts:28:  validateBody(orderCreateSchema),
+[exit 0]

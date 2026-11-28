@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/system-sds.md` |
-| Version | 1.11 |
+| Version | 1.12 |
 | Date | 2026-11-28 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/sprint-2/features.md`, `docs/sprints/sprint-3/features.md`, `docs/sprints/plan.md`, `docs/change-register.md` |
 
@@ -22,6 +22,7 @@
 | 1.9 | 2026-11-28 | Endpoint summary replaces the combined Sprint 3 line with the reject, operator-cancel and sales-report endpoints, adds the changed list and login endpoints, and the permission matrix adds or details the Sprint 3 rows, all marked "Sprint 3 — planned" | Sprint 3 contracts (Issue #59); nothing is implemented yet |
 | 1.10 | 2026-11-28 | `POST /api/orders/:id/reject` and the "Reject order" permission row are marked implemented; the other Sprint 3 rows stay planned | F-09 (Issue #59) |
 | 1.11 | 2026-11-28 | Brought up to date with the code at `dad286b`: F-05 endpoints and permission row marked implemented; `/api/ready` added; data model notes, all CHECK constraints, indexes and the create-only seed; new §2.4 state machines; error handling, route registry (§4.1) and screen table; §7.1 variables; §7.2 replaces the planned deployment with the actual architecture and workflows; §7.3 and §8 describe the real layout, coverage gate and Git flow; §1.3 states where services use Prisma directly | Deliverable 2 update, checked against `backend/src`, `backend/prisma`, `.github/workflows` and `deploy/` (Issue #60) |
+| 1.12 | 2026-11-28 | New §9: CR-01 stock-aware per-line cap (old and new rule, reservation design, menu field, error code, database constraint), **proposed, not implemented**. Pointers added in §1.4, §3.2 and §4. Correction in §1.4: the BR-05 row said conditional `updateMany`; the code reserves stock with a raw conditional `UPDATE … RETURNING` (as §1.3 already says) | CR-01 contract revision (Issue #77) |
 
 ---
 
@@ -69,11 +70,11 @@ The browser and API communicate only through JSON over HTTP. In development Vite
 ### 1.4 Where each rule is enforced
 | Rule | Service | DB constraint | Notes |
 |---|---|---|---|
-| BR-01 quantity and line limits | Yes | CHECK `quantity BETWEEN 1 AND 10`; UNIQUE `(orderId, menuItemId)` | zod also rejects first |
-| BR-02 availability | Yes (inside transaction) | — | Whole order rolls back on failure |
+| BR-01 quantity and line limits | Yes | CHECK `quantity BETWEEN 1 AND 10`; UNIQUE `(orderId, menuItemId)` | zod also rejects first. CR-01 revision proposed: §9 |
+| BR-02 availability | Yes (inside transaction) | — | Whole order rolls back on failure. CR-01 revision proposed: §9 |
 | BR-03 total | Yes (`calculateOrderTotal`) | — | Client fields rejected (DEC-07) |
 | BR-04 price snapshot | Yes | `OrderItem.unitPriceSatang` stored | |
-| BR-05 stock atomic | Conditional `updateMany` where `stockQty >= qty` | CHECK `stockQty >= 0` | Race-safe |
+| BR-05 stock atomic | One raw conditional `UPDATE … RETURNING` where `stockQty >= qty` | CHECK `stockQty >= 0` | Race-safe |
 | BR-06 transitions | Yes (`assertTransition`) | Conditional update `where status = expected` | Blocks double accept, double cancel, accept/reject/cancel races |
 | BR-07, BR-08 access | Role guard + ownership check | — | Never in the frontend only |
 | BR-14 order number | Yes (format from id) | — | |
@@ -220,7 +221,7 @@ Header: shop name, links by role, display name and role badge, Logout button. Af
 | Loading | Spinner or "Loading…" text while a request is pending; buttons disabled during submit |
 | Empty | Explicit text, for example "You have no orders yet." |
 | Error | Alert box showing the API `error.message`; a generic message for network or 500 errors |
-| Validation | Client checks (quantity 1–10, note length) for convenience only; the server is authoritative |
+| Validation | Client checks (quantity 1–10, note length) for convenience only; the server is authoritative. CR-01 revision of the quantity check proposed: §9 |
 | Money | Formatted from satang to `฿` with 2 decimals |
 | Status | Colored badge per status |
 | Route guards | Redirect to `/login` if not logged in; show an in-place 403 Forbidden alert from `ProtectedRoute` ("403 Forbidden: You have no access to this page.") and suppress role content on a wrong-role route. **This is navigation only, not authorization.** |
@@ -248,6 +249,7 @@ NFR-09 is **not yet verified for all screens**: loading, empty and error states 
 | 403 | `FORBIDDEN` | Wrong role or not the owner |
 | 404 | `NOT_FOUND` | Resource does not exist |
 | 409 | `ITEM_UNAVAILABLE` | Item disabled or stock too low |
+| 409 | `QUANTITY_LIMIT_EXCEEDED` | Quantity within the stock but above the stock-aware line maximum (**planned, CR-01**; not returned today; §9) |
 | 409 | `INVALID_TRANSITION` | Status change not allowed |
 | 429 | `TOO_MANY_ATTEMPTS` | Login throttled (**planned, F-13**; not returned today) |
 | 500 | `INTERNAL_ERROR` | Unexpected failure |
@@ -406,3 +408,66 @@ Dockerfile, docker-compose.yml, backend/.env.example, README.md
 Backend unit and API tests and Playwright share `campusbites_test`, so they run one after another (DEC-26).
 
 Git workflow: Issue → feature branch from the sprint staging branch (`sprint-1-staging`, `sprint-2-staging`, `sprint-3-staging`) → PR to staging with teammate review → staging checks → release PR to `main` → deploy → tag (`sprint-1-v1.0`, `sprint-2-v2.0`; planned `sprint-3-rc1`, `sprint-3-v3.0`). For each feature: contract first, failing tests (red), implementation (green); exceptions are disclosed in `docs/traceability.md` (retroactive red runs).
+
+## 9. Revision 1.12 (CR-01): stock-aware per-line quantity cap
+
+**Status: proposed, not implemented.** CHG-07; team approval and teammate review pending. §1 to §8 describe the current code, apart from the rows that point here. Decisions DEC-58 to DEC-66 are in `docs/srs.md` §9.3; criteria and tests are in `docs/sprints/sprint-1/features.md` (F-02 and F-03, Revision 1.4).
+
+### 9.1 Old and new rule
+
+| Fact | Old | New |
+|---|---|---|
+| Request validation of `items[].quantity` | Integer 1 to 10 | Integer 1 to 5 |
+| Line maximum of an orderable item | 10, limited further by stock | `min(5, max(1, floor(stockQty / 2)))` |
+| Lines per order, duplicate items | 1 to 10, forbidden | Unchanged |
+| Menu item fields | `id, name, description, priceSatang, stockQty, isAvailable, available` | Plus `maxOrderQuantity` |
+| UI selector maximum | `min(10, stockQty)` | `maxOrderQuantity` |
+| UI validation convention (§3.2) | Quantity 1–10 | Quantity 1 to `maxOrderQuantity` |
+
+### 9.2 Transaction and atomicity design
+
+The transaction is unchanged: one `prisma.$transaction`, lines processed in ascending `menuItemId` order, no isolation level set in the code. The reservation stays **one statement**, with one added condition:
+
+```sql
+UPDATE "MenuItem"
+   SET "stockQty" = "stockQty" - :quantity::int,
+       "updatedAt" = NOW()
+ WHERE "id" = :menuItemId::int
+   AND "isAvailable" = true
+   AND "stockQty" >= :quantity::int
+   AND :quantity::int <= LEAST(5, GREATEST(1, "stockQty" / 2))   -- added by CR-01
+RETURNING "name", "priceSatang"
+```
+
+- `"stockQty"` is an integer, so `"stockQty" / 2` is integer division, equal to `floor` for the non-negative values allowed by `MenuItem_stockQty_check`.
+- In `WHERE`, `"stockQty"` is the value before the decrement. For stock 0 the formula gives 1, and `"stockQty" >= quantity` still rejects the line.
+- No `SELECT … FOR UPDATE` and no new isolation level. The design relies on PostgreSQL Read Committed behaviour: an `UPDATE` that waits for another transaction's row lock re-checks its `WHERE` condition against the newest committed row. The deployed isolation setting was not checked, and this is **not yet tested** for the new condition (TEST-154).
+- **Why not read, check, then update:** with no row lock, another order can change the stock between the read and the update. `stockQty >=` would still stop negative stock, but not a quantity above the new maximum.
+
+**Choosing the error after a zero-row update.** The item is read (`name`, `stockQty`, `isAvailable`), then:
+
+| Condition on the read row | Response |
+|---|---|
+| Missing or disabled, stock 0, or quantity above `stockQty` | 409 `ITEM_UNAVAILABLE`, message and details as today |
+| Enabled, quantity at most `stockQty`, and above `maxLineQuantity(stockQty)` | 409 `QUANTITY_LIMIT_EXCEEDED` |
+| Anything else (stock rose after the update failed) | 409 `ITEM_UNAVAILABLE`, as today |
+
+The read is a second statement. Its values describe the stock at the time of the read, which a concurrent order, cancel, rejection or catalog edit can make differ from the stock the `UPDATE` saw. `allowedMax` is therefore advice for the next attempt, not a reservation. In the third row the existing message can name a stock figure that is not below the requested quantity; that is already possible today. Either error rolls back the whole transaction. Only the first failing line, in ascending `menuItemId` order, is reported.
+
+### 9.3 Definition of the formula
+`maxLineQuantity(stockQty)` in `backend/src/services/menuRules.ts`, next to `isOrderable`, is the single readable definition. It does not decide orderability. The SQL condition repeats the formula, and TEST-160 compares the behaviour of the production statement with the function for every stock from 0 to 30.
+
+### 9.4 API
+| Item | Spec |
+|---|---|
+| Menu item | `maxOrderQuantity` (integer 0 to 5): `maxLineQuantity(stockQty)` when `available` is true, otherwise 0. Returned by `GET /api/menu`, `POST /api/menu-items` and `PATCH /api/menu-items/:id` (shared mapper). Computed per response, never stored, and rejected in a request body by the strict schemas. It can be out of date by the time of the order |
+| New error | 409 `{ "error": { "code": "QUANTITY_LIMIT_EXCEEDED", "message": "You can order at most 2 of Basil Pork Rice in one order.", "details": { "itemId": 1, "allowedMax": 2 } } }` |
+| Existing error | `ITEM_UNAVAILABLE` keeps `details: { menuItemId, requested, available }`. The two codes name the item id differently (`menuItemId`, `itemId`) |
+
+### 9.5 Database constraint and historical data
+- `OrderItem_quantity_check CHECK (quantity >= 1 AND quantity <= 10)` (`0001_init`) is unchanged, and CR-01 adds no migration.
+- **The database no longer enforces the new upper limit by itself.** It still accepts a line quantity of 6 to 10, and it knows nothing about the stock-aware maximum. Those two limits rest on request validation and on the reservation statement. A write that bypasses the API (a script or manual SQL) is not stopped by the database.
+- Historical order lines with 6 to 10 stay valid, readable, cancellable and rejectable. **The no-migration conclusion comes from reading the code and has not been tested**; deployed data was not queried.
+
+### 9.6 Access, errors and limitation
+Routes, roles and ownership do not change: only a Customer submits orders (401 anonymous, 403 Operator), and BR-07 is unaffected. **Known limitation (DEC-65):** the cap is per line of one order and does not stop several orders in a row.

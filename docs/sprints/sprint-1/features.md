@@ -6,8 +6,8 @@
 | Sprint | 1 (due with Deliverable 1, 8 Nov 2026) |
 | Staging branch | `sprint-1-staging` |
 | Release tag (planned) | `sprint-1-v1.0` |
-| Version | 1.11 |
-| Date | 2026-11-12 |
+| Version | 1.12 |
+| Date | 2026-11-28 |
 | Related | `docs/srs.md`, `docs/features.md` (whole-product inventory), `docs/traceability.md`, `docs/sprints/plan.md`, `docs/system-sds.md` |
 
 ## Revision history (contract set)
@@ -25,6 +25,7 @@
 | 1.9 | 2026-11-11 | §4 gains a footnote on planned versus actual branch and issue names | Pre-submission audit: the branch names planned here differ from the branches actually used |
 | 1.10 | 2026-11-12 | §3 and the contract-index total now say "test IDs" instead of "tests" and record the executed case counts; TEST-12 notes its component-level supporting test | The count of 46 is the number of TEST-nn IDs, while the executed suite at `5c3f984` runs 85 backend, 36 frontend and 6 Playwright cases (PR #20 review) |
 | 1.11 | 2026-11-12 | §4 keeps the planned branch names and adds the actual GitHub issue, branch and pull request for each contract issue | The planned names were never created, so the table read as if those branches existed (PR #20 review) |
+| 1.12 | 2026-11-28 | CR-01: F-02 and F-03 each gain a subsection "Revision 1.4 (CR-01)" (stock-aware per-line cap). The earlier text is not rewritten; where they differ, the revision subsection states the old and new value. **Proposed and not implemented**; team approval and teammate review pending | Lab 7 change request (Issues #76, #77); SRS 1.14, DEC-58 to DEC-66 |
 
 Each contract below keeps its own revision history. Log every change there with a reason; do not rewrite earlier entries.
 
@@ -39,6 +40,8 @@ Each contract below keeps its own revision history. Log every change there with 
 | 11 | R-01, R-02, R-03 Cross-cutting | AC-43 to AC-46 | NFR-01, NFR-02, NFR-07, NFR-08, BR-13 (DB) |
 
 Total: **46 acceptance criteria and 46 test IDs** (TEST-nn verifies AC-nn). The executed Sprint 1 suite at `5c3f984` runs 85 backend test cases, 36 frontend test cases and 6 Playwright journeys; several cases implement one TEST-nn.
+
+CR-01 (proposed, not implemented) revises AC-10 and AC-18 and their tests and adds AC-148 to AC-160 with TEST-148 to TEST-160 in the "Revision 1.4 (CR-01)" subsections of F-02 and F-03. They are not part of the Sprint 1 total above, and all of them are `NOT RUN`.
 
 
 ---
@@ -255,7 +258,7 @@ In addition to the Product Definition of Done (section 2 of this document):
 | Requirements | FR-04, BR-02 (defines the availability rule; F-03 enforces it, AC-11/AC-21/AC-22), NFR-09 (partial) |
 | Sprint | 1 |
 | Depends on | R-03 (schema and seed) |
-| Contract version | 1.3 (2026-11-06) |
+| Contract version | 1.4 (2026-11-28; the 1.4 revision is proposed, not implemented) |
 | Issue / branch | ISSUE-4 / `feature/F-02-menu-browsing` |
 
 ### Revision history
@@ -265,6 +268,7 @@ In addition to the Product Definition of Done (section 2 of this document):
 | 1.1 | 2026-11-05 | Contract index and header state that F-02 defines BR-02 and F-03 enforces it (AC-11/AC-21/AC-22) | Remove the BR-02 ownership ambiguity |
 | 1.2 | 2026-11-05 | Added a Failure and boundary cases subsection citing AC-11 to AC-13 | Document failure and boundary behavior already defined by the AC and STS |
 | 1.3 | 2026-11-06 | API response also includes `isAvailable` next to the computed `available` flag | ISSUE-4 technical specification requires the stored flag in the payload; AC-10 still guarantees every listed field and no `createdAt` |
+| 1.4 | 2026-11-28 | CR-01: the menu item gains `maxOrderQuantity`; AC-10 and TEST-10 expected values change. See "Revision 1.4 (CR-01)" at the end of this section | BR-01 and BR-02 revision (SRS 1.14, DEC-62, DEC-63) |
 
 ### 1. Feature design
 
@@ -333,6 +337,56 @@ In addition to the Product Definition of Done:
 - Screenshot of the menu with a sold-out item and the formatted price.
 - `isOrderable` is exported and used by F-03 (no duplicate availability logic).
 
+### Revision 1.4 (CR-01): maximum order quantity in the menu
+
+**Status: proposed, not implemented.** Contract 1.3 above is the text accepted in Sprint 1 and stays readable. Where this subsection differs, it replaces that text once CR-01 is approved. This follows the convention of CHG-04 and DEC-45: each changed fact is named with its old and new value, so a changed test is a requirement change and not a weakened test.
+
+#### Changed facts
+| Fact | Old value (contract 1.3) | New value |
+|---|---|---|
+| Menu item fields (API specification) | `id, name, description, priceSatang, stockQty, isAvailable, available` | The same plus `maxOrderQuantity` |
+| Rules | `available = isAvailable AND stockQty > 0` | Unchanged. Added: `maxOrderQuantity = available ? maxLineQuantity(stockQty) : 0` |
+| Operator item shape (Sprint 2 contract, F-05 201 response; that file is not rewritten) | The seven fields above | The same plus `maxOrderQuantity` |
+
+#### Design
+`maxLineQuantity(stockQty) = min(5, max(1, floor(stockQty / 2)))` is added to `backend/src/services/menuRules.ts` next to `isOrderable`, which does not change. The function is the formula only (it gives 1 for stock 0); the menu mapper `toMenuViewItem` applies it to orderable items and gives 0 otherwise. The value is computed for each response and never stored (DEC-61, DEC-62).
+
+| `stockQty` of an enabled item | 12 | 10 | 8 | 4 | 3 | 2 | 1 | 0 |
+|---|---|---|---|---|---|---|---|---|
+| `maxOrderQuantity` | 5 | 5 | 4 | 2 | 1 | 1 | 1 | 0 |
+
+A disabled item has `maxOrderQuantity` 0 at any stock.
+
+#### API specification
+`GET /api/menu` 200: `{ "items": [ { "id": 1, "name": "Basil Pork Rice", "description": "...", "priceSatang": 6000, "stockQty": 30, "isAvailable": true, "available": true, "maxOrderQuantity": 5 } ] }`, ordered by `id`. The notes and errors of contract 1.3 are unchanged. The route stays public.
+
+#### Acceptance criteria (revision)
+| AC | Statement |
+|---|---|
+| AC-10 (revised) | **Given** the seeded database, **when** an anonymous caller sends `GET /api/menu`, **then** it returns 200 with all seeded items, each with `id`, `name`, `description`, `priceSatang` (integer), `stockQty`, `available` and `maxOrderQuantity` (integer), ordered by `id`. *Old wording: the same list without `maxOrderQuantity`.* |
+| AC-158 (new) | **Given** enabled items with stock 12, 10, 8, 4, 3, 2, 1 and 0, and a disabled item with stock, **when** the menu is read, **then** `maxOrderQuantity` is 5, 5, 4, 2, 1, 1, 1, 0 and 0 for the disabled item; **and when** an Operator creates or updates an item, **then** the returned item carries the value for its new stock and availability; **and** a request body containing `maxOrderQuantity` returns 400 and changes nothing. |
+
+AC-11 to AC-13 are unchanged.
+
+#### STS (revision)
+All tests below are **NOT RUN**. The new ones do not exist yet.
+
+| Test | AC | Level | Precondition and input | Action | Expected result |
+|---|---|---|---|---|---|
+| TEST-10 (revised) | AC-10 | Integration | Seeded database, no cookie | GET `/api/menu` | As in contract 1.3, and each item's exact key set is `available, description, id, isAvailable, maxOrderQuantity, name, priceSatang, stockQty` |
+| TEST-158 | AC-158 | API-DB | Eight enabled items set by the test to stock 12, 10, 8, 4, 3, 2, 1, 0; one disabled item with stock 20; `operator1` logged in | GET `/api/menu`; Operator POSTs an item with stock 8; PATCHes it to stock 3, then to `isAvailable: false`; POSTs and PATCHes a body with `maxOrderQuantity: 5` | GET: 5, 5, 4, 2, 1, 1, 1, 0, and 0 for the disabled item. POST: 4. PATCH: 1, then 0. The two bodies with the field: 400 `VALIDATION_ERROR`, catalog unchanged |
+
+Planned test file for TEST-158: `backend/tests/menu.test.ts`.
+
+#### Existing tests whose expected value changes (read, not run; to be confirmed in #78)
+| Test | Old | New | Reason |
+|---|---|---|---|
+| TEST-10, first case, `backend/tests/menu.test.ts` (exact key set) | `available, description, id, isAvailable, name, priceSatang, stockQty` | The same plus `maxOrderQuantity` | AC-10 revised |
+| Menu item fixtures in `frontend/src/pages/Menu.test.tsx` | No `maxOrderQuantity` | Stock 30 → 5; 50 → 5; 0 → 0; 1 → 1; 2 → 1 | Required field of the `MenuItem` type; assertions change only in the case listed in F-03 Revision 1.4 |
+| `SAMPLE_ITEMS` and `createdItem` in `frontend/src/pages/OperatorMenu.test.tsx` (TEST-56) | No `maxOrderQuantity` | Stock 15 → 5; disabled with stock 0 → 0; stock 10 → 5 | Same type change; assertions and expected request payloads unchanged |
+
+TEST-47 and TEST-48 receive the new field in Operator responses but use partial matching, so no change is expected (not run). TEST-11, TEST-12 and TEST-13 expect the same results.
+
 ---
 
 ## 9. F-03 — Order Submission and Customer Order Views (Engineering Contract)
@@ -343,7 +397,7 @@ In addition to the Product Definition of Done:
 | Requirements | FR-05, FR-06, FR-07, BR-01, BR-02 (enforces the rule defined in F-02; AC-11/AC-21/AC-22), BR-03, BR-04, BR-05, BR-07, BR-14, BR-15, NFR-09 (partial) |
 | Sprint | 1 |
 | Depends on | F-01, F-02, R-01, R-02 |
-| Contract version | 1.3 (2026-11-07) |
+| Contract version | 1.4 (2026-11-28; the 1.4 revision is proposed, not implemented) |
 | Issue / branch | ISSUE-5 / `feature/F-03-order-submission` |
 
 ### Revision history
@@ -353,6 +407,7 @@ In addition to the Product Definition of Done:
 | 1.1 | 2026-11-05 | Header states BR-02 enforcement; AC-25 and TEST-25 assert the order-creation history `createdAt` | Cover BR-15's timestamp clause and clarify requirement ownership |
 | 1.2 | 2026-11-05 | Added a Failure and boundary cases subsection citing AC-16, AC-18 to AC-22, AC-24, AC-26 to AC-28, AC-30 and AC-31 | Document failure and boundary behavior already defined by the AC and STS |
 | 1.3 | 2026-11-07 | POST /api/orders sets Location header /api/orders/:id on 201 response (Follow-up 3); Menu cart UI caps selectable and cart line quantities at Math.min(10, stockQty) while retaining 409 ITEM_UNAVAILABLE backend safety net (Follow-up 5) | Follow-up defect resolutions identified prior to branch 5 |
+| 1.4 | 2026-11-28 | CR-01: stock-aware per-line cap, new error `QUANTITY_LIMIT_EXCEEDED`, reservation condition and UI behavior; AC-18 and TEST-18 expected values change. See "Revision 1.4 (CR-01)" at the end of this section | BR-01 and BR-02 revision (SRS 1.14, DEC-58 to DEC-66) |
 
 ### 1. Feature design
 
@@ -503,6 +558,134 @@ In addition to the Product Definition of Done:
 - Screenshots: filled cart, order detail with total, 409 error message, My orders. API output showing a 403 for a cross-customer read.
 - The concurrency test runs against the real PostgreSQL test database (no mock).
 - The availability rule is imported from F-02 (`isOrderable`), not duplicated.
+
+### Revision 1.4 (CR-01): stock-aware per-line quantity cap
+
+**Status: proposed, not implemented.** Contract 1.3 above is the text accepted in Sprint 1 and stays readable. Where this subsection differs, it replaces that text once CR-01 is approved (convention of CHG-04 and DEC-45). Decisions: `docs/srs.md` §9.3. System design: `docs/system-sds.md` §9.
+
+#### Changed facts
+| Fact | Old value (contract 1.3) | New value |
+|---|---|---|
+| BR-01 line quantity | 1 to 10 | 1 to 5, and at most `min(5, max(1, floor(stockQty / 2)))` for an orderable item |
+| Validation of `items[].quantity` | integer 1 to 10 | integer 1 to 5 |
+| Failure and boundary cases: 400 | quantity above 10 | quantity above 5 (also for a sold-out or disabled item) |
+| Failure and boundary cases: 409 | disabled, stock 0, or above the stock (any quantity up to 10) | The same for a quantity of 1 to 5, plus `QUANTITY_LIMIT_EXCEEDED` for a quantity within the stock but above the maximum |
+| Workflow step 4.2 | `WHERE id = :id AND "isAvailable" = true AND "stockQty" >= :qty` | Adds `AND :qty <= LEAST(5, GREATEST(1, "stockQty" / 2))` |
+| Zero rows in step 4.2 | 409 `ITEM_UNAVAILABLE` | 409 `ITEM_UNAVAILABLE` or 409 `QUANTITY_LIMIT_EXCEEDED` (table below) |
+| `POST /api/orders` error table | No such code | 409 `QUANTITY_LIMIT_EXCEEDED`, `details: { "itemId", "allowedMax" }` |
+| UI: quantity stepper cap | `Math.min(10, stockQty)` | `maxOrderQuantity` from the menu API |
+| UI: failure | 409 shows the server message; the cart is kept unchanged | Same; after `QUANTITY_LIMIT_EXCEEDED` only the named cart line is also reduced to `allowedMax` |
+| Data specification | No new migration | No new migration; `CHECK` 1..10 kept, so the database no longer enforces the new upper limit by itself |
+
+#### Design: transaction and atomicity
+One transaction and ascending `menuItemId` order, as before. For each line the same single statement reserves stock, with the added condition (full statement in `docs/system-sds.md` §9.2). No new isolation level and no explicit row lock (DEC-59). The concurrency behaviour of the added condition is not yet tested.
+
+**Order of checks**
+| Step | Check | Failure |
+|---|---|---|
+| 1 | Session and role `CUSTOMER` | 401 / 403 |
+| 2 | Strict body schema, quantity an integer from 1 to 5 | 400 `VALIDATION_ERROR` |
+| 3 | Every `menuItemId` exists | 400 `VALIDATION_ERROR` |
+| 4 | For each line in ascending `menuItemId`: the conditional `UPDATE`. On zero rows, read the item: disabled, stock 0, or quantity above `stockQty` | 409 `ITEM_UNAVAILABLE` |
+| 5 | Same read: quantity at most `stockQty` and above `maxLineQuantity(stockQty)` | 409 `QUANTITY_LIMIT_EXCEEDED` |
+
+If the read matches neither step 4 nor step 5 because the stock rose in between, the response is 409 `ITEM_UNAVAILABLE`, as today. A failing line rolls back the whole order: no order, no order line, no history entry, and no stock change on any line. The response reports the first failing line only.
+
+#### API specification: new error
+```json
+{ "error": { "code": "QUANTITY_LIMIT_EXCEEDED",
+  "message": "You can order at most 2 of Basil Pork Rice in one order.",
+  "details": { "itemId": 1, "allowedMax": 2 } } }
+```
+`allowedMax` is `maxLineQuantity` of the stock read after the failed update (1 to 5). It is not a reservation.
+
+#### UI specification
+| Element | Behavior |
+|---|---|
+| Menu card and cart steppers | Maximum is the item's `maxOrderQuantity`. If a cart item is missing from the loaded menu, the fallback maximum is 5 |
+| 409 `QUANTITY_LIMIT_EXCEEDED` | The alert shows the server message (it contains `allowedMax`). The cart line with `menuItemId` equal to `details.itemId` becomes `min(quantity, allowedMax)`. Other lines and the pickup note are kept, there is no navigation, and the menu reloads as for any 409. The clamp does not depend on the reload succeeding |
+| 409 `ITEM_UNAVAILABLE` | Unchanged (AC-30): cart quantities are not changed |
+
+#### Unchanged
+1 to 10 lines per order and no duplicate item (AC-19, TEST-19); BR-02 all-or-nothing and `ITEM_UNAVAILABLE` precedence (TEST-22); BR-03 totals; BR-05 no oversell; BR-07 ownership (403); R-01 role guards and routes.
+
+#### Known limitation (DEC-65)
+The cap applies to one line of one order. A customer can place several orders in a row and still take all the stock.
+
+#### Acceptance criteria (revision)
+"The item" is enabled, "stock N" is its stock before the request shown, each request starts from that stock, and the caller is a logged-in Customer, unless stated otherwise. "Nothing is saved" means no `Order`, `OrderItem` or `OrderStatusHistory` row and no stock change on any item.
+
+| AC | Draft ID | Statement |
+|---|---|---|
+| AC-18 (revised) | — | **Given** a logged-in Customer, **when** a line has a quantity of 0, a negative number, a decimal, a string or a value above 5, **then** the response is 400 and no order is saved. *Old wording: "above 10".* |
+| AC-148 | D-1 | **Given** stock 10, **when** one line orders 5, **then** 201 and stock is 5. **Given** stock 12, **when** one line orders 5, **then** 201 and stock is 7. |
+| AC-149 | D-2 | **Given** stock 10 or 12, **when** one line orders 6, **then** 400 `VALIDATION_ERROR`, nothing is saved. The same applies to quantity 6 or 10 for a sold-out or a disabled item (the request is rejected before stock is looked at). |
+| AC-150 | D-3 | **Given** stock 4, **when** 2 are ordered, **then** 201 and stock is 2; **when** 3 are ordered, **then** 409 `QUANTITY_LIMIT_EXCEEDED` with `details` `{ itemId, allowedMax: 2 }`, nothing is saved. **Given** stock 8, 4 is accepted (stock 4) and 5 is refused with `allowedMax` 4. |
+| AC-151 | D-4 | **Given** stock 3, **when** 1 is ordered, **then** 201 and stock is 2; **when** 2 are ordered, **then** 409 `QUANTITY_LIMIT_EXCEEDED` with `allowedMax` 1, nothing is saved. **Given** stock 2, 1 is accepted (stock 1) and 2 is refused with `allowedMax` 1. |
+| AC-152 | D-5 | **Given** stock 1, **when** 1 is ordered, **then** 201 and stock is 0 (the last unit can be bought). **Given** stock 0, **when** 1 is ordered, **then** 409 `ITEM_UNAVAILABLE`, nothing is saved. |
+| AC-153 | D-6 | **Given** a two-line order in which one line is within its maximum and the other is within its stock but above its maximum, **when** it is submitted, **then** 409 `QUANTITY_LIMIT_EXCEEDED` names the violating item, and nothing is saved, whichever line is processed first. When several lines fail, the response reports the first failing line in ascending `menuItemId` order. |
+| AC-154 | D-7 | **Given** stock 4, **when** two customers each order 2 at the same time, **then** exactly one gets 201, the other 409 `QUANTITY_LIMIT_EXCEEDED` with `allowedMax` 1, and stock ends at 2. **Given** stock 10 and two simultaneous orders of 5, one gets 201 and the other 409 with `allowedMax` 2; stock ends at 5. **Given** stock 2 and two simultaneous orders of 1, both get 201 and stock ends at 0. Stock is never negative. |
+| AC-155 | D-8 | **Given** a menu response, **when** the customer uses the card or cart steppers or presses Add repeatedly, **then** no quantity exceeds the item's `maxOrderQuantity` from the response, and the + control is disabled at that value. The screen takes the value from the response and does not compute it from stock. |
+| AC-156 | D-9 | **Given** stock 10, **when** the quantity is 0, -1, 1.5 or "2", **then** 400 `VALIDATION_ERROR`, nothing is saved. **Given** 10 items with stock 10, **when** one order has 10 lines of 5, **then** 201 and each stock is 5. |
+| AC-157 | precedence | **Given** a quantity from 1 to 5, **when** it is above the stock (stock 4 and 5; 3 and 4; 2 and 3; 1 and 2; 0 and 2) or the item is disabled, **then** 409 `ITEM_UNAVAILABLE` with its existing `details` `{ menuItemId, requested, available }`, even if the quantity is also above the maximum; nothing is saved. |
+| AC-159 | UI after 409 | **Given** a cart with two lines and a pickup note, **when** submission returns 409 `QUANTITY_LIMIT_EXCEEDED`, **then** the alert shows the message containing `allowedMax`, the named line is reduced to `allowedMax`, the other line and the note are kept, the screen does not navigate and the menu is reloaded; the line is reduced even if that reload fails. |
+| AC-160 | one rule | **Given** every stock from 0 to 30 and every quantity from 1 to 5, **when** the line is submitted to the real reservation, **then** it is accepted exactly when the stock is at least 1 and the quantity is at most `maxLineQuantity(stock)`. |
+
+**Unchanged:** AC-14 to AC-17, **AC-19**, AC-20, AC-23 to AC-31. AC-21 and AC-22 keep their wording and apply to a quantity from 1 to 5. A quantity of 6 or more is covered by revised AC-18, so "ordering more than the available stock returns 409" (AC-22) no longer holds for it: for example stock 8 and quantity 9 returns 400.
+
+#### Boundaries
+| Stock | Highest quantity accepted | Next quantity up | Response to it |
+|---|---|---|---|
+| 12 | 5 | 6 | 400 `VALIDATION_ERROR` |
+| 10 | 5 | 6 | 400 `VALIDATION_ERROR` |
+| 8 | 4 | 5 | 409 `QUANTITY_LIMIT_EXCEEDED`, `allowedMax` 4 |
+| 4 | 2 | 3 | 409 `QUANTITY_LIMIT_EXCEEDED`, `allowedMax` 2 |
+| 3 | 1 | 2 | 409 `QUANTITY_LIMIT_EXCEEDED`, `allowedMax` 1 (4 returns 409 `ITEM_UNAVAILABLE`) |
+| 2 | 1 | 2 | 409 `QUANTITY_LIMIT_EXCEEDED`, `allowedMax` 1 (3 returns 409 `ITEM_UNAVAILABLE`) |
+| 1 | 1 | 2 | 409 `ITEM_UNAVAILABLE` |
+| 0 | none | 1 | 409 `ITEM_UNAVAILABLE` |
+
+#### STS (revision)
+All tests below are **NOT RUN**. The new ones do not exist yet. In #78 they are written and seen failing before the implementation, where the old code can make them fail.
+
+| Test | AC | Level | Precondition and input | Action | Expected result |
+|---|---|---|---|---|---|
+| TEST-18 (revised) | AC-18 | Unit + Integration | Logged in `customer1` | POST with quantity 0, -1, 1.5, "2", 6, 11 | Each 400 `VALIDATION_ERROR`; order count 0; the schema unit test rejects the same values |
+| TEST-148 | AC-148 | API-DB | Item stock set to 10, then 12 | POST quantity 5 at each | 201 each; stock 5, then 7; the line stores quantity 5 and the server total is price × 5 |
+| TEST-149 | AC-149 | Unit + API-DB | Items with stock 10 and 12; the seeded sold-out and disabled items | Schema: parse 5 and 6. API: POST 6 at stock 10 and 12; POST 6 and 10 for the sold-out and the disabled item | Schema accepts 5 and rejects 6. Every POST: 400 `VALIDATION_ERROR`; order count 0; stock unchanged |
+| TEST-150 | AC-150 | API-DB | Stock reset to 4 or 8 before each request | At 4 POST 2 and 3; at 8 POST 4 and 5 | 2 and 4: 201, stock 2 and 4. 3 and 5: 409 `QUANTITY_LIMIT_EXCEEDED`, `details` exactly `{ itemId, allowedMax: 2 }` and `{ itemId, allowedMax: 4 }`, message contains the number and item name; stock unchanged; nothing saved |
+| TEST-151 | AC-151 | API-DB | Stock reset to 3 or 2 before each request | At each POST 1 and 2 | 1: 201, stock 2 and 1. 2: 409 `QUANTITY_LIMIT_EXCEEDED`, `allowedMax` 1; stock unchanged; nothing saved |
+| TEST-152 | AC-152 | API-DB | Stock 1; then stock 0 | POST 1 at each | Stock 1: 201, stock 0. Stock 0: 409 `ITEM_UNAVAILABLE`, `details` `{ menuItemId, requested: 1, available: 0 }`; nothing saved by that request |
+| TEST-153 | AC-153 | API-DB | Items A and B with id(A) below id(B). Cases (A stock, quantity; B stock, quantity): (a) 10, 2; 4, 3. (b) 4, 3; 10, 2. (c) 4, 3; 3, 2. (d) 4, 3; 0, 1 | POST both lines for each case | Each 409 `QUANTITY_LIMIT_EXCEEDED`; (a) names B with `allowedMax` 2; (b), (c), (d) name A with `allowedMax` 2. Both stocks unchanged; `Order`, `OrderItem`, `OrderStatusHistory` counts 0 |
+| TEST-154 | AC-154 | API-DB concurrency | Real PostgreSQL; `customer1` and `customer2`; one item reset before each attempt | At stock 4 send two orders of 2 with `Promise.all`; at stock 10 two of 5; at stock 2 two of 1. Repeat each 10 times | Stock 4: statuses 201 and 409, code `QUANTITY_LIMIT_EXCEEDED`, `allowedMax` 1, stock 2, one `OrderItem`. Stock 10: 201 and 409, `allowedMax` 2, stock 5. Stock 2: 201 and 201, stock 0. Never negative. #78 must make the two transactions overlap (the TEST-40 barrier is a precedent) and record that the test fails against a read-then-update variant |
+| TEST-155 | AC-155 | UI component | Menu mocked: (stock 12, max 5), (8, 4), (4, 2), (3, 1), (0, 0), and one item with stock 30 and `maxOrderQuantity` 3 | Press card +, Add (twice) and cart + for each orderable item | Card and cart never pass 5, 4, 2, 1 and 3; + disabled at the maximum; the max-0 item cannot be added. The 30/3 item proves the value comes from the response |
+| TEST-156 | AC-156 | API-DB | Item with stock 10; ten items with stock 10 (extra items created by the test) | POST 0, -1, 1.5, "2"; then one order of 10 lines of 5 | Four times 400 `VALIDATION_ERROR`, nothing saved. Ten-line order: 201, 10 `OrderItem` rows, each stock 5 |
+| TEST-157 | AC-157 | API-DB | (stock, quantity) = (4, 5), (3, 4), (2, 3), (1, 2), (0, 2); a disabled item with stock 10, quantities 1 and 5 | POST each | Each 409 `ITEM_UNAVAILABLE` with `details` `menuItemId`, `requested`, `available` (`available` = the stock for an enabled item, 0 when disabled); nothing saved |
+| TEST-159 | AC-159 | UI component | Cart: line A quantity 5 and line B quantity 1, with a note. `createOrder` mocked: 409 `QUANTITY_LIMIT_EXCEEDED` `{ itemId: A, allowedMax: 2 }`. Menu reload mocked (i) with A `maxOrderQuantity` 2, (ii) failing | Click "Place order" | Alert contains the server message with 2; A shows 2 and its cart + is disabled in (i); B stays 1; note kept; still on `/menu`; the menu fetch is called again; A is 2 in (ii) too |
+| TEST-160 | AC-160 | Unit + API-DB | Stock 0 to 30; quantity 1 to 5 | Unit: `maxLineQuantity(s)`. API-DB: for all 155 pairs reset the stock and submit through the production order service | Unit, for stock 0 to 30: 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, then 5 for 10 to 30. API-DB: accepted exactly when `s >= 1` and `q <= maxLineQuantity(s)`; a refusal is `ITEM_UNAVAILABLE` when `q > s` and otherwise `QUANTITY_LIMIT_EXCEEDED` with `allowedMax = maxLineQuantity(s)`. The test must not carry its own copy of the SQL |
+
+Planned test files: `backend/src/services/menuRules.test.ts` (TEST-160 unit), `backend/src/services/orderRules.test.ts` (TEST-18 unit, TEST-149 unit), a new `backend/tests/orders.quantityCap.test.ts` (TEST-148 to TEST-154, TEST-156, TEST-157, TEST-160 API-DB), `frontend/src/pages/Menu.test.tsx` (TEST-155, TEST-159).
+
+#### E2E change: `AC-21 / AC-30` journey (DEC-66 revises DEC-27; no new TEST ID)
+In `frontend/e2e/order.spec.ts`, each buy-out chunk changes from `Math.min(10, remaining)` to `min(5, max(1, floor(remaining / 2)))`. Each chunk still expects 201 and the other assertions are unchanged. The chunk never exceeds `remaining` while `remaining` is at least 1, so the loop ends at 0.
+
+| Request | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+|---|---|---|---|---|---|---|---|---|---|
+| Remaining before | 30 | 25 | 20 | 15 | 10 | 5 | 3 | 2 | 1 |
+| `floor(remaining / 2)` | 15 | 12 | 10 | 7 | 5 | 2 | 1 | 1 | 0 |
+| Chunk | 5 | 5 | 5 | 5 | 5 | 2 | 1 | 1 | 1 |
+| Remaining after | 25 | 20 | 15 | 10 | 5 | 3 | 2 | 1 | 0 |
+
+Sum: 5 × 5 + 2 + 1 + 1 + 1 = 30. A constant chunk of 5 would be refused at remaining 5 (maximum 2). The journey picks the orderable item with the smallest positive stock, and the seed has an item with stock 1, so it may never exercise the shrinking chunks; that arithmetic is covered by the table and TEST-160, not proven by this journey. Not run.
+
+#### Existing tests whose expected result or input changes (read, not run; to be confirmed in #78)
+| Test | Old | New | Reason |
+|---|---|---|---|
+| TEST-18, `orderRules.test.ts` and `orders.create.test.ts` | Rejected values 0, -1, 1.5, "2", 11 | 0, -1, 1.5, "2", **6**, 11 | AC-18 boundary moved from 10 to 5. The old list would still pass; 6 adds the new boundary |
+| `Menu.test.tsx` "Follow-up 5 … stockQty is below 10" (no TEST ID) | Stock 2: card reaches 2 after one +, then + and cart + disabled | Stock 2, `maxOrderQuantity` 1: card stays 1, + disabled at once, Add puts 1 in the cart, cart + disabled | AC-155 |
+| E2E `AC-21 / AC-30`, `order.spec.ts` | Chunk `min(10, remaining)` | Chunk `min(5, max(1, floor(remaining / 2)))` | DEC-66. May pass unchanged with the stock-1 seed item |
+
+TEST-19, TEST-22 and TEST-24 are **not** changed.
 
 ---
 
