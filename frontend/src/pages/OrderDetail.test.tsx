@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { OrderDetail } from "./OrderDetail";
 import { cancelOrder, fetchOrder, payOrder, type Order } from "../api/orders";
@@ -395,6 +395,88 @@ describe("OrderDetail simulated payment (AC-75)", () => {
       "Could not pay for this order. Please try again."
     );
     expect(button("Pay")).not.toBeNull();
+    expect(mockedFetchOrder).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("OrderDetail fulfilment progress (AC-86)", () => {
+  const STEPS = [
+    ["PENDING", "ACCEPTED", "Pending → Accepted"],
+    ["ACCEPTED", "PREPARING", "Accepted → Preparing"],
+    ["PREPARING", "READY", "Preparing → Ready"],
+    ["READY", "COMPLETED", "Ready → Completed"],
+  ] as const;
+
+  /** A paid order after `count` operator steps. */
+  function orderAfter(count: number): Order {
+    return {
+      ...SAMPLE_ORDER,
+      status: STEPS[count - 1][1],
+      paymentStatus: "PAID",
+      history: [
+        ...SAMPLE_ORDER.history,
+        ...STEPS.slice(0, count).map(([fromStatus, toStatus], index) => ({
+          fromStatus,
+          toStatus,
+          actorRole: "OPERATOR" as const,
+          createdAt: `2026-11-05T05:0${index + 1}:00.000Z`,
+        })),
+      ],
+    };
+  }
+
+  function expectTimeline(count: number) {
+    const entries = within(screen.getByRole("list")).getAllByRole("listitem");
+    expect(entries).toHaveLength(count + 1);
+    expect(entries[0].textContent).toContain("Order placed");
+    STEPS.slice(0, count).forEach(([, , text], index) => {
+      expect(entries[index + 1].textContent).toContain(text);
+      expect(entries[index + 1].textContent).toContain("OPERATOR");
+    });
+  }
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
+
+  it("TEST-86: a completed order shows Completed, the full timeline and no actions", async () => {
+    mockedFetchOrder.mockResolvedValue({ order: orderAfter(4) });
+    renderOrderDetail();
+
+    expect(await screen.findByText("Completed", { exact: true })).toBeTruthy();
+    expect(screen.getByText("Paid", { exact: true })).toBeTruthy();
+    expectTimeline(4);
+    expect(screen.queryByRole("button", { name: "Pay" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Cancel order" })).toBeNull();
+  });
+
+  it.each([
+    [2, "Preparing"],
+    [3, "Ready"],
+    [4, "Completed"],
+  ] as const)("TEST-86: after %i steps a load shows %s and the timeline", async (count, label) => {
+    mockedFetchOrder.mockResolvedValue({ order: orderAfter(count) });
+    renderOrderDetail();
+
+    expect(await screen.findByText(label, { exact: true })).toBeTruthy();
+    expectTimeline(count);
+  });
+
+  it("TEST-86: the page does not poll for new status (DEC-38)", async () => {
+    vi.useFakeTimers();
+    mockedFetchOrder.mockResolvedValue({ order: orderAfter(2) });
+    renderOrderDetail();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+    });
+
+    expect(screen.getByText("Preparing", { exact: true })).toBeTruthy();
     expect(mockedFetchOrder).toHaveBeenCalledTimes(1);
   });
 });
