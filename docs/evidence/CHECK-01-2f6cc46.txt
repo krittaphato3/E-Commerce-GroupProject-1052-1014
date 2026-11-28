@@ -1,0 +1,66 @@
+CHECK-01 Persistence after restart and redeploy (TEST-89, AC-89, NFR-06)
+Date (UTC): 2026-11-28
+Commit SHA: 2f6cc4667441ec149a5e8be62d1692aba23a4e0f (2f6cc46)
+Service: toktickit, region asia-southeast1, project cpe334-1014-1052
+URL: https://toktickit-lchsspl3sa-as.a.run.app
+Account: customer1 (password supplied by the team in the environment variable CHECK01_PASSWORD; not recorded)
+Run: restarted from step 1 so the record is continuous (an earlier attempt stopped at a failed login).
+No passwords, cookies or connection strings are recorded in this file.
+
+RESULT: PASS
+
+== Step 1: current revision and health (2026-11-28T09:30:11Z) ==
+$ gcloud run services describe toktickit --region asia-southeast1 --format="value(status.latestReadyRevisionName,status.traffic[0].revisionName,status.traffic[0].percent,spec.template.spec.containers[0].image)"
+toktickit-00008-4jv  toktickit-00008-4jv  100  asia-southeast1-docker.pkg.dev/cpe334-1014-1052/toktickit/toktickit@sha256:ba4e33a98a7b8e639b4b69a3b6f826fb4238ec79569ff7af19fc97cc8b65f017
+$ curl -s $URL/api/health
+{"status":"ok","version":"2f6cc46"}
+$ curl $URL/api/ready -> HTTP 200
+
+== Step 2: create one synthetic order as customer1 (2026-11-28T09:30:38Z) ==
+$ POST /api/auth/login (customer1)            -> HTTP 200, role CUSTOMER
+$ POST /api/orders {"items":[{"menuItemId":3,"quantity":1},{"menuItemId":4,"quantity":2}],"pickupNote":"CHECK-01 synthetic order"} -> HTTP 201
+$ GET /api/orders/16 (body, keys sorted):
+{"order":{"createdAt":"2026-11-28T09:30:38.573Z","history":[{"actorRole":"CUSTOMER","createdAt":"2026-11-28T09:30:38.573Z","fromStatus":null,"toStatus":"PENDING"}],"id":16,"items":[{"itemName":"Fried Rice with Egg","lineTotalSatang":5500,"menuItemId":3,"quantity":1,"unitPriceSatang":5500},{"itemName":"Thai Iced Tea","lineTotalSatang":6000,"menuItemId":4,"quantity":2,"unitPriceSatang":3000}],"orderNumber":"CB-000016","paymentStatus":"UNPAID","pickupNote":"CHECK-01 synthetic order","status":"PENDING","totalSatang":11500,"updatedAt":"2026-11-28T09:30:38.573Z"}}
+$ GET /api/menu stockQty before the order (id, stockQty):
+[{"id":1,"stockQty":30},{"id":2,"stockQty":25},{"id":3,"stockQty":30},{"id":4,"stockQty":50},{"id":5,"stockQty":1},{"id":6,"stockQty":0},{"id":7,"stockQty":20}]
+$ GET /api/menu stockQty after the order:
+[{"id":1,"stockQty":30},{"id":2,"stockQty":25},{"id":3,"stockQty":29},{"id":4,"stockQty":48},{"id":5,"stockQty":1},{"id":6,"stockQty":0},{"id":7,"stockQty":20}]
+Stock effect: item 3 30 -> 29, item 4 50 -> 48.
+
+== Step 3: restart (forced new revision of the same image) ==
+$ gcloud run services update toktickit --region asia-southeast1 --update-labels=check01=20261128t093052z
+Revision toktickit-00009-xdb has been deployed and is serving 100 percent of traffic.
+
+== Step 4: after restart ==
+Serving revision: toktickit-00009-xdb (100%), differs from toktickit-00008-4jv
+Image digest: sha256:ba4e33a98a7b8e639b4b69a3b6f826fb4238ec79569ff7af19fc97cc8b65f017 (unchanged)
+GET /api/health: {"status":"ok","version":"2f6cc46"}
+Login again as customer1: HTTP 200
+GET /api/orders/16 compared with step 2 (diff of key-sorted JSON): IDENTICAL
+GET /api/menu stockQty compared with step 2 (diff): IDENTICAL
+
+== Step 5: redeploy (Deploy demo, main, rollback=false) ==
+$ gh workflow run "Deploy demo" --ref main -f rollback=false
+Run: https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/actions/runs/46130862230
+Head SHA: 2f6cc4667441ec149a5e8be62d1692aba23a4e0f; conclusion: success (test-and-docker success, Deploy demo success; completed 2026-11-28T09:36:00Z)
+
+== Step 6: after redeploy ==
+Serving revision: toktickit-00010-wj6 (100%, created 2026-11-28T09:35:39Z), differs from toktickit-00009-xdb
+Image digest: sha256:5c5e88468ab80d6b9382f1efe4f8f7a37e73d68cd1b4e346f97d79196afbabe0 (rebuilt from the same commit)
+GET /api/health: {"status":"ok","version":"2f6cc46"}
+Login again as customer1: HTTP 200
+GET /api/orders/16 compared with step 2 (diff of key-sorted JSON): IDENTICAL
+GET /api/menu stockQty compared with step 2 (diff): IDENTICAL
+
+== Pass conditions (features.md, CHECK-01) ==
+- Order body identical at steps 4 and 6 (id, order number, status, payment status, items, total, history): YES
+- Stock values identical at steps 4 and 6: YES
+- Same account can log in at steps 4 and 6: YES
+- Revision name differs from the one before (step 4: 00009-xdb vs 00008-4jv; step 6: 00010-wj6 vs 00009-xdb): YES
+
+== Finding ==
+- The 401 observations below were made by the team from a local terminal, outside the scripted CHECK-01 run.
+- On 2026-11-28 login as operator1, customer1 and customer2 using the current Secret Manager values (toktickit-admin-password, toktickit-demo-password, one version each, created 2026-11-22) returned HTTP 401 INVALID_CREDENTIALS.
+- The migration job toktickit-migrate is configured with SEED_DEMO_DATA=true and mounts both secrets; the seed is create-only, so existing users keep their stored password hash.
+- Conclusion: the stored password hashes do not match the current secret values. The cause is unconfirmed. docs/labs/lab-05/deployment.md section 10 ("read the password from Secret Manager") is therefore not reliable for these accounts.
+- CHECK-01 was run with a working customer1 password supplied by the team through an environment variable.
