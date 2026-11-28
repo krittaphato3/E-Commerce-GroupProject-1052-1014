@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/system-sds.md` |
-| Version | 1.6 |
+| Version | 1.7 |
 | Date | 2026-11-28 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/sprint-2/features.md`, `docs/sprints/plan.md` |
 
@@ -17,6 +17,7 @@
 | 1.4 | 2026-11-10 | Correct the `DATABASE_URL` and `TEST_DATABASE_URL` examples to match `backend/.env.example`, and note that `GET /api/health` currently reports the literal `1.0.0` while the git SHA is wired in during Lab 5 | Documentation audit: the configuration table contradicted the shipped `.env.example` and the release-identification plan overstated what Sprint 1 returns (Issue #16) |
 | 1.5 | 2026-11-27 | Endpoint summary lists the seven Sprint 2 endpoints and the permission matrix splits their rows, all marked "Sprint 2 — planned" | Sprint 2 contracts (Issue #53); nothing is implemented yet |
 | 1.6 | 2026-11-28 | `POST /api/orders/:id/cancel` and the "Cancel own `PENDING` order" permission row are marked implemented | F-06 (Issue #55) |
+| 1.7 | 2026-11-28 | `POST /api/orders/:id/pay` and its permission matrix row are marked implemented | F-07 (Issue #56) |
 
 ---
 
@@ -230,7 +231,7 @@ Header: shop name, links by role, display name and role badge, Logout button. Af
 | `POST /api/menu-items` | Operator | F-05 | Sprint 2 — planned |
 | `PATCH /api/menu-items/:id` | Operator | F-05 | Sprint 2 — planned |
 | `POST /api/orders/:id/cancel` | Customer (owner) | F-06 | 2 |
-| `POST /api/orders/:id/pay` | Customer (owner) | F-07 | Sprint 2 — planned |
+| `POST /api/orders/:id/pay` | Customer (owner) | F-07 | 2 |
 | `POST /api/orders/:id/start` | Operator | F-08 | Sprint 2 — planned |
 | `POST /api/orders/:id/ready` | Operator | F-08 | Sprint 2 — planned |
 | `POST /api/orders/:id/complete` | Operator | F-08 | Sprint 2 — planned |
@@ -254,7 +255,7 @@ Header: shop name, links by role, display name and role badge, Logout button. Af
 | Create/edit/enable/disable menu item | — | — | Y | Sprint 2 — planned |
 | Cancel own `PENDING` order | — | Own, `PENDING` only | — | 2 |
 | Cancel `ACCEPTED` order | — | — | Any `ACCEPTED` | 3 |
-| Pay order (simulated) | — | Own, `ACCEPTED` and `UNPAID` | — | Sprint 2 — planned |
+| Pay order (simulated) | — | Own, `ACCEPTED` and `UNPAID` | — | 2 |
 | Start / ready / complete | — | — | Y (start needs `PAID`) | Sprint 2 — planned |
 | Reject order | — | — | Y | 3 |
 | Sales summary | — | — | Y | 3 |

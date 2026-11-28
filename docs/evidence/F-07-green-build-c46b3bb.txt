@@ -1,0 +1,41 @@
+# F-07 GREEN evidence (typecheck and build) — tested at commit c46b3bb
+# Run: 2026-11-28 14:16 +0700; real PostgreSQL test database
+
+## npm run typecheck
+
+> campusbites@1.0.0 typecheck
+> npm run typecheck --workspaces
+
+
+> campusbites-backend@1.0.0 typecheck
+> tsc --noEmit
+
+
+> campusbites-frontend@1.0.0 typecheck
+> tsc --noEmit
+
+exit code: 0
+
+## npm run build
+
+> campusbites@1.0.0 build
+> npm run build --workspaces
+
+
+> campusbites-backend@1.0.0 build
+> tsc -p tsconfig.json
+
+
+> campusbites-frontend@1.0.0 build
+> tsc && vite build
+
+vite v6.4.5 building for production...
+transforming...
+✓ 46 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.39 kB │ gzip:  0.27 kB
+dist/assets/index-BL5QWnkG.css  231.14 kB │ gzip: 30.69 kB
+dist/assets/index-D3hcs6IH.js   195.87 kB │ gzip: 61.55 kB
+✓ built in 394ms
+exit code: 0
