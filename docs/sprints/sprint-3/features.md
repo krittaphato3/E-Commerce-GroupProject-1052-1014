@@ -528,6 +528,138 @@ In addition to the Product Definition of Done:
 
 ---
 
+## 10. F-12 — Operator Cancellation and Refund (Engineering Contract)
+
+| Item | Value |
+|---|---|
+| Feature | F-12 Operator cancellation and refund |
+| Requirements | FR-17, BR-06, BR-10, BR-05, BR-15 |
+| Sprint | 3 |
+| Depends on | F-07, F-08 |
+| Contract version | 1.0 (2026-11-28) |
+| Status | planned |
+| Issue / branch | issue to be opened / `feature/F-12-operator-cancel` |
+
+### Revision history
+| Version | Date | Change | Reason |
+|---|---|---|---|
+| 1.0 | 2026-11-28 | Initial contract, status planned | Before implementation |
+
+### 1. Feature design
+
+**Behavior.** An Operator cancels an `ACCEPTED` order before preparation starts. The order becomes `CANCELLED`, reserved stock is restored and a history entry is written, in one transaction. If the order was `PAID` it becomes `REFUNDED` (simulated: no money moves); if it was `UNPAID` it stays `UNPAID`.
+
+**State and payment transitions added.**
+```mermaid
+stateDiagram-v2
+    ACCEPTED --> CANCELLED: cancel (Operator)
+    CANCELLED --> [*]
+```
+```mermaid
+stateDiagram-v2
+    PAID --> REFUNDED: Operator cancels the order
+```
+
+**Who may cancel what.** `orderStateMachine.ts` gains `ACCEPTED → CANCELLED`. The table alone no longer says who may cancel, so the same file also gets the two role rules and no other file repeats them (DEC-50):
+- Customer cancel is allowed only from `PENDING` (BR-10).
+- Operator cancel is allowed only from `ACCEPTED` (FR-17).
+
+Both rules fail with the same 409 `INVALID_TRANSITION` and `{ from, to: "CANCELLED" }`. The Customer cancel endpoint keeps calling `assertTransition` (TEST-63 depends on it) and then applies the Customer rule. From `PREPARING`, `READY` and `COMPLETED` nobody can cancel (BR-10).
+
+**Workflow (`POST /api/orders/:id/operator-cancel`).**
+1. Authenticate (401), require role `OPERATOR` (403). Validate `:id` (400).
+2. In one transaction load the status and lines (ascending `menuItemId`): missing → 404.
+3. `assertTransition` and the Operator rule → 409.
+4. **One atomic statement** updates the row only where `id` matches and `status = ACCEPTED`, setting `status = CANCELLED` and `paymentStatus = REFUNDED` if it is `PAID` at that moment, otherwise leaving it unchanged. It must not decide the refund from the earlier read, because a payment can commit in between (DEC-51). Zero rows → re-read and return 409.
+5. Restore stock with atomic increments in ascending `menuItemId` order.
+6. Insert history `ACCEPTED → CANCELLED`, actor = the Operator, role `OPERATOR`, `note` null.
+7. Commit and return 200. Any failure rolls back steps 4 to 6.
+
+**Validation.** `:id` only. No body and no reason; FR-17 asks for none. A body is ignored, as for accept.
+
+**Permissions.** Operator only. The Customer endpoint `/cancel` is unchanged and still Customer only.
+
+**Failure and boundary cases.**
+- From `PENDING` (use Reject instead), `PREPARING`, `READY`, `COMPLETED`, `REJECTED` or `CANCELLED`: 409, nothing changes; a repeated cancel restores nothing (AC-128, AC-129).
+- Cancel against start preparing: exactly one wins (AC-130).
+- Cancel against customer payment: the order never ends `CANCELLED` and `PAID` (AC-131).
+- Stock is restored to disabled items, which stay disabled (DEC-34).
+
+### 2. API specification
+
+#### `POST /api/orders/:id/operator-cancel` (Operator)
+| Item | Spec |
+|---|---|
+| Role / ownership | `OPERATOR`; no ownership rule |
+| Request | No body |
+| 200 | `{ "order": { ...order detail with customer... } }` with `status` `CANCELLED` and `paymentStatus` `REFUNDED` or `UNPAID` |
+| 400 / 401 / 403 | `VALIDATION_ERROR` (bad `:id`) / `UNAUTHENTICATED` / `FORBIDDEN` (Customer) |
+| 404 | `NOT_FOUND` |
+| 409 | `INVALID_TRANSITION`; `details: { "from": "<current status>", "to": "CANCELLED" }` |
+
+A separate path keeps the Customer endpoint and its tests unchanged (DEC-50). **Registry:** add the route with `[OPERATOR]`; update TEST-43 and TEST-92 as in §2.1.
+
+### 3. UI specification
+| Element | Behavior |
+|---|---|
+| `/operator/orders` `ACCEPTED` row | **Cancel order** button, paid or unpaid, beside **Start preparing** or "Awaiting payment" |
+| Confirmation | Inline: "Cancel this order?" for unpaid, "Cancel this order and refund the payment (simulated)?" for paid, with **Yes, cancel** and **Keep order** |
+| Pending | "Cancelling…"; both buttons and that row's **Start preparing** are disabled |
+| Success | The row shows "Cancelled" and "Refunded" or "Unpaid", with no action; the list reloads if the filter no longer matches |
+| 409 | Alert "This order can no longer be cancelled." and the list reloads |
+| Other errors | The API message below 500, else "Could not cancel this order. Please try again." |
+| Order detail | Shows the "Cancelled" badge, the "Refunded" payment badge and the history entry. No new control; no Pay button |
+| Loading / empty / error | Existing states |
+
+### 4. Data specification
+| Layer | Change |
+|---|---|
+| Prisma schema | **No change.** `PaymentStatus.REFUNDED` exists; no refund table or refund time (DEC-51) |
+| Constraints, indexes, migration, seed | **No change; no migration** |
+
+### 5. Acceptance criteria
+
+| AC | Statement |
+|---|---|
+| AC-124 | An Operator cancelling an `ACCEPTED`, `UNPAID` order gets 200; the database shows `CANCELLED`, `UNPAID` and one new history row (`ACCEPTED → CANCELLED`, that Operator, role `OPERATOR`). |
+| AC-125 | Cancelling an `ACCEPTED`, `PAID` order sets `CANCELLED` and `REFUNDED` together; the total and lines are unchanged. |
+| AC-126 | Stock rises by exactly the ordered quantities, including disabled items, which stay disabled. |
+| AC-127 | The state machine allows `ACCEPTED → CANCELLED`; the Customer rule allows cancel only from `PENDING` and the Operator rule only from `ACCEPTED`; no cancel is possible from `PREPARING`, `READY`, `COMPLETED`, `REJECTED` or `CANCELLED`. |
+| AC-128 | Operator cancel from any status other than `ACCEPTED` (including `PENDING` and a second cancel) returns 409; status, payment status, stock and history are unchanged. |
+| AC-129 | The Customer endpoint still returns 409 for the owner's `ACCEPTED` order, paid or unpaid, and changes nothing. |
+| AC-130 | When Operator cancel races start preparing on a paid order, exactly one gets 200; the status, payment status, stock and history match the winner. |
+| AC-131 | When Operator cancel races the owner's payment, the order ends `CANCELLED` with either `REFUNDED` (payment won first, both 200) or `UNPAID` (payment got 409); it is never `CANCELLED` and `PAID`, and stock is restored once. |
+| AC-132 | A Customer gets 403 with no order data, anonymous 401, missing order 404, non-numeric id 400; nothing changes. |
+| AC-133 | If writing the history row fails, the response is 500 and status, payment status, stock and history are unchanged. |
+| AC-134 | In the UI Cancel order appears only on `ACCEPTED` rows, confirms with the matching text, shows a pending state, shows the new badges, and handles 409 and other errors; the order detail shows "Cancelled" and "Refunded". |
+| AC-135 | In the UI a Customer orders and pays, an Operator cancels, the Customer sees "Cancelled" and "Refunded", and the menu stock is restored. |
+
+### 6. Software Test Specification (STS)
+
+| Test | AC | Level | Precondition and input | Action | Expected result | Planned file::test name |
+|---|---|---|---|---|---|---|
+| TEST-124 | AC-124 | API-DB | Accepted unpaid order | Operator cancels; read DB and GET | As in AC-124 | `backend/tests/orders.operatorCancel.test.ts::TEST-124` |
+| TEST-125 | AC-125 | API-DB | Accepted paid order | Same | `CANCELLED`, `REFUNDED`; amounts unchanged | `backend/tests/orders.operatorCancel.test.ts::TEST-125` |
+| TEST-126 | AC-126 | API-DB | Two lines; one item then disabled | Cancel; read all stock | Exact increments; flags unchanged | `backend/tests/orders.operatorCancel.test.ts::TEST-126` |
+| TEST-127 | AC-127 | Unit | None | Table-driven state machine and both role rules over all 7 statuses | As in AC-127 | `backend/src/services/orderStateMachine.test.ts::TEST-127` |
+| TEST-128 | AC-128 | API-DB | Orders in the 6 non-`ACCEPTED` statuses (the second cancel reached by a first one) | Operator cancel on each | All 409 with `details.from`; nothing changes | `backend/tests/orders.operatorCancel.test.ts::TEST-128` |
+| TEST-129 | AC-129 | API-DB | Owner's accepted unpaid and accepted paid orders | Owner calls `/cancel` on each | Both 409 with `details`; nothing changes | `backend/tests/orders.operatorCancel.test.ts::TEST-129` |
+| TEST-130 | AC-130 | API-DB | Paid accepted order | Cancel and start behind a barrier; 10 times | One winner; data matches it | `backend/tests/orders.operatorCancel.test.ts::TEST-130` |
+| TEST-131 | AC-131 | API-DB | Unpaid accepted order | Cancel and pay with `Promise.all`, 10 times; plus a forced run where payment commits after the cancel's read | Only the two allowed outcomes; forced run ends `REFUNDED` | `backend/tests/orders.operatorCancel.test.ts::TEST-131` |
+| TEST-132 | AC-132 | API-DB | `customer1`'s accepted order | Customer, anonymous, id 99999, id `abc` | 403, 401, 404, 400; nothing changes | `backend/tests/orders.operatorCancel.test.ts::TEST-132` |
+| TEST-133 | AC-133 | API-DB | Paid accepted order; trigger raises on `CANCELLED` history insert | Cancel | 500; order still `ACCEPTED` and `PAID`; stock unchanged | `backend/tests/orders.operatorCancel.test.ts::TEST-133` |
+| TEST-134 | AC-134 | UI component | API client mocked | Rows in all statuses; confirm, keep, success, 409, 500; render a refunded order detail | As in AC-134 | `frontend/src/pages/OperatorOrders.test.tsx::TEST-134`; `frontend/src/pages/OrderDetail.test.tsx::TEST-134` |
+| TEST-135 | AC-135 | E2E | Seeded database | Order, accept, pay, operator cancel, customer view | As in AC-135 | `frontend/e2e/operator-cancel.spec.ts::TEST-135` |
+
+### 7. Definition of Done (feature-specific)
+In addition to the Product Definition of Done:
+- TEST-124 to TEST-135 executed and passing; TEST-43, TEST-92 pass with the new route; TEST-60, TEST-81 and TEST-86 are changed only as listed in §2.1; TEST-61 and TEST-63 pass unchanged.
+- **TDD evidence** for TEST-125 (refund) and TEST-131 (cancel against payment).
+- Screenshots: confirmation, refunded order for both roles, stock before and after.
+- Traceability rows FR-17, BR-06 and BR-10 updated.
+
+---
+
 ## 13. Decisions and open questions
 
 These continue the decision numbering (last used: DEC-42). The SRS and SDS do not settle these points; each takes the simplest option consistent with the current code. Status of all entries: **proposed**, confirmed by merging the contracts PR for Issue #59.
@@ -541,6 +673,8 @@ These continue the decision numbering (last used: DEC-42). The SRS and SDS do no
 | DEC-47 | Date filters are inclusive Asia/Bangkok calendar days applied to `createdAt`. | SRS A-03 stores UTC and shows Bangkok time. | F-10, F-11 | 2026-11-28 |
 | DEC-48 | Order number search is exact on the id behind `CB-nnnnnn`; customer name search is a case-insensitive substring of `displayName`. No new index. | The order number is derived from the id (BR-14); data volume is small. | F-10 | 2026-11-28 |
 | DEC-49 | The report is `GET /api/reports/sales`. A sale is a `PAID` order, dated by placement. Status counts cover all orders; top items are the 5 largest by quantity among sales. | No paid time is stored (DEC-35); refunded and unpaid orders are not income. | F-11 | 2026-11-28 |
+| DEC-50 | Operator cancel is a separate `POST /api/orders/:id/operator-cancel` with no body or reason. `orderStateMachine.ts` holds the transition and the two per-role cancel rules. | The Customer endpoint is Customer only and tested (DEC-33, TEST-65, TEST-92); FR-17 asks for no reason. | F-12 | 2026-11-28 |
+| DEC-51 | A refund only changes `paymentStatus` from `PAID` to `REFUNDED`, in the same atomic statement that cancels. No refund record. | Payment is simulated and stored only as a status (DEC-35). One statement closes the race with payment. | F-12 | 2026-11-28 |
 
 ### Open questions for the team
 
