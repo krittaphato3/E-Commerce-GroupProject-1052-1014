@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/change-register.md` |
-| Version | 1.0 |
+| Version | 1.1 |
 | Date | 2026-11-28 |
 | Related | `docs/traceability.md` (§6 approved changes), `docs/srs.md`, `docs/sprints/sprint-3/features.md`, `docs/sprints/sprint-3/release-readiness.md` |
 
@@ -11,6 +11,7 @@
 | Version | Date | Change | Reason |
 |---|---|---|---|
 | 1.0 | 2026-11-28 | Initial register: FND-01, FND-02, Issue #49, CHG-01, CHG-02, DEF-01, approved baseline revisions CHG-03 to CHG-06, and the Sprint 1 continuity record | Deliverable 2, Parts A and D (Issue #60) |
+| 1.1 | 2026-11-28 | Added CHG-07 (CR-01, BR-01 per-line cap 10 → 5) to §2 as proposed, not approved | Lab 7 change request (Issue #76) |
 
 Only items with evidence in this repository, its Issues or its pull requests are listed. Findings from Lab 6 or Lab 7 that are not recorded there are not included.
 
@@ -37,6 +38,9 @@ Only items with evidence in this repository, its Issues or its pull requests are
 | CHG-04 | 2026-11-28 | BR-06; AC-60, AC-81; TEST-43, TEST-92, TEST-81, TEST-86, TEST-60 | Sprint 3 extends transition and route facts that earlier tests pin (AC-95 and AC-127 extend AC-60 and AC-81). Each earlier test change is listed with its new value in the Sprint 3 contract §2.1. The Sprint 2 contract text is not rewritten | The Sprint 3 requirements change those facts; naming each change keeps it separate from weakening a test (DEC-45) | PR #71 approved; F-09 type-only addition (contract revision 1.1) in PR [#72](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/pull/72), approved 2026-11-28 | F-09 rows applied and passing at `15ea606`; F-11 and F-12 rows not yet applied |
 | CHG-05 | 2026-11-28 | Order detail response (F-03, F-04 API); FR-14 | Every history entry in order detail gains `note` (string or null), which carries the rejection reason | The `OrderStatusHistory.note` column already exists and the customer must see the reason (DEC-43) | PR #71 and PR #72 approved | Implemented on `sprint-3-staging`; TEST-93 and TEST-103 PASS |
 | CHG-06 | 2026-11-28 | FR-07, FR-08 list endpoints; System SDS §4 | The 200-row list limit is to be replaced by page-number pagination when F-10 is built | The System SDS already states that pagination arrives with F-10 (DEC-46) | PR #71 approved | Approved, **not implemented**; lists still return at most 200 rows |
+| CHG-07 | 2026-11-28 | CR-01: BR-01 per-line cap 10 → 5; F-03; AC-18, AC-19; TEST-18, TEST-19 | Proposed: each order line has an integer quantity from 1 to 5 (was 1 to 10). Lines per order stay 1 to 10, with no duplicate item. Record: [CR-01](labs/lab-07/CR-01-change-request.md) | Limit stock-hoarding of low-stock items so that more customers can order popular items (synthetic business-owner request for Lab 7) | None recorded. Approval is to be recorded as a comment on Issue [#76](https://github.com/krittaphato3/E-Commerce-GroupProject-1052-1014/issues/76) | Proposed, awaiting instructor/TA approval (Issue #76) |
+
+**CHG-07 is a proposal.** The section heading and the statements above about approval and mirroring in `docs/traceability.md` §6 do not yet apply to it. It is not mirrored there, and no requirement, contract or code has been changed for it.
 
 Detailed Sprint 2 and Sprint 3 acceptance criteria (AC-47 to AC-147) and decisions DEC-28 to DEC-57 elaborate allocated requirements. They are recorded in the sprint contracts and are not repeated here.
 
