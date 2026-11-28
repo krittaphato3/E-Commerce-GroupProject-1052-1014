@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/system-sds.md` |
-| Version | 1.7 |
+| Version | 1.8 |
 | Date | 2026-11-28 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/sprint-2/features.md`, `docs/sprints/plan.md` |
 
@@ -18,6 +18,7 @@
 | 1.5 | 2026-11-27 | Endpoint summary lists the seven Sprint 2 endpoints and the permission matrix splits their rows, all marked "Sprint 2 — planned" | Sprint 2 contracts (Issue #53); nothing is implemented yet |
 | 1.6 | 2026-11-28 | `POST /api/orders/:id/cancel` and the "Cancel own `PENDING` order" permission row are marked implemented | F-06 (Issue #55) |
 | 1.7 | 2026-11-28 | `POST /api/orders/:id/pay` and its permission matrix row are marked implemented | F-07 (Issue #56) |
+| 1.8 | 2026-11-28 | `POST /api/orders/:id/start`, `/ready`, `/complete` and the "Start / ready / complete" permission row are marked implemented; the `/operator/orders` screen row names the payment badge and fulfilment actions | F-08 (Issue #57) |
 
 ---
 
@@ -173,7 +174,7 @@ Money is stored as integer satang. The UI formats it as THB (for example `6000` 
 | `/menu` | Menu with cart and order form | Anonymous (view); Customer (order) | 1 |
 | `/orders` | My orders list | Customer | 1 |
 | `/orders/:id` | Order detail with items, totals, history | Customer (own), Operator (any) | 1 |
-| `/operator/orders` | Incoming orders table with status filter and Accept | Operator | 1 |
+| `/operator/orders` | Incoming orders table with status filter, payment badge, Accept and fulfilment actions | Operator | 1, 2 |
 | `/operator/menu` | Catalog management | Operator | 2 |
 | `/operator/reports` | Sales summary | Operator | 3 |
 
@@ -232,9 +233,9 @@ Header: shop name, links by role, display name and role badge, Logout button. Af
 | `PATCH /api/menu-items/:id` | Operator | F-05 | Sprint 2 — planned |
 | `POST /api/orders/:id/cancel` | Customer (owner) | F-06 | 2 |
 | `POST /api/orders/:id/pay` | Customer (owner) | F-07 | 2 |
-| `POST /api/orders/:id/start` | Operator | F-08 | Sprint 2 — planned |
-| `POST /api/orders/:id/ready` | Operator | F-08 | Sprint 2 — planned |
-| `POST /api/orders/:id/complete` | Operator | F-08 | Sprint 2 — planned |
+| `POST /api/orders/:id/start` | Operator | F-08 | 2 |
+| `POST /api/orders/:id/ready` | Operator | F-08 | 2 |
+| `POST /api/orders/:id/complete` | Operator | F-08 | 2 |
 | `POST /api/orders/:id/reject`, reports, operator cancel | Operator | F-09, F-11, F-12 | 3 |
 
 ## 5. Role and permission matrix
@@ -256,7 +257,7 @@ Header: shop name, links by role, display name and role badge, Logout button. Af
 | Cancel own `PENDING` order | — | Own, `PENDING` only | — | 2 |
 | Cancel `ACCEPTED` order | — | — | Any `ACCEPTED` | 3 |
 | Pay order (simulated) | — | Own, `ACCEPTED` and `UNPAID` | — | 2 |
-| Start / ready / complete | — | — | Y (start needs `PAID`) | Sprint 2 — planned |
+| Start / ready / complete | — | — | Y (start needs `PAID`) | 2 |
 | Reject order | — | — | Y | 3 |
 | Sales summary | — | — | Y | 3 |
 

@@ -1,0 +1,37 @@
+# F-08 API transcript — commit 7571373
+# Run: 2026-11-28 14:33 +0700; local API on the freshly seeded test database; passwords and session cookies not printed
+
+customer1 (owner)  POST /api/orders              -> 201, order id 1, PENDING
+operator1          POST /api/orders/1/accept     -> 200, ACCEPTED
+customer1 (owner)  GET  /api/orders/1            -> 200, status ACCEPTED, paymentStatus UNPAID, history rows 2
+
+## TEST-80 behaviour (AC-80, BR-09): an unpaid order cannot start preparing
+operator1          POST /api/orders/1/start      -> 409
+  {"error":{"code":"INVALID_TRANSITION","message":"Order must be paid before preparation can start.","details":{"from":"ACCEPTED","to":"PREPARING","paymentStatus":"UNPAID"}}}
+customer1 (owner)  GET  /api/orders/1            -> 200, status ACCEPTED, paymentStatus UNPAID, history rows 2 (unchanged)
+
+## AC-84: a Customer, even the owner of a paid order, gets 403 on /start
+customer1 (owner)  POST /api/orders/1/pay        -> 200, PAID
+customer1 (owner)  POST /api/orders/1/start      -> 403
+  {"error":{"code":"FORBIDDEN","message":"You do not have permission to perform this action"}}
+customer1 (owner)  GET  /api/orders/1            -> 200, status ACCEPTED, paymentStatus PAID, history rows 2 (not started)
+
+## Automated test, same commit
+# Filtered with -t "TEST-80": the 6 cases marked skipped are only excluded by this filter.
+# They all run and pass in F-08-green-7571373.txt.
+
+ RUN  v3.2.7 <repo>/backend
+
+ ↓ tests/orders.fulfilment.test.ts > F-08 Fulfilment Workflow (AC-77 to AC-84) > TEST-77: starting a paid ACCEPTED order gives PREPARING with one OPERATOR history row
+ ↓ tests/orders.fulfilment.test.ts > F-08 Fulfilment Workflow (AC-77 to AC-84) > TEST-78: marking a PREPARING order ready gives READY with one new history row
+ ↓ tests/orders.fulfilment.test.ts > F-08 Fulfilment Workflow (AC-77 to AC-84) > TEST-79: completing a READY order gives COMPLETED with one new history row
+ ✓ tests/orders.fulfilment.test.ts > F-08 Fulfilment Workflow (AC-77 to AC-84) > TEST-80: starting an ACCEPTED, UNPAID order is 409 and nothing changes 81ms
+ ↓ tests/orders.fulfilment.test.ts > F-08 Fulfilment Workflow (AC-77 to AC-84) > TEST-82: every endpoint rejects a paid order in each wrong status (18 cases)
+ ↓ tests/orders.fulfilment.test.ts > F-08 Fulfilment Workflow (AC-77 to AC-84) > TEST-83: two operators making the same step behind a barrier give one 200, one 409 and one history row, 10 times per endpoint
+ ↓ tests/orders.fulfilment.test.ts > F-08 Fulfilment Workflow (AC-77 to AC-84) > TEST-84: owner and other customer 403, anonymous 401, missing 404, bad id 400; nothing changes
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 6 skipped (7)
+   Start at  14:33:51
+   Duration  339ms (transform 62ms, setup 11ms, collect 150ms, tests 82ms, environment 0ms, prepare 30ms)
+
