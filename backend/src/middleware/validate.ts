@@ -91,6 +91,13 @@ export const orderPaymentSchema = z
 
 export type OrderPaymentBody = z.infer<typeof orderPaymentSchema>;
 
+// BR-12: a rejection needs a reason of 5 to 200 characters, measured after trimming (DEC-43).
+export const orderRejectSchema = z
+  .object({ reason: z.string().trim().min(5).max(200) })
+  .strict();
+
+export type OrderRejectBody = z.infer<typeof orderRejectSchema>;
+
 /** Parses a positive integer route parameter, returning null when it is not one. */
 export function parsePositiveIntegerParam(value: string | undefined): number | null {
   if (!value || !/^\d+$/.test(value)) {

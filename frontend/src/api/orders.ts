@@ -24,6 +24,8 @@ export interface OrderHistoryEntry {
   toStatus: OrderStatus;
   actorRole: "CUSTOMER" | "OPERATOR";
   createdAt: string;
+  /** The rejection reason; null on every other entry. */
+  note: string | null;
 }
 
 export interface Order {
@@ -81,6 +83,13 @@ export function fetchOperatorOrders(
 
 export function acceptOrder(id: number): Promise<{ order: Order }> {
   return apiRequest<{ order: Order }>(`/api/orders/${id}/accept`, { method: "POST" });
+}
+
+export function rejectOrder(id: number, reason: string): Promise<{ order: Order }> {
+  return apiRequest<{ order: Order }>(`/api/orders/${id}/reject`, {
+    method: "POST",
+    body: { reason },
+  });
 }
 
 export function cancelOrder(id: number): Promise<{ order: Order }> {

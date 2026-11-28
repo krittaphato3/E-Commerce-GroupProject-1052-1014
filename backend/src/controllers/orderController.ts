@@ -5,6 +5,7 @@ import {
   parsePositiveIntegerParam,
   type OrderCreateBody,
   type OrderPaymentBody,
+  type OrderRejectBody,
 } from "../middleware/validate.js";
 import { orderService } from "../services/orderService.js";
 
@@ -77,6 +78,20 @@ export async function payOrder(req: Request, res: Response): Promise<void> {
 
   const { amountSatang } = req.body as OrderPaymentBody;
   const order = await orderService.pay(orderId, req.user!.id, amountSatang);
+  res.status(200).json({ order });
+}
+
+/** POST /api/orders/:id/reject — Operator only, with a reason (FR-14, AC-93..101). */
+export async function rejectOrder(req: Request, res: Response): Promise<void> {
+  const rawId = req.params.id;
+  const orderId = parsePositiveIntegerParam(typeof rawId === "string" ? rawId : undefined);
+
+  if (orderId === null) {
+    throw new AppError(400, "VALIDATION_ERROR", "Order id must be a positive integer");
+  }
+
+  const { reason } = req.body as OrderRejectBody;
+  const order = await orderService.reject(orderId, req.user!.id, reason);
   res.status(200).json({ order });
 }
 

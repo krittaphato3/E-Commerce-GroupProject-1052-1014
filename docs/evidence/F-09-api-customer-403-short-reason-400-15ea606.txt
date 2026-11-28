@@ -1,0 +1,20 @@
+# F-09 API evidence — application code at commit 15ea606
+# Run: 2026-11-28 17:36 +0700; local API against the PostgreSQL test database (AC-100)
+
+Setup: customer1 created PENDING order CB-000001 (id 1). Session cookies and passwords are not recorded.
+
+## 1. A Customer (the owner) calls reject: 403
+POST /api/orders/1/reject
+request body: {"reason":"Customer must not reject"}
+HTTP 403
+{"error":{"code":"FORBIDDEN","message":"You do not have permission to perform this action"}}
+
+## 2. An Operator sends a 4-character reason: 400
+POST /api/orders/1/reject
+request body: {"reason":"abcd"}
+HTTP 400
+{"error":{"code":"VALIDATION_ERROR","message":"Invalid request body","details":[{"field":"reason","message":"String must contain at least 5 character(s)"}]}}
+
+## Order afterwards (unchanged)
+status PENDING, paymentStatus UNPAID, history entries 1
+

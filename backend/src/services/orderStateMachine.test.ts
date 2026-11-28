@@ -85,22 +85,56 @@ describe("orderStateMachine cancellation (AC-60, BR-06, BR-10)", () => {
   });
 });
 
+describe("orderStateMachine rejection (AC-95, BR-06)", () => {
+  it.each([
+    ["PENDING", true],
+    ["ACCEPTED", false],
+    ["PREPARING", false],
+    ["READY", false],
+    ["COMPLETED", false],
+    ["CANCELLED", false],
+    ["REJECTED", false],
+  ] as const)("TEST-95: %s -> REJECTED allowed: %s", (from, allowed) => {
+    expect(canTransition(from, "REJECTED")).toBe(allowed);
+
+    if (allowed) {
+      expect(() => assertTransition(from, "REJECTED")).not.toThrow();
+      return;
+    }
+
+    let thrown: unknown;
+    try {
+      assertTransition(from, "REJECTED");
+    } catch (err) {
+      thrown = err;
+    }
+
+    expect(thrown).toBeInstanceOf(AppError);
+    expect(thrown).toMatchObject({
+      statusCode: 409,
+      code: "INVALID_TRANSITION",
+      details: { from, to: "REJECTED" },
+    });
+  });
+});
+
 describe("orderStateMachine full transition table (AC-81, BR-06)", () => {
   const STATUSES = Object.values(OrderStatus);
   const ALLOWED = [
     "PENDING -> ACCEPTED",
     "PENDING -> CANCELLED",
+    "PENDING -> REJECTED",
     "ACCEPTED -> PREPARING",
     "PREPARING -> READY",
     "READY -> COMPLETED",
   ];
   const PAIRS = STATUSES.flatMap((from) => STATUSES.map((to) => [from, to] as const));
 
-  it("TEST-81: the table covers all 49 ordered pairs and lists 5 as allowed", () => {
+  it("TEST-81: the table covers all 49 ordered pairs and lists 6 as allowed", () => {
     expect(STATUSES).toHaveLength(7);
     expect(PAIRS).toHaveLength(49);
     const listed = PAIRS.filter(([from, to]) => ALLOWED.includes(`${from} -> ${to}`));
-    expect(listed).toHaveLength(5);
+    expect(listed).toHaveLength(6);
   });
 
   it.each(PAIRS)("TEST-81: %s -> %s", (from, to) => {

@@ -9,9 +9,15 @@ import {
   listOrders,
   markOrderReady,
   payOrder,
+  rejectOrder,
   startOrder,
 } from "../controllers/orderController.js";
-import { orderCreateSchema, orderPaymentSchema, validateBody } from "../middleware/validate.js";
+import {
+  orderCreateSchema,
+  orderPaymentSchema,
+  orderRejectSchema,
+  validateBody,
+} from "../middleware/validate.js";
 import { guardsFor } from "./registry.js";
 
 export const ordersRouter = Router();
@@ -29,6 +35,12 @@ ordersRouter.post(
   "/:id/accept",
   ...guardsFor("POST", "/api/orders/:id/accept"),
   acceptOrder
+);
+ordersRouter.post(
+  "/:id/reject",
+  ...guardsFor("POST", "/api/orders/:id/reject"),
+  validateBody(orderRejectSchema),
+  rejectOrder
 );
 ordersRouter.post(
   "/:id/cancel",
