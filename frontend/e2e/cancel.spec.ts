@@ -50,6 +50,12 @@ test("TEST-67: a customer cancels a pending order and the menu stock comes back"
   await expect(page.getByText("Pending", { exact: true })).toBeVisible();
   expect(await menuStock(page)).toBe(stockBefore - 1);
 
+  // The reservation is visible on the menu, so "before" and "after" are not trivially equal.
+  await page.goto("/menu");
+  await expect(card.getByText("Sold out")).toBeVisible();
+  await captureEvidence(page, "F-06-stock-reserved.png");
+  await page.goto(orderUrl);
+
   await page.getByRole("button", { name: "Cancel order" }).click();
   await expect(page.getByText("Cancel this order?")).toBeVisible();
   await captureEvidence(page, "F-06-cancel-confirm.png");
