@@ -3,8 +3,8 @@
 | Item | Value |
 |---|---|
 | Document | `docs/srs.md` |
-| Version | 1.12 |
-| Date | 2026-11-12 |
+| Version | 1.13 |
+| Date | 2026-11-28 |
 | Course / Theme | CPE 334, Semester 1/2026 — Theme 4: E-Commerce or Ordering System |
 | Student 1 | Krittaphat Panyasomphan (67070501052) |
 | Student 2 | Napat Kasemweerasan (67070501014) |
@@ -26,8 +26,10 @@
 | 1.10 | 2026-11-12 | Both | FR-03 identity now lists `email` as well as id, display name and role | FR-03 contradicted AC-01 and the F-01 contract, which both return `email` (PR #20 review) |
 | 1.11 | 2026-11-12 | Both | §9 note on issue numbering now says that `docs/sprints/sprint-1/features.md` §4 carries the actual GitHub issue, branch and PR beside the planned branch names | The note still said the §4 table was left unchanged, which stopped being true once the actual names were added (PR #20 review) |
 | 1.12 | 2026-11-12 | Both | §6 records the Sprint 1 NFR-05 result with the same wording as the traceability matrix, `PASS (S1 baseline)`, and states that it is a single-host local measurement | The matrix, this document and the submitted PDF must not describe the same result in different terms (PR #20 review round 3) |
+| 1.13 | 2026-11-28 | Both | Deliverable 2 update: new §1.1 implementation status; §7 states which transitions and payment changes are implemented; A-05 restated now that catalog management is released; new §9.2 references DEC-28 to DEC-57 and open questions OQ-01 to OQ-10; new §11 points to the approved baseline revisions CHG-03 to CHG-06. No FR, BR or NFR wording changed | Align the SRS with the product at `dad286b` (Issue #60) |
 
 ---
+
 
 ## 1. Stakeholder problem and context
 
@@ -36,6 +38,19 @@
 **Problem.** At lunch peak the stall takes orders verbally at the counter. Queues are long, staff lose track of what was ordered and what has been accepted, and limited-stock dishes get oversold. Customers (students and staff) cannot see what is still available before they walk over.
 
 **Solution.** A web application where customers log in, pre-order available dishes for pickup, and track the order. Shop operators see incoming orders, accept or reject them, move them through preparation to pickup, and review sales. Payment is **simulated** (no real payment gateway).
+
+## 1.1 Implementation status (2026-11-28)
+
+This section reports status; it changes no requirement. Per-requirement and per-AC results are in `docs/traceability.md`.
+
+| Scope | Requirements | Status |
+|---|---|---|
+| Sprint 1 (F-01 to F-04) | FR-01 to FR-09 | Accepted; released as `sprint-1-v1.0` |
+| Sprint 2 (F-05 to F-08, R-05) | FR-10 to FR-13; NFR-06, NFR-10 | Accepted; released as `sprint-2-v2.0` (`2f6cc46`) |
+| Sprint 3, F-09 | FR-14, BR-12 | Tested on `sprint-3-staging` (`15ea606`, merged at `dad286b`); **not yet released to `main`** |
+| Sprint 3, F-10 to F-12 | FR-15 to FR-17 | Planned; not implemented; tests NOT RUN |
+| Sprint 3, F-13 | NFR-11 | Planned; not implemented; tests NOT RUN |
+| Sprint 3, R-04 | NFR-05 (deployed re-measurement), NFR-09 (all screens) | Planned. NFR-05 remains `PASS (S1 baseline)`; NFR-09 is incomplete |
 
 ## 2. Actors
 
@@ -132,18 +147,20 @@ stateDiagram-v2
     COMPLETED --> [*]
 ```
 
-| From | Action | To | Who | Extra precondition | Sprint |
-|---|---|---|---|---|---|
-| (none) | submit | PENDING | Customer | BR-01..BR-05 satisfied | 1 |
-| PENDING | accept | ACCEPTED | Operator | none | 1 |
-| PENDING | cancel | CANCELLED | Customer (owner) | stock restored | 2 |
-| ACCEPTED | start | PREPARING | Operator | paymentStatus = PAID | 2 |
-| PREPARING | ready | READY | Operator | none | 2 |
-| READY | complete | COMPLETED | Operator | none | 2 |
-| PENDING | reject | REJECTED | Operator | reason, stock restored | 3 |
-| ACCEPTED | cancel | CANCELLED | Operator | stock restored; PAID becomes REFUNDED | 3 |
+| From | Action | To | Who | Extra precondition | Sprint | Status (2026-11-28) |
+|---|---|---|---|---|---|---|
+| (none) | submit | PENDING | Customer | BR-01..BR-05 satisfied | 1 | Released |
+| PENDING | accept | ACCEPTED | Operator | none | 1 | Released |
+| PENDING | cancel | CANCELLED | Customer (owner) | stock restored | 2 | Released |
+| ACCEPTED | start | PREPARING | Operator | paymentStatus = PAID | 2 | Released |
+| PREPARING | ready | READY | Operator | none | 2 | Released |
+| READY | complete | COMPLETED | Operator | none | 2 | Released |
+| PENDING | reject | REJECTED | Operator | reason, stock restored | 3 | Tested on staging, not released |
+| ACCEPTED | cancel | CANCELLED | Operator | stock restored; PAID becomes REFUNDED | 3 | Planned (F-12) |
 
 Payment status: `UNPAID` → `PAID` (Customer pays an `ACCEPTED` order, Sprint 2) → `REFUNDED` (operator cancels a paid order, Sprint 3). Terminal order statuses: `REJECTED`, `CANCELLED`, `COMPLETED`.
+
+**Current implementation.** `UNPAID` → `PAID` is released: it happens once, only for the owner's `ACCEPTED` order with the exact total, changes no order status and writes no history row (DEC-35). No code path sets `REFUNDED` yet. The diagram above also shows the planned F-12 transition `ACCEPTED` → `CANCELLED`; the current state machine rejects it. A rejection stores its reason on the history entry (DEC-43).
 
 ## 8. Assumptions
 
@@ -153,7 +170,7 @@ Payment status: `UNPAID` → `PAID` (Customer pays an `ACCEPTED` order, Sprint 2
 | A-02 | Currency is Thai Baht. Money is stored as integer satang (1 THB = 100 satang) so no floating-point arithmetic is used. |
 | A-03 | Timestamps are stored in UTC and displayed in Asia/Bangkok. |
 | A-04 | Users access the app with a current desktop or mobile browser. |
-| A-05 | The operator sets daily stock manually through catalog management (Sprint 2). Until then stock comes from the seed. |
+| A-05 | The operator sets daily stock manually through catalog management (F-05, released in `sprint-2-v2.0`). The seed only creates missing starter data; it never overwrites an existing item or account. |
 | A-06 | Demo data is synthetic. Seeded accounts use the `@campusbites.test` domain. |
 | A-07 | Pickup happens at the stall; there are no time slots. |
 | A-08 | The system does not support partial fulfillment, waste tracking or a no-show terminal state. If a customer does not collect an order at READY, or ingredients run out during PREPARING, the operator resolves it outside the system. |
@@ -199,6 +216,23 @@ These entries continue the §9 numbering. They record decisions taken while deli
 
 Note on issue numbering: `docs/sprints/sprint-1/features.md` §4 labels F-01 as ISSUE-2 and R-01/R-02 as ISSUE-3, while GitHub numbers Issue #2 as the scaffold (R-03) and Issue #3 as F-01. The work follows the GitHub numbering and the contract's AC/TEST IDs; §4 keeps the planned branch names as the contract baseline and records the actual GitHub issue, branch and pull request beside each row.
 
+### 9.2 Sprint 2 and Sprint 3 decisions (DEC-28 to DEC-57)
+
+These continue the §9 numbering. The decision text lives in the sprint contracts and is not copied here. The contracts label them "proposed", confirmed by merging the contracts pull request.
+
+| Decisions | Subject | Source | Confirmed by |
+|---|---|---|---|
+| DEC-28 to DEC-32 | F-05 catalog endpoints, limits, duplicate names, stock updates, unchanged seed | `docs/sprints/sprint-2/features.md` §12 | PR #61 (merged 2026-11-27) |
+| DEC-33, DEC-34 | F-06 customer-only cancel endpoint and stock restoration | same | PR #61 |
+| DEC-35, DEC-36 | F-07 payment stored as a status only; error codes | same | PR #61 |
+| DEC-37, DEC-38 | F-08 action endpoints and UI behavior | same | PR #61 |
+| DEC-39 to DEC-42 | R-05 check names, coverage gate, route registry, persistence check | same | PR #61 |
+| DEC-43 to DEC-45 | F-09 reject endpoint, dialog, and changes to earlier tests | `docs/sprints/sprint-3/features.md` §13 | PR #71 (merged 2026-11-28) |
+| DEC-46 to DEC-53 | F-10 to F-13 designs (planned) | same | PR #71 |
+| DEC-54 to DEC-57 | R-04 load test, cloud data, FND-01 fix, CI for `sprint-3-staging` (planned) | same | PR #71 |
+
+Open questions: OQ-01 to OQ-05 are in the Sprint 2 contract §12, each with the default the contract applies. For Sprint 3 (contract revision 1.2): OQ-06 yes; OQ-07 yes, recorded as a known limitation; OQ-08 (data left by the load test) deferred to R-04 and **still open**; OQ-09 left to the release; OQ-10 (owners and dates) has a proposal in `docs/sprints/sprint-3/release-readiness.md` that the team still has to confirm.
+
 ## 10. Questions and resolutions
 
 | ID | Question | Resolution / status |
@@ -207,3 +241,14 @@ Note on issue numbering: `docs/sprints/sprint-1/features.md` §4 labels F-01 as 
 | Q-02 | Is a concurrency test for the last stock unit expected? | Resolved: included (AC-24) because the specification asks for tests of competing requests in similar themes and it is a meaningful rule. |
 | Q-03 | Is returning 403 (instead of 404) for another customer's order acceptable? | Resolved (team decision, 2026-11-05): a customer requesting another customer's order receives HTTP 403 with the standard error body and no order data. |
 | Q-04 | Are the NFR-05 performance numbers acceptable? | Resolved (team decision, 2026-11-05): targets defined in NFR-05. |
+
+## 11. Approved baseline revisions
+
+The FR, BR and NFR wording above is unchanged since `sprint-1-v1.0`. Approved revisions to how requirements are verified or elaborated are recorded with their rationale in `docs/change-register.md` §2 and `docs/traceability.md` §6:
+
+| ID | Summary |
+|---|---|
+| CHG-03 | BR-10 is verified in two parts: customer path (Sprint 2, tested) and operator path (Sprint 3 F-12, planned) |
+| CHG-04 | Sprint 3 extends transition and route facts pinned by earlier tests, each change listed by name |
+| CHG-05 | Order detail history entries carry `note` (the rejection reason) |
+| CHG-06 | The 200-row list limit is to be replaced by pagination with F-10 (not implemented) |

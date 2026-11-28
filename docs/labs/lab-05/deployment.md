@@ -181,11 +181,14 @@ Cloud Run revision history (`gcloud run revisions list --service toktickit --reg
 
 - The production seed creates only `operator1@campusbites.test` by default (`SEED_DEMO_DATA` unset or `false`).
 - For the demo, the migration job `toktickit-migrate` was updated with `SEED_DEMO_DATA=true` and the secret `toktickit-demo-password` mounted as `SEED_CUSTOMER_PASSWORD`, so the demo customers `customer1` and `customer2` exist.
-- Passwords are stored only in Secret Manager and are never written in the repository or in this document. To read one in Cloud Shell, run the command below with the secret name (`toktickit-admin-password` for the operator, `toktickit-demo-password` for customers):
+- Passwords are never written in the repository or in this document. The seed is create-only: it never changes the password hash of an existing user. Therefore the current value of `toktickit-admin-password` or `toktickit-demo-password` is the password of an account only if the account was created from that version. It may differ for accounts created earlier. Before relying on a secret, confirm it by logging in. If login returns 401, ask the team for the working password and supply it through an environment variable, never in a command line, a file or a commit.
+- To read a secret value in Cloud Shell, run the command below with the secret name (`toktickit-admin-password` for the operator, `toktickit-demo-password` for customers). The limit above applies: the value read is not proof of the account password.
 
   ```bash
   gcloud secrets versions access latest --secret=<name>
   ```
+
+- **Known defect DEF-01** (`docs/change-register.md`): on 2026-11-28 the current values of both secrets returned 401 for `operator1`, `customer1` and `customer2` (`docs/evidence/CHECK-01-2f6cc46.txt`, Finding). Status: **documented; password reconciliation remains**. The cause is unconfirmed.
 
 ## 11. Cost control
 
