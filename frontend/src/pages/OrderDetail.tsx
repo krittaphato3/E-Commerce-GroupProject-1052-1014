@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiRequestError } from "../api/client";
-import { cancelOrder, fetchOrder, type Order } from "../api/orders";
+import { cancelOrder, fetchOrder, payOrder, type Order } from "../api/orders";
 import { useAuth } from "../auth/AuthContext";
 import { formatDateTime, formatThb, paymentStatusLabel, statusLabel } from "../lib/format";
 
@@ -15,11 +15,16 @@ export function OrderDetail() {
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [confirmingPay, setConfirmingPay] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
 
-  // A different order starts clean. A reload of the same order keeps the cancel alert.
+  // A different order starts clean. A reload of the same order keeps the action alerts.
   useEffect(() => {
     setConfirmingCancel(false);
     setCancelError(null);
+    setConfirmingPay(false);
+    setPayError(null);
   }, [id]);
 
   useEffect(() => {
@@ -80,6 +85,27 @@ export function OrderDetail() {
       }
     } finally {
       setCancelling(false);
+    }
+  }
+
+  async function handlePay(orderId: number, amountSatang: number) {
+    setPaying(true);
+    setPayError(null);
+
+    try {
+      const result = await payOrder(orderId, amountSatang);
+      setOrder(result.order);
+      setConfirmingPay(false);
+    } catch (err) {
+      setConfirmingPay(false);
+      if (err instanceof ApiRequestError && (err.status === 409 || err.status === 400)) {
+        setPayError(err.message);
+        setReloadKey((key) => key + 1);
+      } else {
+        setPayError("Could not pay for this order. Please try again.");
+      }
+    } finally {
+      setPaying(false);
     }
   }
 
@@ -173,6 +199,59 @@ export function OrderDetail() {
           )}
         </div>
       )}
+
+      {payError && (
+        <div className="alert alert-danger" role="alert">
+          {payError}
+        </div>
+      )}
+
+      {user?.role === "CUSTOMER" &&
+        order.status === "PENDING" &&
+        order.paymentStatus === "UNPAID" && (
+          <p className="text-muted">You can pay after the shop accepts this order.</p>
+        )}
+
+      {user?.role === "CUSTOMER" &&
+        order.status === "ACCEPTED" &&
+        order.paymentStatus === "UNPAID" && (
+          <div className="mb-3">
+            {confirmingPay ? (
+              <div className="d-flex flex-wrap align-items-center gap-2">
+                <span className="fw-semibold">
+                  Pay {formatThb(order.totalSatang)} (simulated)?
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-success btn-sm"
+                  disabled={paying}
+                  onClick={() => handlePay(order.id, order.totalSatang)}
+                >
+                  {paying ? "Paying…" : "Confirm payment"}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary btn-sm"
+                  disabled={paying}
+                  onClick={() => setConfirmingPay(false)}
+                >
+                  Back
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-success btn-sm"
+                onClick={() => {
+                  setPayError(null);
+                  setConfirmingPay(true);
+                }}
+              >
+                Pay
+              </button>
+            )}
+          </div>
+        )}
 
       <table className="table align-middle">
         <thead>

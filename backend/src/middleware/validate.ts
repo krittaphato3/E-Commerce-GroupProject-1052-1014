@@ -84,6 +84,13 @@ export const menuItemUpdateSchema = z
 
 export type MenuItemUpdateBody = z.infer<typeof menuItemUpdateSchema>;
 
+// BR-11: the amount is only compared with the stored total, never saved (BR-03).
+export const orderPaymentSchema = z
+  .object({ amountSatang: z.number().int().positive() })
+  .strict();
+
+export type OrderPaymentBody = z.infer<typeof orderPaymentSchema>;
+
 /** Parses a positive integer route parameter, returning null when it is not one. */
 export function parsePositiveIntegerParam(value: string | undefined): number | null {
   if (!value || !/^\d+$/.test(value)) {
