@@ -238,7 +238,7 @@ These are known gaps in the R-01 route registry (`backend/src/routes/registry.ts
 - **Nested sub-routers are not extracted.** `extractExpressRoutes` reads one level of `layer.handle.stack`. A router mounted inside another router (`router.use(...)` inside a router) is invisible to the meta-test.
 - **A router mounted under two prefixes keeps only the last mount.** `mountRouter` stores one prefix per router in a `WeakMap`, so `extractExpressRoutes` reports the router once, under the prefix mounted last.
 
-Sprint 1 scope stops at `PENDING → ACCEPTED`: payment, fulfilment, cancellation and rejection transitions are contract work for Sprints 2 and 3. The NFR-05 load benchmark (autocannon) has a recorded Sprint 1 baseline in [`docs/evidence/nfr05/`](docs/evidence/nfr05/summary.json); the remaining R-04 hardening and the deployed-build measurement stay in Sprint 3.
+Sprint 1 scope stops at `PENDING → ACCEPTED`. Sprint 2 F-06 adds `PENDING → CANCELLED` by the owning customer (`POST /api/orders/:id/cancel`, stock restored); payment, fulfilment, rejection and operator cancellation are later Sprint 2 and 3 work. The NFR-05 load benchmark (autocannon) has a recorded Sprint 1 baseline in [`docs/evidence/nfr05/`](docs/evidence/nfr05/summary.json); the remaining R-04 hardening and the deployed-build measurement stay in Sprint 3.
 
 ---
 

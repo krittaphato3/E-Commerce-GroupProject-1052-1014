@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   acceptOrder,
+  cancelOrder,
   createOrder,
   getOrder,
   listMyOrders,
@@ -24,4 +25,9 @@ ordersRouter.post(
   "/:id/accept",
   ...guardsFor("POST", "/api/orders/:id/accept"),
   acceptOrder
+);
+ordersRouter.post(
+  "/:id/cancel",
+  ...guardsFor("POST", "/api/orders/:id/cancel"),
+  cancelOrder
 );

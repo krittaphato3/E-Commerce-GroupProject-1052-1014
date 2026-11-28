@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiRequestError } from "../api/client";
-import { fetchOrder, type Order } from "../api/orders";
+import { cancelOrder, fetchOrder, type Order } from "../api/orders";
 import { useAuth } from "../auth/AuthContext";
 import { formatDateTime, formatThb, paymentStatusLabel, statusLabel } from "../lib/format";
 
@@ -12,6 +12,15 @@ export function OrderDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+
+  // A different order starts clean. A reload of the same order keeps the cancel alert.
+  useEffect(() => {
+    setConfirmingCancel(false);
+    setCancelError(null);
+  }, [id]);
 
   useEffect(() => {
     const orderId = Number(id);
@@ -48,6 +57,31 @@ export function OrderDetail() {
       cancelled = true;
     };
   }, [id, reloadKey]);
+
+  async function handleCancel(orderId: number) {
+    setCancelling(true);
+    setCancelError(null);
+
+    try {
+      const result = await cancelOrder(orderId);
+      setOrder(result.order);
+      setConfirmingCancel(false);
+    } catch (err) {
+      setConfirmingCancel(false);
+      if (err instanceof ApiRequestError && err.status === 409) {
+        setCancelError("This order can no longer be cancelled.");
+        setReloadKey((key) => key + 1);
+      } else {
+        setCancelError(
+          err instanceof ApiRequestError && err.status < 500
+            ? err.message
+            : "Could not cancel this order. Please try again."
+        );
+      }
+    } finally {
+      setCancelling(false);
+    }
+  }
 
   if (loading) {
     return <p className="text-muted">Loading order…</p>;
@@ -96,6 +130,49 @@ export function OrderDetail() {
       )}
 
       <p className="text-muted">Placed on {formatDateTime(order.createdAt)}</p>
+
+      {cancelError && (
+        <div className="alert alert-danger" role="alert">
+          {cancelError}
+        </div>
+      )}
+
+      {user?.role === "CUSTOMER" && order.status === "PENDING" && (
+        <div className="mb-3">
+          {confirmingCancel ? (
+            <div className="d-flex flex-wrap align-items-center gap-2">
+              <span className="fw-semibold">Cancel this order?</span>
+              <button
+                type="button"
+                className="btn btn-danger btn-sm"
+                disabled={cancelling}
+                onClick={() => handleCancel(order.id)}
+              >
+                {cancelling ? "Cancelling…" : "Yes, cancel"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline-secondary btn-sm"
+                disabled={cancelling}
+                onClick={() => setConfirmingCancel(false)}
+              >
+                Keep order
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-outline-danger btn-sm"
+              onClick={() => {
+                setCancelError(null);
+                setConfirmingCancel(true);
+              }}
+            >
+              Cancel order
+            </button>
+          )}
+        </div>
+      )}
 
       <table className="table align-middle">
         <thead>

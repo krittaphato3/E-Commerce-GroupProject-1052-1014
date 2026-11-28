@@ -50,3 +50,36 @@ describe("orderStateMachine (AC-35, BR-06)", () => {
     }
   });
 });
+
+describe("orderStateMachine cancellation (AC-60, BR-06, BR-10)", () => {
+  it.each([
+    ["PENDING", true],
+    ["ACCEPTED", false],
+    ["PREPARING", false],
+    ["READY", false],
+    ["COMPLETED", false],
+    ["REJECTED", false],
+    ["CANCELLED", false],
+  ] as const)("TEST-60: %s -> CANCELLED allowed: %s", (from, allowed) => {
+    expect(canTransition(from, "CANCELLED")).toBe(allowed);
+
+    if (allowed) {
+      expect(() => assertTransition(from, "CANCELLED")).not.toThrow();
+      return;
+    }
+
+    let thrown: unknown;
+    try {
+      assertTransition(from, "CANCELLED");
+    } catch (err) {
+      thrown = err;
+    }
+
+    expect(thrown).toBeInstanceOf(AppError);
+    expect(thrown).toMatchObject({
+      statusCode: 409,
+      code: "INVALID_TRANSITION",
+      details: { from, to: "CANCELLED" },
+    });
+  });
+});
