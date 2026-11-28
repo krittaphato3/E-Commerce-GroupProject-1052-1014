@@ -5,11 +5,13 @@ import {
   completeOrder,
   fetchOperatorOrders,
   markOrderReady,
+  rejectOrder,
   startOrder,
   type OperatorOrderSummary,
   type OrderStatus,
 } from "../api/orders";
 import { ApiRequestError } from "../api/client";
+import { RejectOrderDialog } from "../components/RejectOrderDialog";
 import { formatDateTime, formatThb, paymentStatusLabel, statusLabel } from "../lib/format";
 
 const FILTER_OPTIONS: Array<{ label: string; value: OrderStatus | "" }> = [
@@ -48,6 +50,22 @@ function fulfilmentAction(order: OperatorOrderSummary): FulfilmentAction | null 
   }
 }
 
+/** What the reject dialog shows for a failed request other than 409. */
+function rejectErrorMessage(err: unknown): string {
+  if (!(err instanceof ApiRequestError) || err.status >= 500) {
+    return "Could not reject this order. Please try again.";
+  }
+
+  if (err.status === 400 && Array.isArray(err.details)) {
+    const detail = (err.details as Array<{ field?: string; message?: string }>).find(
+      (entry) => entry.field === "reason"
+    );
+    if (detail?.message) return detail.message;
+  }
+
+  return err.message;
+}
+
 export function OperatorOrders() {
   const [orders, setOrders] = useState<OperatorOrderSummary[]>([]);
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("PENDING");
@@ -56,6 +74,9 @@ export function OperatorOrders() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [acceptingId, setAcceptingId] = useState<number | null>(null);
   const [updatingIds, setUpdatingIds] = useState<ReadonlySet<number>>(new Set());
+  const [rejectTarget, setRejectTarget] = useState<OperatorOrderSummary | null>(null);
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
+  const [rejectError, setRejectError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   const statusFilterRef = useRef(statusFilter);
@@ -125,6 +146,46 @@ export function OperatorOrders() {
     }
   }
 
+  /** Shows an order's new status after an action that moves it out of its old one. */
+  function showNewStatus(orderId: number, next: OrderStatus, filterAtClick: OrderStatus | "") {
+    // Only the unchanged "All" view still matches the new status and can be updated in place.
+    const canUpdateInPlace =
+      statusFilterRef.current === "" &&
+      filterAtClick === "" &&
+      ordersRef.current.some((o) => o.id === orderId);
+
+    if (canUpdateInPlace) {
+      setOrders((current) =>
+        current.map((order) => (order.id === orderId ? { ...order, status: next } : order))
+      );
+    } else {
+      setReloadKey((k) => k + 1);
+    }
+  }
+
+  async function handleReject(orderId: number, reason: string) {
+    const filterAtClick = statusFilterRef.current;
+    setRejectingId(orderId);
+    setRejectError(null);
+    setActionError(null);
+
+    try {
+      await rejectOrder(orderId, reason);
+      setRejectTarget(null);
+      showNewStatus(orderId, "REJECTED", filterAtClick);
+    } catch (err) {
+      if (err instanceof ApiRequestError && err.status === 409) {
+        setRejectTarget(null);
+        setActionError("This order was already handled.");
+        setReloadKey((k) => k + 1);
+      } else {
+        setRejectError(rejectErrorMessage(err));
+      }
+    } finally {
+      setRejectingId(null);
+    }
+  }
+
   async function handleFulfilment(orderId: number, action: FulfilmentAction) {
     const filterAtClick = statusFilterRef.current;
     setUpdatingIds((current) => new Set(current).add(orderId));
@@ -132,22 +193,7 @@ export function OperatorOrders() {
 
     try {
       await action.run(orderId);
-      const currentFilter = statusFilterRef.current;
-      // Only the unchanged "All" view still matches the new status and can be updated in place.
-      const canUpdateInPlace =
-        currentFilter === "" &&
-        filterAtClick === "" &&
-        ordersRef.current.some((o) => o.id === orderId);
-
-      if (canUpdateInPlace) {
-        setOrders((current) =>
-          current.map((order) =>
-            order.id === orderId ? { ...order, status: action.next } : order
-          )
-        );
-      } else {
-        setReloadKey((k) => k + 1);
-      }
+      showNewStatus(orderId, action.next, filterAtClick);
     } catch (err) {
       if (err instanceof ApiRequestError && err.status === 409) {
         setActionError(err.message);
@@ -171,14 +217,27 @@ export function OperatorOrders() {
   function renderAction(order: OperatorOrderSummary) {
     if (order.status === "PENDING") {
       return (
-        <button
-          type="button"
-          className="btn btn-success btn-sm"
-          onClick={() => handleAccept(order.id)}
-          disabled={acceptingId === order.id}
-        >
-          {acceptingId === order.id ? "Accepting…" : "Accept"}
-        </button>
+        <div className="d-flex justify-content-end gap-2">
+          <button
+            type="button"
+            className="btn btn-success btn-sm"
+            onClick={() => handleAccept(order.id)}
+            disabled={acceptingId === order.id || rejectingId === order.id}
+          >
+            {acceptingId === order.id ? "Accepting…" : "Accept"}
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline-danger btn-sm"
+            onClick={() => {
+              setRejectError(null);
+              setRejectTarget(order);
+            }}
+            disabled={acceptingId === order.id || rejectingId !== null}
+          >
+            Reject
+          </button>
+        </div>
       );
     }
 
@@ -289,6 +348,18 @@ export function OperatorOrders() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {rejectTarget && (
+        <RejectOrderDialog
+          // A different order gets a fresh, empty dialog.
+          key={rejectTarget.id}
+          orderNumber={rejectTarget.orderNumber}
+          pending={rejectingId === rejectTarget.id}
+          error={rejectError}
+          onSubmit={(reason) => handleReject(rejectTarget.id, reason)}
+          onClose={() => setRejectTarget(null)}
+        />
       )}
     </section>
   );
