@@ -131,6 +131,7 @@ Playwright (TEST-09) reads the same two variables from `backend/.env`, so log in
 | **Unit + API/database integration** (default) | `npm test` | Runs both workspaces. The backend `pretest` migrates `campusbites_test` first. Sprint 1 backend: TEST-01 to TEST-08, TEST-10, TEST-11, TEST-14 to TEST-28, TEST-32 to TEST-40, TEST-43 to TEST-46; frontend components: TEST-13, TEST-30, TEST-31 |
 | **Backend only** | `npm test --workspace=backend` | Vitest + Supertest against the real PostgreSQL test database (no mocked SQL) |
 | **Frontend components** | `npm test --workspace=frontend` | Vitest + Testing Library: TEST-13, TEST-30, TEST-31 and the app shell |
+| **Coverage gate (COV-01)** | `npm run coverage --workspace=backend` | All backend tests with line coverage of `backend/src/services`; fails below 85% (NFR-10). Report in `backend/coverage/` (CI artifact `backend-coverage`) |
 | **Route access meta-test (R-01)** | `npm run test --workspace=backend -- tests/routes.access.test.ts` | TEST-43: every protected route answers 401 anonymously and 403 for each disallowed role, and the route registry matches the mounted Express routes |
 | **End-to-end** | `npm run e2e` | Playwright journeys: TEST-09, TEST-12, TEST-29, TEST-41, TEST-42, plus the AC-21/AC-30 stale-cart journey |
 | **Type check** | `npm run typecheck` | `tsc --noEmit` across both workspaces |
@@ -233,12 +234,7 @@ The deliverable document is assembled locally from these Markdown sources and su
 
 ## Known Limitations (Sprint 2 backlog)
 
-These are known gaps in the R-01 route registry (`backend/src/routes/registry.ts`); the TEST-43 meta-test does not cover them yet, and fixing them is Sprint 2 work:
-
-- **Nested sub-routers are not extracted.** `extractExpressRoutes` reads one level of `layer.handle.stack`. A router mounted inside another router (`router.use(...)` inside a router) is invisible to the meta-test.
-- **A router mounted under two prefixes keeps only the last mount.** `mountRouter` stores one prefix per router in a `WeakMap`, so `extractExpressRoutes` reports the router once, under the prefix mounted last.
-
-Sprint 1 scope stops at `PENDING → ACCEPTED`: payment, fulfilment, cancellation and rejection transitions are contract work for Sprints 2 and 3. The NFR-05 load benchmark (autocannon) has a recorded Sprint 1 baseline in [`docs/evidence/nfr05/`](docs/evidence/nfr05/summary.json); the remaining R-04 hardening and the deployed-build measurement stay in Sprint 3.
+Sprint 1 scope stops at `PENDING → ACCEPTED`. Sprint 2 F-06 adds `PENDING → CANCELLED` by the owning customer (`POST /api/orders/:id/cancel`, stock restored); Sprint 2 F-07 adds simulated payment of the owner's `ACCEPTED` order (`POST /api/orders/:id/pay`, `UNPAID → PAID` once, no card data); Sprint 2 F-08 adds operator fulfilment of paid orders, `ACCEPTED → PREPARING → READY → COMPLETED` (`POST /api/orders/:id/start`, `/ready`, `/complete`). Rejection and operator cancellation are Sprint 3 work. The NFR-05 load benchmark (autocannon) has a recorded Sprint 1 baseline in [`docs/evidence/nfr05/`](docs/evidence/nfr05/summary.json); the remaining R-04 hardening and the deployed-build measurement stay in Sprint 3.
 
 ---
 

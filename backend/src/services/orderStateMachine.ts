@@ -2,7 +2,10 @@ import type { OrderStatus } from "@prisma/client";
 import { AppError } from "../middleware/error.js";
 
 const ALLOWED_TRANSITIONS: Partial<Record<OrderStatus, readonly OrderStatus[]>> = {
-  PENDING: ["ACCEPTED"],
+  PENDING: ["ACCEPTED", "CANCELLED"],
+  ACCEPTED: ["PREPARING"],
+  PREPARING: ["READY"],
+  READY: ["COMPLETED"],
 };
 
 export function canTransition(from: OrderStatus, to: OrderStatus): boolean {

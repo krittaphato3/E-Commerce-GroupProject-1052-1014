@@ -3,9 +3,9 @@
 | Item | Value |
 |---|---|
 | Document | `docs/system-sds.md` |
-| Version | 1.4 |
-| Date | 2026-11-10 |
-| Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/plan.md` |
+| Version | 1.8 |
+| Date | 2026-11-28 |
+| Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/sprint-2/features.md`, `docs/sprints/plan.md` |
 
 ### Revision history
 | Version | Date | Change | Reason |
@@ -15,6 +15,10 @@
 | 1.2 | 2026-11-07 | Update route guard summary: wrong-role routes show an in-place 403 Forbidden alert from ProtectedRoute ("403 Forbidden: You have no access to this page.") rather than redirect to the role home, consistent with F-04 contract and AC-42 (DEC-23, Option A) | Reconcile system SDS with ProtectedRoute behavior and AC-42 contract revision |
 | 1.3 | 2026-11-07 | Document title uses the Omazon display name | Display brand rename (DEC-25); no design content changed |
 | 1.4 | 2026-11-10 | Correct the `DATABASE_URL` and `TEST_DATABASE_URL` examples to match `backend/.env.example`, and note that `GET /api/health` currently reports the literal `1.0.0` while the git SHA is wired in during Lab 5 | Documentation audit: the configuration table contradicted the shipped `.env.example` and the release-identification plan overstated what Sprint 1 returns (Issue #16) |
+| 1.5 | 2026-11-27 | Endpoint summary lists the seven Sprint 2 endpoints and the permission matrix splits their rows, all marked "Sprint 2 — planned" | Sprint 2 contracts (Issue #53); nothing is implemented yet |
+| 1.6 | 2026-11-28 | `POST /api/orders/:id/cancel` and the "Cancel own `PENDING` order" permission row are marked implemented | F-06 (Issue #55) |
+| 1.7 | 2026-11-28 | `POST /api/orders/:id/pay` and its permission matrix row are marked implemented | F-07 (Issue #56) |
+| 1.8 | 2026-11-28 | `POST /api/orders/:id/start`, `/ready`, `/complete` and the "Start / ready / complete" permission row are marked implemented; the `/operator/orders` screen row names the payment badge and fulfilment actions | F-08 (Issue #57) |
 
 ---
 
@@ -170,7 +174,7 @@ Money is stored as integer satang. The UI formats it as THB (for example `6000` 
 | `/menu` | Menu with cart and order form | Anonymous (view); Customer (order) | 1 |
 | `/orders` | My orders list | Customer | 1 |
 | `/orders/:id` | Order detail with items, totals, history | Customer (own), Operator (any) | 1 |
-| `/operator/orders` | Incoming orders table with status filter and Accept | Operator | 1 |
+| `/operator/orders` | Incoming orders table with status filter, payment badge, Accept and fulfilment actions | Operator | 1, 2 |
 | `/operator/menu` | Catalog management | Operator | 2 |
 | `/operator/reports` | Sales summary | Operator | 3 |
 
@@ -225,8 +229,13 @@ Header: shop name, links by role, display name and role badge, Logout button. Af
 | `GET /api/orders/:id` | Customer (owner), Operator | F-03, F-04 | 1 |
 | `GET /api/orders` | Operator | F-04 | 1 |
 | `POST /api/orders/:id/accept` | Operator | F-04 | 1 |
-| `POST/PATCH /api/menu-items…` | Operator | F-05 | 2 |
-| `POST /api/orders/:id/cancel`, `/pay`, `/start`, `/ready`, `/complete` | see matrix | F-06..F-08 | 2 |
+| `POST /api/menu-items` | Operator | F-05 | Sprint 2 — planned |
+| `PATCH /api/menu-items/:id` | Operator | F-05 | Sprint 2 — planned |
+| `POST /api/orders/:id/cancel` | Customer (owner) | F-06 | 2 |
+| `POST /api/orders/:id/pay` | Customer (owner) | F-07 | 2 |
+| `POST /api/orders/:id/start` | Operator | F-08 | 2 |
+| `POST /api/orders/:id/ready` | Operator | F-08 | 2 |
+| `POST /api/orders/:id/complete` | Operator | F-08 | 2 |
 | `POST /api/orders/:id/reject`, reports, operator cancel | Operator | F-09, F-11, F-12 | 3 |
 
 ## 5. Role and permission matrix
@@ -244,10 +253,11 @@ Header: shop name, links by role, display name and role badge, Logout button. Af
 | View order detail | — | Own | Any | 1 |
 | List all orders | — | — | Y | 1 |
 | Accept order | — | — | Y | 1 |
-| Create/edit menu item | — | — | Y | 2 |
-| Cancel order | — | Own, `PENDING` only | Any `ACCEPTED` (S3) | 2, 3 |
-| Pay order (simulated) | — | Own | — | 2 |
-| Start / ready / complete | — | — | Y | 2 |
+| Create/edit/enable/disable menu item | — | — | Y | Sprint 2 — planned |
+| Cancel own `PENDING` order | — | Own, `PENDING` only | — | 2 |
+| Cancel `ACCEPTED` order | — | — | Any `ACCEPTED` | 3 |
+| Pay order (simulated) | — | Own, `ACCEPTED` and `UNPAID` | — | 2 |
+| Start / ready / complete | — | — | Y (start needs `PAID`) | 2 |
 | Reject order | — | — | Y | 3 |
 | Sales summary | — | — | Y | 3 |
 

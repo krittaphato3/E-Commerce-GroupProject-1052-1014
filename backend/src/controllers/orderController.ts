@@ -4,6 +4,7 @@ import {
   parseOrderStatusQuery,
   parsePositiveIntegerParam,
   type OrderCreateBody,
+  type OrderPaymentBody,
 } from "../middleware/validate.js";
 import { orderService } from "../services/orderService.js";
 
@@ -51,3 +52,54 @@ export async function acceptOrder(req: Request, res: Response): Promise<void> {
   const order = await orderService.accept(orderId, req.user!.id);
   res.status(200).json({ order });
 }
+
+/** POST /api/orders/:id/cancel — owner Customer only, no body (FR-11, AC-58..65, DEC-33). */
+export async function cancelOrder(req: Request, res: Response): Promise<void> {
+  const rawId = req.params.id;
+  const orderId = parsePositiveIntegerParam(typeof rawId === "string" ? rawId : undefined);
+
+  if (orderId === null) {
+    throw new AppError(400, "VALIDATION_ERROR", "Order id must be a positive integer");
+  }
+
+  const order = await orderService.cancel(orderId, req.user!.id);
+  res.status(200).json({ order });
+}
+
+/** POST /api/orders/:id/pay — owner Customer only, simulated payment (FR-13, AC-68..74). */
+export async function payOrder(req: Request, res: Response): Promise<void> {
+  const rawId = req.params.id;
+  const orderId = parsePositiveIntegerParam(typeof rawId === "string" ? rawId : undefined);
+
+  if (orderId === null) {
+    throw new AppError(400, "VALIDATION_ERROR", "Order id must be a positive integer");
+  }
+
+  const { amountSatang } = req.body as OrderPaymentBody;
+  const order = await orderService.pay(orderId, req.user!.id, amountSatang);
+  res.status(200).json({ order });
+}
+
+/**
+ * POST /api/orders/:id/start, /ready, /complete — Operator only, no body
+ * (FR-12, AC-77..84, DEC-37).
+ */
+function fulfilmentHandler(
+  step: (orderId: number, operatorId: number) => ReturnType<typeof orderService.start>
+) {
+  return async (req: Request, res: Response): Promise<void> => {
+    const rawId = req.params.id;
+    const orderId = parsePositiveIntegerParam(typeof rawId === "string" ? rawId : undefined);
+
+    if (orderId === null) {
+      throw new AppError(400, "VALIDATION_ERROR", "Order id must be a positive integer");
+    }
+
+    const order = await step(orderId, req.user!.id);
+    res.status(200).json({ order });
+  };
+}
+
+export const startOrder = fulfilmentHandler(orderService.start);
+export const markOrderReady = fulfilmentHandler(orderService.markReady);
+export const completeOrder = fulfilmentHandler(orderService.complete);

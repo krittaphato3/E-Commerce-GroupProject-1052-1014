@@ -1,0 +1,69 @@
+# R-05 RED evidence — tested at commit 6d6f86e (tests only; registry.ts unchanged)
+# Run: 2026-11-28 14:41 +0700; real PostgreSQL test database
+# Expected: TEST-90 and TEST-91 FAIL. TEST-43 and TEST-92 PASS: TEST-92 verifies guards already shipped by F-05 to F-08.
+
+## npx vitest run tests/routes.registry.test.ts tests/routes.access.test.ts --reporter=verbose
+
+ RUN  v3.2.7 /Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/backend
+
+ × tests/routes.registry.test.ts > R-05 route registry extraction (AC-90, AC-91) > TEST-90: reports nested routes with full paths and flags unregistered and raw nested mounts 12ms
+   → expected [ 'GET /api/health' ] to deeply equal [ 'GET /api/health', …(2) ]
+ × tests/routes.registry.test.ts > R-05 route registry extraction (AC-90, AC-91) > TEST-91: reports every recorded prefix once and flags an extra raw mount 1ms
+   → expected [ 'GET /api/b/thing', …(1) ] to deeply equal [ 'GET /api/a/thing', …(1) ]
+ ✓ tests/routes.access.test.ts > R-01 route access control and registry completeness (AC-43) > TEST-43: every protected route answers 401 anonymously and 403 for each non-allowed role without private data 125ms
+ ✓ tests/routes.access.test.ts > R-01 route access control and registry completeness (AC-43) > TEST-43: the registry and the mounted Express routes are in exact agreement 49ms
+ ✓ tests/routes.access.test.ts > R-01 route access control and registry completeness (AC-43) > TEST-92: sweeps all 13 protected routes, pins the 7 Sprint 2 guards and changes no data 55ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes.registry.test.ts > R-05 route registry extraction (AC-90, AC-91) > TEST-90: reports nested routes with full paths and flags unregistered and raw nested mounts
+AssertionError: expected [ 'GET /api/health' ] to deeply equal [ 'GET /api/health', …(2) ]
+
+- Expected
++ Received
+
+  [
+    "GET /api/health",
+-   "GET /api/orders",
+-   "GET /api/orders/:orderId/lines/:lineId",
+  ]
+
+ ❯ tests/routes.registry.test.ts:37:31
+     35|     // The app really serves the deepest route, so extraction must not…
+     36|     expect((await request(app).get("/api/orders/1/lines/2")).status).t…
+     37|     expect(mountedPaths(app)).toEqual([
+       |                               ^
+     38|       "GET /api/health",
+     39|       "GET /api/orders",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/routes.registry.test.ts > R-05 route registry extraction (AC-90, AC-91) > TEST-91: reports every recorded prefix once and flags an extra raw mount
+AssertionError: expected [ 'GET /api/b/thing', …(1) ] to deeply equal [ 'GET /api/a/thing', …(1) ]
+
+- Expected
++ Received
+
+  [
+-   "GET /api/a/thing",
++   "GET /api/b/thing",
+    "GET /api/b/thing",
+  ]
+
+ ❯ tests/routes.registry.test.ts:74:33
+     72|     mountRouter(twice, "/api/a", shared);
+     73|     mountRouter(twice, "/api/b", shared);
+     74|     expect(mountedPaths(twice)).toEqual(["GET /api/a/thing", "GET /api…
+       |                                 ^
+     75| 
+     76|     // The same router in a second app: one recorded mount plus one ra…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 3 passed (5)
+   Start at  14:41:24
+   Duration  638ms (transform 67ms, setup 14ms, collect 200ms, tests 243ms, environment 0ms, prepare 46ms)
+
+# exit code: 1

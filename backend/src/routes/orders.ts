@@ -1,12 +1,17 @@
 import { Router } from "express";
 import {
   acceptOrder,
+  cancelOrder,
+  completeOrder,
   createOrder,
   getOrder,
   listMyOrders,
   listOrders,
+  markOrderReady,
+  payOrder,
+  startOrder,
 } from "../controllers/orderController.js";
-import { orderCreateSchema, validateBody } from "../middleware/validate.js";
+import { orderCreateSchema, orderPaymentSchema, validateBody } from "../middleware/validate.js";
 import { guardsFor } from "./registry.js";
 
 export const ordersRouter = Router();
@@ -24,4 +29,30 @@ ordersRouter.post(
   "/:id/accept",
   ...guardsFor("POST", "/api/orders/:id/accept"),
   acceptOrder
+);
+ordersRouter.post(
+  "/:id/cancel",
+  ...guardsFor("POST", "/api/orders/:id/cancel"),
+  cancelOrder
+);
+ordersRouter.post(
+  "/:id/pay",
+  ...guardsFor("POST", "/api/orders/:id/pay"),
+  validateBody(orderPaymentSchema),
+  payOrder
+);
+ordersRouter.post(
+  "/:id/start",
+  ...guardsFor("POST", "/api/orders/:id/start"),
+  startOrder
+);
+ordersRouter.post(
+  "/:id/ready",
+  ...guardsFor("POST", "/api/orders/:id/ready"),
+  markOrderReady
+);
+ordersRouter.post(
+  "/:id/complete",
+  ...guardsFor("POST", "/api/orders/:id/complete"),
+  completeOrder
 );

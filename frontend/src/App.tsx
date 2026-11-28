@@ -5,6 +5,7 @@ import { Header } from "./components/Header";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Login } from "./pages/Login";
 import { Menu } from "./pages/Menu";
+import { OperatorMenu } from "./pages/OperatorMenu";
 import { OperatorOrders } from "./pages/OperatorOrders";
 import { OrderDetail } from "./pages/OrderDetail";
 import { Orders } from "./pages/Orders";
@@ -68,6 +69,14 @@ export function AppShell() {
             element={
               <ProtectedRoute roles={["OPERATOR"]}>
                 <OperatorOrders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/operator/menu"
+            element={
+              <ProtectedRoute roles={["OPERATOR"]}>
+                <OperatorMenu />
               </ProtectedRoute>
             }
           />

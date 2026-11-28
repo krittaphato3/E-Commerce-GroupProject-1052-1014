@@ -1,4 +1,4 @@
-import type { OrderStatus, Prisma, Role } from "@prisma/client";
+import type { OrderStatus, PaymentStatus, Prisma, Role } from "@prisma/client";
 import { prisma } from "../db/prisma.js";
 import { AppError } from "../middleware/error.js";
 import type { OrderCreateBody } from "../middleware/validate.js";
@@ -6,6 +6,7 @@ import { orderRepository } from "../repositories/orderRepository.js";
 import { isOrderable } from "./menuRules.js";
 import { calculateOrderTotal, formatOrderNumber } from "./orderRules.js";
 import { assertTransition } from "./orderStateMachine.js";
+import { assertPaymentAllowed, paymentTransitionError } from "./paymentRules.js";
 
 interface StockRow {
   name: string;
@@ -104,6 +105,108 @@ function toDetailView(
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
   };
+}
+
+interface FulfilmentStep {
+  from: OrderStatus;
+  to: OrderStatus;
+  /** BR-09: preparation may start only when the order is paid. */
+  requiresPayment: boolean;
+}
+
+const FULFILMENT_STEPS = {
+  start: { from: "ACCEPTED", to: "PREPARING", requiresPayment: true },
+  ready: { from: "PREPARING", to: "READY", requiresPayment: false },
+  complete: { from: "READY", to: "COMPLETED", requiresPayment: false },
+} satisfies Record<string, FulfilmentStep>;
+
+function unpaidStartError(paymentStatus: PaymentStatus): AppError {
+  return new AppError(
+    409,
+    "INVALID_TRANSITION",
+    "Order must be paid before preparation can start.",
+    { from: "ACCEPTED", to: "PREPARING", paymentStatus }
+  );
+}
+
+/**
+ * FR-12/BR-06/BR-09/BR-15: one fulfilment step with its history row in one transaction.
+ * Only the order status changes; stock and payment status are never written.
+ */
+async function advanceFulfilment(
+  orderId: number,
+  operatorId: number,
+  { from, to, requiresPayment }: FulfilmentStep
+): Promise<OrderDetailView> {
+  const order = await prisma.$transaction(async (tx) => {
+    const existing = await tx.order.findUnique({
+      where: { id: orderId },
+      select: { status: true, paymentStatus: true },
+    });
+
+    if (!existing) {
+      throw new AppError(404, "NOT_FOUND", "Order not found");
+    }
+
+    await assertTransition(existing.status, to);
+
+    if (requiresPayment && existing.paymentStatus !== "PAID") {
+      throw unpaidStartError(existing.paymentStatus);
+    }
+
+    // Of two concurrent calls, only one still matches the required status when it writes.
+    const updated = await tx.order.updateMany({
+      where: {
+        id: orderId,
+        status: from,
+        ...(requiresPayment ? { paymentStatus: "PAID" as const } : {}),
+      },
+      data: { status: to },
+    });
+
+    if (updated.count === 0) {
+      const latest = await tx.order.findUnique({
+        where: { id: orderId },
+        select: { status: true, paymentStatus: true },
+      });
+
+      if (!latest) {
+        throw new AppError(404, "NOT_FOUND", "Order not found");
+      }
+
+      if (requiresPayment && latest.status === from && latest.paymentStatus !== "PAID") {
+        throw unpaidStartError(latest.paymentStatus);
+      }
+
+      throw new AppError(
+        409,
+        "INVALID_TRANSITION",
+        `Cannot transition order from ${latest.status} to ${to}`,
+        { from: latest.status, to }
+      );
+    }
+
+    await tx.orderStatusHistory.create({
+      data: {
+        orderId,
+        fromStatus: from,
+        toStatus: to,
+        actorId: operatorId,
+        actorRole: "OPERATOR",
+      },
+    });
+
+    return tx.order.findUniqueOrThrow({
+      where: { id: orderId },
+      include: {
+        items: { orderBy: { id: "asc" } },
+        history: { orderBy: { id: "asc" } },
+        customer: { select: { id: true, displayName: true } },
+      },
+    });
+  });
+
+  return toDetailView(order, { includeCustomer: true });
 }
 
 /**
@@ -310,6 +413,159 @@ export const orderService = {
     });
 
     return toDetailView(order, { includeCustomer: true });
+  },
+
+  /** FR-12/AC-77/AC-80: start preparing a paid ACCEPTED order. */
+  start(orderId: number, operatorId: number): Promise<OrderDetailView> {
+    return advanceFulfilment(orderId, operatorId, FULFILMENT_STEPS.start);
+  },
+
+  /** FR-12/AC-78: mark a PREPARING order ready for pickup. */
+  markReady(orderId: number, operatorId: number): Promise<OrderDetailView> {
+    return advanceFulfilment(orderId, operatorId, FULFILMENT_STEPS.ready);
+  },
+
+  /** FR-12/AC-79: complete a READY order. */
+  complete(orderId: number, operatorId: number): Promise<OrderDetailView> {
+    return advanceFulfilment(orderId, operatorId, FULFILMENT_STEPS.complete);
+  },
+
+  /** FR-11/BR-10/BR-15: cancel the caller's PENDING order, restoring stock in one transaction. */
+  async cancel(orderId: number, customerId: number): Promise<OrderDetailView> {
+    const order = await prisma.$transaction(async (tx) => {
+      const existing = await tx.order.findUnique({
+        where: { id: orderId },
+        select: {
+          customerId: true,
+          status: true,
+          items: {
+            select: { menuItemId: true, quantity: true },
+            // The same lock order as order creation.
+            orderBy: { menuItemId: "asc" },
+          },
+        },
+      });
+
+      if (!existing) {
+        throw new AppError(404, "NOT_FOUND", "Order not found");
+      }
+
+      if (existing.customerId !== customerId) {
+        throw new AppError(403, "FORBIDDEN", "You do not have permission to cancel this order");
+      }
+
+      await assertTransition(existing.status, "CANCELLED");
+
+      // Only the request that wins this update may restore stock, so it is restored once.
+      const updated = await tx.order.updateMany({
+        where: { id: orderId, customerId, status: "PENDING" },
+        data: { status: "CANCELLED" },
+      });
+
+      if (updated.count === 0) {
+        const latest = await tx.order.findUnique({
+          where: { id: orderId },
+          select: { status: true },
+        });
+
+        if (!latest) {
+          throw new AppError(404, "NOT_FOUND", "Order not found");
+        }
+
+        throw new AppError(
+          409,
+          "INVALID_TRANSITION",
+          `Cannot transition order from ${latest.status} to CANCELLED`,
+          { from: latest.status, to: "CANCELLED" }
+        );
+      }
+
+      // DEC-34: add to the current stock, disabled items included, with no cap.
+      for (const line of existing.items) {
+        await tx.menuItem.update({
+          where: { id: line.menuItemId },
+          data: { stockQty: { increment: line.quantity } },
+        });
+      }
+
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId,
+          fromStatus: "PENDING",
+          toStatus: "CANCELLED",
+          actorId: customerId,
+          actorRole: "CUSTOMER",
+        },
+      });
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        include: {
+          items: { orderBy: { id: "asc" } },
+          history: { orderBy: { id: "asc" } },
+        },
+      });
+    });
+
+    return toDetailView(order);
+  },
+
+  /**
+   * FR-13/BR-11: simulated payment of the caller's own ACCEPTED order, exactly once.
+   * Only paymentStatus changes: no history row and no stored amount (DEC-35).
+   */
+  async pay(orderId: number, customerId: number, amountSatang: number): Promise<OrderDetailView> {
+    const order = await prisma.$transaction(async (tx) => {
+      const existing = await tx.order.findUnique({
+        where: { id: orderId },
+        select: { customerId: true, status: true, paymentStatus: true, totalSatang: true },
+      });
+
+      if (!existing) {
+        throw new AppError(404, "NOT_FOUND", "Order not found");
+      }
+
+      if (existing.customerId !== customerId) {
+        throw new AppError(403, "FORBIDDEN", "You do not have permission to pay this order");
+      }
+
+      await assertPaymentAllowed(existing, amountSatang);
+
+      // Of two concurrent payments, only one still matches UNPAID when it writes.
+      const updated = await tx.order.updateMany({
+        where: {
+          id: orderId,
+          customerId,
+          status: "ACCEPTED",
+          paymentStatus: "UNPAID",
+          totalSatang: amountSatang,
+        },
+        data: { paymentStatus: "PAID" },
+      });
+
+      if (updated.count === 0) {
+        const latest = await tx.order.findUnique({
+          where: { id: orderId },
+          select: { status: true, paymentStatus: true },
+        });
+
+        if (!latest) {
+          throw new AppError(404, "NOT_FOUND", "Order not found");
+        }
+
+        throw paymentTransitionError(latest);
+      }
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        include: {
+          items: { orderBy: { id: "asc" } },
+          history: { orderBy: { id: "asc" } },
+        },
+      });
+    });
+
+    return toDetailView(order);
   },
 
   /** FR-06/BR-07: the owner customer or any operator may read an order. */

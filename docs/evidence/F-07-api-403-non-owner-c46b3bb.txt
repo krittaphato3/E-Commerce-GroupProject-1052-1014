@@ -1,0 +1,10 @@
+# F-07 API transcript: a non-owner customer cannot pay (AC-74) — commit c46b3bb
+# Run: 2026-11-28 14:17 +0700; local API on the seeded test database; session cookies not printed
+
+customer1 (owner)     POST /api/orders          -> 201, order id 1, PENDING, totalSatang 6000
+operator1             POST /api/orders/1/accept -> 200, ACCEPTED
+customer2 (not owner) POST /api/orders/1/pay    -> 403
+  {"error":{"code":"FORBIDDEN","message":"You do not have permission to pay this order"}}
+operator1             POST /api/orders/1/pay    -> 403
+  {"error":{"code":"FORBIDDEN","message":"You do not have permission to perform this action"}}
+customer1 (owner)     GET  /api/orders/1        -> 200, status ACCEPTED, paymentStatus UNPAID, history rows 2 (unchanged)

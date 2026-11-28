@@ -82,3 +82,29 @@ export function fetchOperatorOrders(
 export function acceptOrder(id: number): Promise<{ order: Order }> {
   return apiRequest<{ order: Order }>(`/api/orders/${id}/accept`, { method: "POST" });
 }
+
+export function cancelOrder(id: number): Promise<{ order: Order }> {
+  return apiRequest<{ order: Order }>(`/api/orders/${id}/cancel`, { method: "POST" });
+}
+
+/** Simulated payment: the server only compares the amount with the stored total (BR-11). */
+export function payOrder(id: number, amountSatang: number): Promise<{ order: Order }> {
+  return apiRequest<{ order: Order }>(`/api/orders/${id}/pay`, {
+    method: "POST",
+    body: { amountSatang },
+  });
+}
+
+
+/** Fulfilment steps (FR-12, DEC-37): no request body. */
+export function startOrder(id: number): Promise<{ order: Order }> {
+  return apiRequest<{ order: Order }>(`/api/orders/${id}/start`, { method: "POST" });
+}
+
+export function markOrderReady(id: number): Promise<{ order: Order }> {
+  return apiRequest<{ order: Order }>(`/api/orders/${id}/ready`, { method: "POST" });
+}
+
+export function completeOrder(id: number): Promise<{ order: Order }> {
+  return apiRequest<{ order: Order }>(`/api/orders/${id}/complete`, { method: "POST" });
+}

@@ -52,13 +52,19 @@ async function loginCookie(email: string, password: string): Promise<string> {
 const app = createApp();
 
 function requestApp(method: HttpMethod, path: string, cookie?: string) {
-  const agent = method === "GET" ? request(app).get(path) : request(app).post(path);
+  const agent =
+    method === "GET"
+      ? request(app).get(path)
+      : method === "PATCH"
+        ? request(app).patch(path)
+        : request(app).post(path);
   return cookie ? agent.set("Cookie", cookie) : agent;
 }
 
-/** Replaces `:id` with a concrete order id so a registry entry can be called. */
-function concretePath(path: string, orderId: number): string {
-  return path.replace(":id", String(orderId));
+/** Replaces `:id` with a concrete resource id so a registry entry can be called. */
+function concretePath(path: string, orderId: number, menuItemId: number): string {
+  const targetId = path.startsWith("/api/menu-items") ? menuItemId : orderId;
+  return path.replace(":id", String(targetId));
 }
 
 function formatRoute(route: ExpressRoute): string {
@@ -81,6 +87,7 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
   let customer2Cookie: string;
   let operator1Cookie: string;
   let order1Id: number;
+  let menuItem1Id: number;
 
   beforeEach(async () => {
     await clearTestDatabase(testPrisma);
@@ -94,6 +101,7 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
     const basil = await testPrisma.menuItem.findUniqueOrThrow({
       where: { name: "Basil Pork Rice" },
     });
+    menuItem1Id = basil.id;
     const created = await requestApp("POST", "/api/orders", customer1Cookie).send({
       items: [{ menuItemId: basil.id, quantity: 1 }],
     });
@@ -108,8 +116,8 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
   it("TEST-43: every protected route answers 401 anonymously and 403 for each non-allowed role without private data", async () => {
     expect(
       protectedRoutes.length,
-      "the registry must list the six protected Sprint 1 routes"
-    ).toBe(6);
+      "the registry must list the thirteen protected routes"
+    ).toBe(13);
 
     // Keyed by Role so adding a new schema role requires a seeded account cookie here.
     const cookies: Record<Role, string> = {
@@ -121,7 +129,7 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
     let wrongRoleChecks = 0;
 
     for (const entry of protectedRoutes) {
-      const path = concretePath(entry.path, order1Id);
+      const path = concretePath(entry.path, order1Id, menuItem1Id);
       const label = `${entry.method} ${entry.path}`;
 
       const anonymous = await requestApp(entry.method, path);
@@ -199,8 +207,25 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
     const mounted = extractExpressRoutes(app).map(formatRoute).sort();
 
     expect(publicRoutes.length, "five public routes").toBe(5);
-    expect(protectedRoutes.length, "six protected routes").toBe(6);
-    expect(mounted).toHaveLength(11);
+    expect(protectedRoutes.length, "thirteen protected routes").toBe(13);
+    expect(mounted).toHaveLength(18);
+    for (const action of ["start", "ready", "complete"]) {
+      const path = `/api/orders/:id/${action}`;
+      expect(mounted).toContain(`POST ${path}`);
+      expect(protectedRoutes).toContainEqual({ method: "POST", path, roles: [Role.OPERATOR] });
+    }
+    expect(mounted).toContain("POST /api/orders/:id/cancel");
+    expect(protectedRoutes).toContainEqual({
+      method: "POST",
+      path: "/api/orders/:id/cancel",
+      roles: [Role.CUSTOMER],
+    });
+    expect(mounted).toContain("POST /api/orders/:id/pay");
+    expect(protectedRoutes).toContainEqual({
+      method: "POST",
+      path: "/api/orders/:id/pay",
+      roles: [Role.CUSTOMER],
+    });
 
     // Every mounted route is registered.
     expect(mounted).toEqual(registry);
@@ -237,5 +262,122 @@ describe("R-01 route access control and registry completeness (AC-43)", () => {
     const rawUnregistered = findUnregisteredRoutes(appWithRawMount);
     expect(rawUnregistered.length).toBeGreaterThan(0);
     expect(rawUnregistered.some((route) => route.startsWith("GET "))).toBe(true);
+  });
+
+  it("TEST-92: sweeps all 13 protected routes, pins the 7 Sprint 2 guards and changes no data", async () => {
+    const sprint2Routes = [
+      "POST /api/menu-items [OPERATOR]",
+      "POST /api/orders/:id/cancel [CUSTOMER]",
+      "POST /api/orders/:id/complete [OPERATOR]",
+      "POST /api/orders/:id/pay [CUSTOMER]",
+      "POST /api/orders/:id/ready [OPERATOR]",
+      "POST /api/orders/:id/start [OPERATOR]",
+      "PATCH /api/menu-items/:id [OPERATOR]",
+    ];
+    const sprint2Keys = new Set(sprint2Routes.map((line) => line.slice(0, line.indexOf(" ["))));
+    const pinned = protectedRoutes
+      .filter((route) => sprint2Keys.has(formatRoute(route)))
+      .map((route) => `${formatRoute(route)} [${route.roles.join(",")}]`);
+    expect(pinned.sort()).toEqual([...sprint2Routes].sort());
+
+    expect(publicRoutes.length, "five public routes").toBe(5);
+    expect(protectedRoutes.length, "thirteen protected routes").toBe(13);
+    const mounted = extractExpressRoutes(app).map(formatRoute).sort();
+    expect(mounted).toHaveLength(18);
+    expect(mounted).toEqual([...publicRoutes, ...protectedRoutes].map(formatRoute).sort());
+    expect(findUnregisteredRoutes(app)).toEqual([]);
+
+    // A second customer1 order in ACCEPTED/UNPAID, so that only ownership stops
+    // customer2 from paying it. order1 stays PENDING, so only ownership stops a cancel.
+    const created = await requestApp("POST", "/api/orders", customer1Cookie).send({
+      items: [{ menuItemId: menuItem1Id, quantity: 2 }],
+    });
+    expect(created.status).toBe(201);
+    const payableOrderId = created.body.order.id as number;
+    const payableTotal = created.body.order.totalSatang as number;
+    const accepted = await requestApp(
+      "POST",
+      `/api/orders/${payableOrderId}/accept`,
+      operator1Cookie
+    );
+    expect(accepted.status).toBe(200);
+
+    // Order status, payment status, lines, history, stock and the whole menu.
+    const snapshot = async () => ({
+      orders: await testPrisma.order.findMany({
+        orderBy: { id: "asc" },
+        include: {
+          items: { orderBy: { id: "asc" } },
+          history: { orderBy: { id: "asc" } },
+        },
+      }),
+      menu: await testPrisma.menuItem.findMany({ orderBy: { id: "asc" } }),
+    });
+    const before = await snapshot();
+
+    // Valid bodies, so a missing guard would change data instead of failing validation.
+    const validBodies: Record<string, object> = {
+      "POST /api/orders": { items: [{ menuItemId: menuItem1Id, quantity: 1 }] },
+      "POST /api/orders/:id/pay": { amountSatang: payableTotal },
+      "POST /api/menu-items": {
+        name: "TEST-92 Probe Dish",
+        description: "Must never be created",
+        priceSatang: 100,
+        stockQty: 1,
+      },
+      "PATCH /api/menu-items/:id": { priceSatang: 1, stockQty: 0, isAvailable: false },
+    };
+    const cookies: Record<Role, string> = {
+      CUSTOMER: customer1Cookie,
+      OPERATOR: operator1Cookie,
+    };
+    // The state each order action would succeed on if its guard were missing.
+    const targetOrderId = (path: string) => (path.endsWith("/pay") ? payableOrderId : order1Id);
+
+    let swept = 0;
+    for (const entry of protectedRoutes) {
+      const key = formatRoute(entry);
+      const path = concretePath(entry.path, targetOrderId(entry.path), menuItem1Id);
+      const call = (cookie?: string) => {
+        const pending = requestApp(entry.method, path, cookie);
+        return validBodies[key] ? pending.send(validBodies[key]) : pending;
+      };
+
+      const anonymous = await call();
+      expect(anonymous.status, `${key} anonymous`).toBe(401);
+      expect(anonymous.body.error.code, `${key} anonymous`).toBe("UNAUTHENTICATED");
+      assertNoPrivateData(anonymous, `${key} anonymous`);
+
+      for (const role of ALL_ROLES.filter((candidate) => !entry.roles.includes(candidate))) {
+        const forbidden = await call(cookies[role]);
+        expect(forbidden.status, `${key} as ${role}`).toBe(403);
+        expect(forbidden.body.error.code, `${key} as ${role}`).toBe("FORBIDDEN");
+        assertNoPrivateData(forbidden, `${key} as ${role}`);
+      }
+      swept += 1;
+    }
+    expect(swept).toBe(13);
+
+    const foreignCancel = await requestApp(
+      "POST",
+      `/api/orders/${order1Id}/cancel`,
+      customer2Cookie
+    );
+    const foreignPay = await requestApp(
+      "POST",
+      `/api/orders/${payableOrderId}/pay`,
+      customer2Cookie
+    ).send({ amountSatang: payableTotal });
+
+    for (const [label, response] of [
+      ["customer2 cancel", foreignCancel],
+      ["customer2 pay", foreignPay],
+    ] as const) {
+      expect(response.status, label).toBe(403);
+      expect(response.body.error.code, label).toBe("FORBIDDEN");
+      assertNoPrivateData(response, label);
+    }
+
+    expect(await snapshot()).toEqual(before);
   });
 });
