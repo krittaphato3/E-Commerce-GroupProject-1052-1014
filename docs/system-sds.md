@@ -3,9 +3,9 @@
 | Item | Value |
 |---|---|
 | Document | `docs/system-sds.md` |
-| Version | 1.8 |
+| Version | 1.9 |
 | Date | 2026-11-28 |
-| Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/sprint-2/features.md`, `docs/sprints/plan.md` |
+| Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/sprint-2/features.md`, `docs/sprints/sprint-3/features.md`, `docs/sprints/plan.md` |
 
 ### Revision history
 | Version | Date | Change | Reason |
@@ -19,6 +19,7 @@
 | 1.6 | 2026-11-28 | `POST /api/orders/:id/cancel` and the "Cancel own `PENDING` order" permission row are marked implemented | F-06 (Issue #55) |
 | 1.7 | 2026-11-28 | `POST /api/orders/:id/pay` and its permission matrix row are marked implemented | F-07 (Issue #56) |
 | 1.8 | 2026-11-28 | `POST /api/orders/:id/start`, `/ready`, `/complete` and the "Start / ready / complete" permission row are marked implemented; the `/operator/orders` screen row names the payment badge and fulfilment actions | F-08 (Issue #57) |
+| 1.9 | 2026-11-28 | Endpoint summary replaces the combined Sprint 3 line with the reject, operator-cancel and sales-report endpoints, adds the changed list and login endpoints, and the permission matrix adds or details the Sprint 3 rows, all marked "Sprint 3 — planned" | Sprint 3 contracts (Issue #59); nothing is implemented yet |
 
 ---
 
@@ -236,7 +237,11 @@ Header: shop name, links by role, display name and role badge, Logout button. Af
 | `POST /api/orders/:id/start` | Operator | F-08 | 2 |
 | `POST /api/orders/:id/ready` | Operator | F-08 | 2 |
 | `POST /api/orders/:id/complete` | Operator | F-08 | 2 |
-| `POST /api/orders/:id/reject`, reports, operator cancel | Operator | F-09, F-11, F-12 | 3 |
+| `POST /api/orders/:id/reject` | Operator | F-09 | Sprint 3 — planned |
+| `GET /api/orders/mine`, `GET /api/orders` with filter, search and pagination parameters (changed) | Customer (own), Operator | F-10 | Sprint 3 — planned |
+| `GET /api/reports/sales` | Operator | F-11 | Sprint 3 — planned |
+| `POST /api/orders/:id/operator-cancel` | Operator | F-12 | Sprint 3 — planned |
+| `POST /api/auth/login` answers 429 when throttled (changed) | Anonymous | F-13 | Sprint 3 — planned |
 
 ## 5. Role and permission matrix
 
@@ -255,11 +260,12 @@ Header: shop name, links by role, display name and role badge, Logout button. Af
 | Accept order | — | — | Y | 1 |
 | Create/edit/enable/disable menu item | — | — | Y | Sprint 2 — planned |
 | Cancel own `PENDING` order | — | Own, `PENDING` only | — | 2 |
-| Cancel `ACCEPTED` order | — | — | Any `ACCEPTED` | 3 |
+| Cancel `ACCEPTED` order | — | — | Any `ACCEPTED` | Sprint 3 — planned |
 | Pay order (simulated) | — | Own, `ACCEPTED` and `UNPAID` | — | 2 |
 | Start / ready / complete | — | — | Y (start needs `PAID`) | 2 |
-| Reject order | — | — | Y | 3 |
-| Sales summary | — | — | Y | 3 |
+| Reject order | — | — | Any `PENDING` | Sprint 3 — planned |
+| Sales summary | — | — | Y | Sprint 3 — planned |
+| Search and filter orders | — | Own | Any (also by customer name) | Sprint 3 — planned |
 
 A hidden button is not authorization. Sprint 1 rows are enforced by backend middleware and services and covered by AC-43; Sprint 2–3 rows will be added to the same route-registry test when their endpoints are implemented.
 

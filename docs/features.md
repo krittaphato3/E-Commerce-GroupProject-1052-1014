@@ -3,9 +3,9 @@
 | Item | Value |
 |---|---|
 | Document | `docs/features.md` |
-| Version | 1.5 |
-| Date | 2026-11-27 |
-| Related | `docs/srs.md`, `docs/traceability.md`, `docs/sprints/plan.md`, `docs/sprints/sprint-1/features.md` (Sprint 1 contracts), `docs/sprints/sprint-2/features.md` (Sprint 2 contracts) |
+| Version | 1.6 |
+| Date | 2026-11-28 |
+| Related | `docs/srs.md`, `docs/traceability.md`, `docs/sprints/plan.md`, `docs/sprints/sprint-1/features.md` (Sprint 1 contracts), `docs/sprints/sprint-2/features.md` (Sprint 2 contracts), `docs/sprints/sprint-3/features.md` (Sprint 3 contracts) |
 
 ### Revision history
 | Version | Date | Change | Reason |
@@ -16,6 +16,7 @@
 | 1.3 | 2026-11-07 | Document title uses the Omazon display name | Display brand rename (DEC-25); no requirement, feature or sprint content changed |
 | 1.4 | 2026-11-12 | §4 approved scope changes now lists CHG-01 and CHG-02 instead of "None yet" | The cell contradicted `docs/traceability.md` §6, which already records both changes (PR #20 review) |
 | 1.5 | 2026-11-27 | Related row references the Sprint 2 contract file `docs/sprints/sprint-2/features.md` (F-05 to F-08, R-05); no requirement, feature or sprint content changed | Sprint 2 contracts written before implementation (Issue #53) |
+| 1.6 | 2026-11-28 | Related row references the Sprint 3 contract file `docs/sprints/sprint-3/features.md` (F-09 to F-13, R-04); no requirement, feature or sprint content changed | Sprint 3 contracts written before implementation (Issue #59) |
 
 ## 1. Features
 
