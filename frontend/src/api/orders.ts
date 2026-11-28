@@ -82,3 +82,7 @@ export function fetchOperatorOrders(
 export function acceptOrder(id: number): Promise<{ order: Order }> {
   return apiRequest<{ order: Order }>(`/api/orders/${id}/accept`, { method: "POST" });
 }
+
+export function cancelOrder(id: number): Promise<{ order: Order }> {
+  return apiRequest<{ order: Order }>(`/api/orders/${id}/cancel`, { method: "POST" });
+}

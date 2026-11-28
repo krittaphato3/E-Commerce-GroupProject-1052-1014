@@ -312,6 +312,86 @@ export const orderService = {
     return toDetailView(order, { includeCustomer: true });
   },
 
+  /** FR-11/BR-10/BR-15: cancel the caller's PENDING order, restoring stock in one transaction. */
+  async cancel(orderId: number, customerId: number): Promise<OrderDetailView> {
+    const order = await prisma.$transaction(async (tx) => {
+      const existing = await tx.order.findUnique({
+        where: { id: orderId },
+        select: {
+          customerId: true,
+          status: true,
+          items: {
+            select: { menuItemId: true, quantity: true },
+            // The same lock order as order creation.
+            orderBy: { menuItemId: "asc" },
+          },
+        },
+      });
+
+      if (!existing) {
+        throw new AppError(404, "NOT_FOUND", "Order not found");
+      }
+
+      if (existing.customerId !== customerId) {
+        throw new AppError(403, "FORBIDDEN", "You do not have permission to cancel this order");
+      }
+
+      await assertTransition(existing.status, "CANCELLED");
+
+      // Only the request that wins this update may restore stock, so it is restored once.
+      const updated = await tx.order.updateMany({
+        where: { id: orderId, customerId, status: "PENDING" },
+        data: { status: "CANCELLED" },
+      });
+
+      if (updated.count === 0) {
+        const latest = await tx.order.findUnique({
+          where: { id: orderId },
+          select: { status: true },
+        });
+
+        if (!latest) {
+          throw new AppError(404, "NOT_FOUND", "Order not found");
+        }
+
+        throw new AppError(
+          409,
+          "INVALID_TRANSITION",
+          `Cannot transition order from ${latest.status} to CANCELLED`,
+          { from: latest.status, to: "CANCELLED" }
+        );
+      }
+
+      // DEC-34: add to the current stock, disabled items included, with no cap.
+      for (const line of existing.items) {
+        await tx.menuItem.update({
+          where: { id: line.menuItemId },
+          data: { stockQty: { increment: line.quantity } },
+        });
+      }
+
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId,
+          fromStatus: "PENDING",
+          toStatus: "CANCELLED",
+          actorId: customerId,
+          actorRole: "CUSTOMER",
+        },
+      });
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        include: {
+          items: { orderBy: { id: "asc" } },
+          history: { orderBy: { id: "asc" } },
+        },
+      });
+    });
+
+    return toDetailView(order);
+  },
+
   /** FR-06/BR-07: the owner customer or any operator may read an order. */
   async getForViewer(
     orderId: number,
