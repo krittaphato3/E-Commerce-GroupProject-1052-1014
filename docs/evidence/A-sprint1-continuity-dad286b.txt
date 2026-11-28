@@ -1,0 +1,132 @@
+# Part A — Sprint 1 continuity run on the current staging head — dad286b
+Environment: local macOS, Node v24.14.0, npm 11.9.0, PostgreSQL 16 (Docker), test database campusbites_test
+Commit: dad286b5eb4d96b973ad538f0f3e792bcf10e81c (dad286b), head of sprint-3-staging after PR #72; branch docs/deliverable-2 with no tracked change at run time
+Run: 2026-11-28 17:48 +0700
+
+Accepted Sprint 1 release: tag sprint-1-v1.0 = 858ef85. No tag sprint-1-v1.1 exists (local or remote);
+the later Sprint 1 change release is merge commit b1422f4 on main (PR #52, titled 'sprint-1-v1.1').
+
+Critical journey and the tests that cover it
+- Login / logout / session:         TEST-01 to TEST-08 (backend/tests/auth.test.ts), TEST-09 (frontend/e2e/auth.spec.ts)
+- Menu:                             TEST-10 (backend/tests/menu.test.ts), TEST-12 (frontend/e2e/menu.spec.ts)
+- Place order:                      TEST-14 to TEST-25 (backend/tests/orders.create.test.ts), TEST-29 (frontend/e2e/order.spec.ts)
+- Operator accepts:                 TEST-32 to TEST-40 (backend/tests/orders.operator.test.ts)
+- Customer sees Accepted + history: TEST-41 (frontend/e2e/operator.spec.ts)
+- Access checks:                    TEST-26, TEST-27, TEST-28 (orders.access.test.ts), TEST-37, TEST-38 (orders.operator.test.ts),
+                                    TEST-42 (operator.spec.ts, UI only), TEST-43 and TEST-92 (routes.access.test.ts)
+- FND-02 regression:                'AC-21 / AC-30' case (frontend/e2e/order.spec.ts)
+
+Difference from the files at sprint-1-v1.0 (git diff --stat sprint-1-v1.0 dad286b over these test files):
+- auth.spec.ts, menu.spec.ts, operator.spec.ts, orders.access.test.ts, orders.operator.test.ts: unchanged
+- order.spec.ts: +7 lines (FND-02 assertions added to the AC-21 / AC-30 case)
+- routes.access.test.ts: extended for Sprint 2 and F-09 routes (TEST-92; contract-listed count changes)
+- auth.test.ts, menu.test.ts, orders.create.test.ts: unchanged
+
+These are current-head tests against current-head code; the sprint-1-v1.0 build itself was not re-run.
+Local run only: not a deployed or partner UAT re-test.
+
+SUMMARY: API/DB 45 passed, 0 failed, 0 skipped (6 files, exit 0); Playwright 6 passed, 0 failed, 0 skipped (exit 0)
+
+$ (cd backend) npm run db:migrate:test && npx vitest run tests/auth.test.ts tests/menu.test.ts tests/orders.create.test.ts tests/orders.access.test.ts tests/orders.operator.test.ts tests/routes.access.test.ts --reporter=verbose
+
+> campusbites-backend@1.0.0 db:migrate:test
+> tsx scripts/migrate-test-db.ts
+
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "campusbites_test", schema "public" at "localhost:5432"
+
+2 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+
+ RUN  v3.2.7 /Users/sun/Documents/kmutt/cpe334/Project/E-Commerce-GroupProject-1052-1014/backend
+
+ ✓ tests/orders.create.test.ts > F-03 Order submission (AC-14 to AC-25) > TEST-14: a valid order returns 201 PENDING/UNPAID and can be retrieved afterwards 96ms
+ ✓ tests/orders.create.test.ts > F-03 Order submission (AC-14 to AC-25) > TEST-15: the total uses the current database price, not a client value 38ms
+ ✓ tests/orders.create.test.ts > F-03 Order submission (AC-14 to AC-25) > TEST-16: client-supplied totalSatang, unitPriceSatang or status returns 400 and saves nothing 25ms
+ ✓ tests/orders.create.test.ts > F-03 Order submission (AC-14 to AC-25) > TEST-17: existing orders keep their snapshot price after the menu price changes 28ms
+ ✓ tests/orders.create.test.ts > F-03 Order submission (AC-14 to AC-25) > TEST-18: invalid quantities return 400 and save nothing 26ms
+ ✓ tests/orders.create.test.ts > F-03 Order submission (AC-14 to AC-25) > TEST-19: an empty list, more than ten lines or a duplicated item returns 400 26ms
+ ✓ tests/orders.create.test.ts > F-03 Order submission (AC-14 to AC-25) > TEST-20: a 201-character pickup note is rejected and a 200-character note is stored 22ms
+ ✓ tests/orders.create.test.ts > F-03 Order submission (AC-14 to AC-25) > TEST-21: ordering a sold-out or disabled item returns 409 ITEM_UNAVAILABLE with details 24ms
+ ✓ tests/orders.create.test.ts > F-03 Order submission (AC-14 to AC-25) > TEST-22: a failing line rolls the whole order back and leaves other stock unchanged 23ms
+ ✓ tests/orders.create.test.ts > F-03 Order submission (AC-14 to AC-25) > TEST-23: a successful order reduces stock by exactly the ordered quantity 26ms
+ ✓ tests/orders.create.test.ts > F-03 Order submission (AC-14 to AC-25) > TEST-24: two customers ordering the last unit produce exactly one 201 and one 409 73ms
+ ✓ tests/orders.create.test.ts > F-03 Order submission (AC-14 to AC-25) > TEST-25: creating an order writes exactly one history entry with a timestamp 23ms
+ ✓ tests/orders.operator.test.ts > F-04 Operator Order Management (AC-32 to AC-40) > TEST-32: GET /api/orders as an operator returns all orders oldest first with customer displayName and no email 78ms
+ ✓ tests/orders.operator.test.ts > F-04 Operator Order Management (AC-32 to AC-40) > TEST-33: GET /api/orders filters by status and returns 400 VALIDATION_ERROR for an unknown status 35ms
+ ✓ tests/orders.operator.test.ts > F-04 Operator Order Management (AC-32 to AC-40) > TEST-34: POST /api/orders/:id/accept transitions a PENDING order to ACCEPTED and records an OPERATOR history row with createdAt 32ms
+ ✓ tests/orders.operator.test.ts > F-04 Operator Order Management (AC-32 to AC-40) > TEST-35: POST /api/orders/:id/accept on an already ACCEPTED order returns 409 INVALID_TRANSITION and leaves status and history unchanged 34ms
+ ✓ tests/orders.operator.test.ts > F-04 Operator Order Management (AC-32 to AC-40) > TEST-36: POST /api/orders/:id/accept returns 404 NOT_FOUND for a missing order and 400 VALIDATION_ERROR for a non-numeric id 22ms
+ ✓ tests/orders.operator.test.ts > F-04 Operator Order Management (AC-32 to AC-40) > TEST-37: a customer gets 403 FORBIDDEN and an anonymous caller gets 401 UNAUTHENTICATED when calling POST /api/orders/:id/accept 23ms
+ ✓ tests/orders.operator.test.ts > F-04 Operator Order Management (AC-32 to AC-40) > TEST-38: a customer gets 403 FORBIDDEN and an anonymous caller gets 401 UNAUTHENTICATED when calling GET /api/orders, with no order data 24ms
+ ✓ tests/orders.operator.test.ts > F-04 Operator Order Management (AC-32 to AC-40) > TEST-39: an operator can GET /api/orders/:id for any customer's order and receives customer.displayName without email or passwordHash 25ms
+ ✓ tests/orders.operator.test.ts > F-04 Operator Order Management (AC-32 to AC-40) > TEST-40: two operators accepting the same PENDING order concurrently produce one 200, one 409, and one accept history row across 10 runs with synchronization barrier 83ms
+ ✓ tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-01: valid credentials return the user, set the session cookie and create one 8-hour session 61ms
+ ✓ tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-02: a wrong password returns 401 INVALID_CREDENTIALS, sets no cookie and creates no session 26ms
+ ✓ tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-03: an unknown email returns the same 401 response as a wrong password 24ms
+ ✓ tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-03 (regression): unknown-email login lazily creates and caches a dummy hash at env.BCRYPT_ROUNDS 39ms
+ ✓ tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-04: invalid login bodies return 400 VALIDATION_ERROR in the standard error shape 23ms
+ ✓ tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-04 (boundary): login password accepts 72 UTF-8 bytes and rejects 73 UTF-8 bytes including multibyte characters 21ms
+ ✓ tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-05: GET /api/auth/me returns the logged-in operator and rejects an anonymous caller 21ms
+ ✓ tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-05 (regression): GET /api/auth/me returns only { id, email, displayName, role } even if upstream user object has extra keys 17ms
+ ✓ tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-06: logout invalidates the seeded session cookie and deletes the session row 17ms
+ ✓ tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-06 (supporting): a session created by login stops working after logout 20ms
+ ✓ tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-07: a session whose expiresAt is in the past is rejected with 401 17ms
+ ✓ tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-07 (supporting): sessionRepository.deleteExpired removes only expired rows 15ms
+ ✓ tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > TEST-08: stored passwords are bcrypt hashes and no response exposes the hash 21ms
+ ✓ tests/auth.test.ts > F-01 Authentication API (AC-01 to AC-08) > requireRole('OPERATOR') returns 401 without a cookie, 403 FORBIDDEN for CUSTOMER and 200 for OPERATOR 20ms
+ ✓ tests/routes.access.test.ts > R-01 route access control and registry completeness (AC-43) > TEST-43: every protected route answers 401 anonymously and 403 for each non-allowed role without private data 111ms
+ ✓ tests/routes.access.test.ts > R-01 route access control and registry completeness (AC-43) > TEST-43: the registry and the mounted Express routes are in exact agreement 38ms
+ ✓ tests/routes.access.test.ts > R-01 route access control and registry completeness (AC-43) > TEST-92: sweeps all 14 protected routes, pins the 7 Sprint 2 guards and changes no data 54ms
+ ✓ tests/orders.access.test.ts > F-03 Order access control (AC-26 to AC-28) > TEST-26: an operator gets 403 and an anonymous caller 401 when submitting an order 71ms
+ ✓ tests/orders.access.test.ts > F-03 Order access control (AC-26 to AC-28) > TEST-27: another customer gets 403, the owner 200, a missing id 404 and a non-numeric id 400 48ms
+ ✓ tests/orders.access.test.ts > F-03 Order access control (AC-26 to AC-28) > TEST-28: GET /api/orders/mine returns only the caller's orders, newest first 40ms
+ ✓ tests/menu.test.ts > F-02 Menu API (AC-10, AC-11, AC-12) > TEST-10: an anonymous GET /api/menu returns every seeded item in id order with the public fields 62ms
+ ✓ tests/menu.test.ts > F-02 Menu API (AC-10, AC-11, AC-12) > TEST-10: the menu works with a session cookie and still returns no private data 32ms
+ ✓ tests/menu.test.ts > F-02 Menu API (AC-10, AC-11, AC-12) > TEST-10 (AC-11): available is false exactly when the item is disabled or has no stock 19ms
+ ✓ tests/menu.test.ts > F-02 Menu API (AC-10, AC-11, AC-12) > TEST-10 (500 path): GET /api/menu returns 500 INTERNAL_ERROR with a generic message when the repository fails 18ms
+
+ Test Files  6 passed (6)
+      Tests  45 passed (45)
+   Start at  17:48:26
+   Duration  2.78s (transform 94ms, setup 22ms, collect 611ms, tests 1.63s, environment 0ms, prepare 140ms)
+
+# exit code: 0
+
+$ (cd frontend) npx playwright test e2e/auth.spec.ts e2e/menu.spec.ts e2e/order.spec.ts e2e/operator.spec.ts --reporter=list
+
+> campusbites-backend@1.0.0 db:reset:test
+> tsx scripts/reset-test-db.ts
+
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "campusbites_test", schema "public" at "localhost:5432"
+
+2 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+[E2E] Test database reset and seeded.
+
+Running 6 tests using 1 worker
+
+(node:48397) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › e2e/auth.spec.ts:16:1 › TEST-09: customer and operator login, logout and invalid credentials (880ms)
+  ✓  2 [chromium] › e2e/menu.spec.ts:12:1 › TEST-12: anonymous menu shows formatted prices and sold-out items (142ms)
+  ✓  3 [chromium] › e2e/operator.spec.ts:16:1 › TEST-41: an operator accepts a pending order and the customer sees Accepted and history (2.0s)
+  ✓  4 [chromium] › e2e/operator.spec.ts:116:1 › TEST-42: a customer navigating to /operator/orders sees in-place 403 Forbidden (341ms)
+  ✓  5 [chromium] › e2e/order.spec.ts:25:1 › TEST-29: a customer places an order and sees the saved total (562ms)
+  ✓  6 [chromium] › e2e/order.spec.ts:82:1 › AC-21 / AC-30: a stale cart gets 409 ITEM_UNAVAILABLE and keeps both lines (482ms)
+
+  6 passed (6.7s)
+# exit code: 0
