@@ -6,6 +6,7 @@ import { orderRepository } from "../repositories/orderRepository.js";
 import { isOrderable } from "./menuRules.js";
 import { calculateOrderTotal, formatOrderNumber } from "./orderRules.js";
 import { assertTransition } from "./orderStateMachine.js";
+import { assertPaymentAllowed, paymentTransitionError } from "./paymentRules.js";
 
 interface StockRow {
   name: string;
@@ -379,6 +380,64 @@ export const orderService = {
           actorRole: "CUSTOMER",
         },
       });
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        include: {
+          items: { orderBy: { id: "asc" } },
+          history: { orderBy: { id: "asc" } },
+        },
+      });
+    });
+
+    return toDetailView(order);
+  },
+
+  /**
+   * FR-13/BR-11: simulated payment of the caller's own ACCEPTED order, exactly once.
+   * Only paymentStatus changes: no history row and no stored amount (DEC-35).
+   */
+  async pay(orderId: number, customerId: number, amountSatang: number): Promise<OrderDetailView> {
+    const order = await prisma.$transaction(async (tx) => {
+      const existing = await tx.order.findUnique({
+        where: { id: orderId },
+        select: { customerId: true, status: true, paymentStatus: true, totalSatang: true },
+      });
+
+      if (!existing) {
+        throw new AppError(404, "NOT_FOUND", "Order not found");
+      }
+
+      if (existing.customerId !== customerId) {
+        throw new AppError(403, "FORBIDDEN", "You do not have permission to pay this order");
+      }
+
+      await assertPaymentAllowed(existing, amountSatang);
+
+      // Of two concurrent payments, only one still matches UNPAID when it writes.
+      const updated = await tx.order.updateMany({
+        where: {
+          id: orderId,
+          customerId,
+          status: "ACCEPTED",
+          paymentStatus: "UNPAID",
+          totalSatang: amountSatang,
+        },
+        data: { paymentStatus: "PAID" },
+      });
+
+      if (updated.count === 0) {
+        const latest = await tx.order.findUnique({
+          where: { id: orderId },
+          select: { status: true, paymentStatus: true },
+        });
+
+        if (!latest) {
+          throw new AppError(404, "NOT_FOUND", "Order not found");
+        }
+
+        throw paymentTransitionError(latest);
+      }
 
       return tx.order.findUniqueOrThrow({
         where: { id: orderId },

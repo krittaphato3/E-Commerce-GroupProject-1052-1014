@@ -6,8 +6,9 @@ import {
   getOrder,
   listMyOrders,
   listOrders,
+  payOrder,
 } from "../controllers/orderController.js";
-import { orderCreateSchema, validateBody } from "../middleware/validate.js";
+import { orderCreateSchema, orderPaymentSchema, validateBody } from "../middleware/validate.js";
 import { guardsFor } from "./registry.js";
 
 export const ordersRouter = Router();
@@ -30,4 +31,10 @@ ordersRouter.post(
   "/:id/cancel",
   ...guardsFor("POST", "/api/orders/:id/cancel"),
   cancelOrder
+);
+ordersRouter.post(
+  "/:id/pay",
+  ...guardsFor("POST", "/api/orders/:id/pay"),
+  validateBody(orderPaymentSchema),
+  payOrder
 );

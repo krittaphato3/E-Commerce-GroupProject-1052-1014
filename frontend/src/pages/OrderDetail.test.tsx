@@ -1,17 +1,22 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { OrderDetail } from "./OrderDetail";
-import { cancelOrder, fetchOrder, type Order } from "../api/orders";
+import { cancelOrder, fetchOrder, payOrder, type Order } from "../api/orders";
 import { ApiRequestError } from "../api/client";
 import * as AuthContextModule from "../auth/AuthContext";
 import type { User } from "../api/auth";
 
-vi.mock("../api/orders", () => ({ fetchOrder: vi.fn(), cancelOrder: vi.fn() }));
+vi.mock("../api/orders", () => ({
+  fetchOrder: vi.fn(),
+  cancelOrder: vi.fn(),
+  payOrder: vi.fn(),
+}));
 
 const mockedFetchOrder = vi.mocked(fetchOrder);
 const mockedCancelOrder = vi.mocked(cancelOrder);
+const mockedPayOrder = vi.mocked(payOrder);
 
 const CUSTOMER_USER: User = {
   id: 1,
@@ -261,6 +266,135 @@ describe("OrderDetail cancellation (AC-66)", () => {
 
     expect((await screen.findByRole("alert")).textContent).toContain(message);
     expect(button("Cancel order")).not.toBeNull();
+    expect(mockedFetchOrder).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("OrderDetail simulated payment (AC-75)", () => {
+  const PENDING_ORDER: Order = { ...SAMPLE_ORDER, totalSatang: 15000 };
+  const ACCEPTED_ORDER: Order = { ...PENDING_ORDER, status: "ACCEPTED" };
+  const PAID_ORDER: Order = { ...ACCEPTED_ORDER, paymentStatus: "PAID" };
+  const CONFIRM_TEXT = "Pay ฿150.00 (simulated)?";
+  const PENDING_HINT = "You can pay after the shop accepts this order.";
+
+  const button = (name: string) => screen.queryByRole("button", { name }) as HTMLButtonElement | null;
+
+  async function openConfirmation() {
+    fireEvent.click(await screen.findByRole("button", { name: "Pay" }));
+    expect(screen.getByText(CONFIRM_TEXT)).toBeTruthy();
+  }
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("TEST-75: shows Pay only to a Customer on an ACCEPTED, UNPAID order", async () => {
+    const cases = [
+      { user: CUSTOMER_USER, order: PENDING_ORDER, visible: false, hint: true },
+      { user: CUSTOMER_USER, order: ACCEPTED_ORDER, visible: true, hint: false },
+      { user: CUSTOMER_USER, order: PAID_ORDER, visible: false, hint: false },
+      { user: OPERATOR_USER, order: PENDING_ORDER, visible: false, hint: false },
+      { user: OPERATOR_USER, order: ACCEPTED_ORDER, visible: false, hint: false },
+      { user: OPERATOR_USER, order: PAID_ORDER, visible: false, hint: false },
+    ];
+
+    for (const { user, order, visible, hint } of cases) {
+      const label = `${user.role} ${order.status} ${order.paymentStatus}`;
+      mockedFetchOrder.mockResolvedValue({ order });
+      renderOrderDetail(user);
+      await screen.findByText("CB-000001");
+      expect(button("Pay") !== null, label).toBe(visible);
+      expect(screen.queryByText(PENDING_HINT) !== null, label).toBe(hint);
+      cleanup();
+    }
+  });
+
+  it("TEST-75: the confirmation shows the total with no input, and Back sends nothing", async () => {
+    mockedFetchOrder.mockResolvedValue({ order: ACCEPTED_ORDER });
+    renderOrderDetail();
+
+    await openConfirmation();
+    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(screen.queryByRole("spinbutton")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+
+    expect(screen.queryByText(CONFIRM_TEXT)).toBeNull();
+    expect(button("Pay")).not.toBeNull();
+    expect(mockedPayOrder).not.toHaveBeenCalled();
+  });
+
+  it("TEST-75: confirming sends 15000, shows Paying… with buttons disabled, then Paid", async () => {
+    mockedFetchOrder.mockResolvedValue({ order: ACCEPTED_ORDER });
+    let resolvePay!: (value: { order: Order }) => void;
+    mockedPayOrder.mockReturnValue(
+      new Promise((resolve) => {
+        resolvePay = resolve;
+      })
+    );
+    renderOrderDetail();
+
+    await openConfirmation();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm payment" }));
+
+    expect(mockedPayOrder).toHaveBeenCalledTimes(1);
+    expect(mockedPayOrder).toHaveBeenCalledWith(1, 15000);
+    expect(button("Paying…")?.disabled).toBe(true);
+    expect(button("Back")?.disabled).toBe(true);
+
+    resolvePay({ order: PAID_ORDER });
+
+    expect(await screen.findByText("Paid", { exact: true })).toBeTruthy();
+    expect(screen.getByText("Accepted", { exact: true })).toBeTruthy();
+    expect(button("Pay")).toBeNull();
+    expect(screen.queryByText(CONFIRM_TEXT)).toBeNull();
+    expect(mockedFetchOrder).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    [409, "INVALID_TRANSITION", "Cannot pay an order that is PAID", PAID_ORDER],
+    [400, "VALIDATION_ERROR", "Payment amount must equal the order total.", ACCEPTED_ORDER],
+  ])("TEST-75: a %i shows the API message and refetches the order", async (status, code, message, reloaded) => {
+    mockedFetchOrder
+      .mockResolvedValueOnce({ order: ACCEPTED_ORDER })
+      .mockResolvedValue({ order: reloaded });
+    mockedPayOrder.mockRejectedValue(new ApiRequestError(status, code, message));
+    renderOrderDetail();
+
+    await openConfirmation();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm payment" }));
+
+    // Wait for the reloaded page itself, not the render between the error and the reload.
+    await waitFor(() => {
+      expect(mockedFetchOrder).toHaveBeenCalledTimes(2);
+      expect(screen.queryByText("Loading order…")).toBeNull();
+    });
+    expect(screen.getByRole("alert").textContent).toContain(message);
+    expect(screen.queryByText("Paid", { exact: true }) !== null).toBe(
+      reloaded.paymentStatus === "PAID"
+    );
+    expect(button("Pay") !== null).toBe(reloaded.paymentStatus === "UNPAID");
+  });
+
+  it.each([
+    ["a 403", new ApiRequestError(403, "FORBIDDEN", "You do not have permission to pay this order")],
+    ["a 500", new ApiRequestError(500, "INTERNAL_ERROR", "Something went wrong.")],
+    ["a network error", new Error("Network failed")],
+  ])("TEST-75: %s shows a generic message and keeps the button", async (_label, error) => {
+    mockedFetchOrder.mockResolvedValue({ order: ACCEPTED_ORDER });
+    mockedPayOrder.mockRejectedValue(error);
+    renderOrderDetail();
+
+    await openConfirmation();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm payment" }));
+
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Could not pay for this order. Please try again."
+    );
+    expect(button("Pay")).not.toBeNull();
     expect(mockedFetchOrder).toHaveBeenCalledTimes(1);
   });
 });

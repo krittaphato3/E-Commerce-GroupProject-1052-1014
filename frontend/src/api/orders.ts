@@ -86,3 +86,12 @@ export function acceptOrder(id: number): Promise<{ order: Order }> {
 export function cancelOrder(id: number): Promise<{ order: Order }> {
   return apiRequest<{ order: Order }>(`/api/orders/${id}/cancel`, { method: "POST" });
 }
+
+/** Simulated payment: the server only compares the amount with the stored total (BR-11). */
+export function payOrder(id: number, amountSatang: number): Promise<{ order: Order }> {
+  return apiRequest<{ order: Order }>(`/api/orders/${id}/pay`, {
+    method: "POST",
+    body: { amountSatang },
+  });
+}
+

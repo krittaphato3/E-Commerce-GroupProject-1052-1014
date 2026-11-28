@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/traceability.md` |
-| Version | 1.24 |
+| Version | 1.25 |
 | Date | 2026-11-28 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/sprint-2/features.md` |
 
@@ -35,6 +35,7 @@
 | 1.22 | 2026-11-27 | Sprint 2 contracts added: FR-10 to FR-13, BR-04 (S2 part), BR-06 (S2 part), BR-09, BR-10, BR-11, BR-13 (S2 part), NFR-06 and NFR-10 now name their AC and test IDs; new §4.3 maps AC-47 to AC-92; BR-04, BR-06 and BR-13 read `PASS (S1 only)` because their new Sprint 2 tests are `NOT RUN`; §5 updated | Sprint 2 contracts written before implementation (Issue #53) |
 | 1.23 | 2026-11-28 | F-05 implemented and verified (TEST-47 to TEST-57): FR-10, BR-04 and BR-13 updated to `PASS` with test files and red/green evidence (`56fe6f6` retroactive red, `0a339a1` green); §4.3 F-05 row updated to `PASS` | F-05 Catalog management completed (Issue #54, PR #62) |
 | 1.24 | 2026-11-28 | F-06 implemented and verified (TEST-58 to TEST-67): FR-11 and BR-10 updated to `PASS`, BR-06 to `PASS (S1 and F-06 only)`; §4.3 records AC-58 to AC-67 with test files; red at `ae84e79`, implementation at `3f1fedf`, full green run at `2998b71`. The first full E2E run, at `3f1fedf`, failed (7 passed, 1 failed: TEST-41) because `cancel.spec.ts` left an order in the shared E2E database; `cancel.spec.ts` now re-seeds after itself and TEST-41 is unchanged | F-06 Customer order cancellation (Issue #55) |
+| 1.25 | 2026-11-28 | F-07 implemented and verified (TEST-68 to TEST-76) against contract 1.0 with no contract change: FR-13 and BR-11 updated to `PASS`; the BR-07 row adds F-07 with AC-74 / TEST-74; §4.3 records AC-68 to AC-76 with test files; red at `a221cba`, implementation and full green run at `c46b3bb` | F-07 Simulated payment (Issue #56) |
 
 ### How to use this file
 - Sprint 1 test IDs follow the rule **TEST-nn verifies AC-nn** (for example TEST-24 verifies AC-24).
@@ -58,7 +59,7 @@
 | FR-10 | F-05 | 2 | AC-47, AC-48, AC-49, AC-50, AC-51, AC-52, AC-53, AC-54, AC-55, AC-56, AC-57 | TEST-47 to TEST-57 | backend/tests/menuItems.test.ts::TEST-47, ::TEST-48, ::TEST-49, ::TEST-50, ::TEST-51, ::TEST-52, ::TEST-53, ::TEST-54, ::TEST-55; backend/src/middleware/menuItemSchema.test.ts::TEST-51, ::TEST-52; frontend/src/pages/OperatorMenu.test.tsx::TEST-56; frontend/e2e/catalog.spec.ts::TEST-57 | PASS | 56fe6f6 (retroactive red), 2639138 (green), 0a339a1 (review fix & full green) |
 | FR-11 | F-06 | 2 | AC-58, AC-59, AC-60, AC-61, AC-62, AC-63, AC-64, AC-65, AC-66, AC-67 | TEST-58 to TEST-67 | backend/tests/orders.cancel.test.ts::TEST-58, ::TEST-59; backend/src/services/orderStateMachine.test.ts::TEST-60; backend/tests/orders.cancel.test.ts::TEST-61, ::TEST-62, ::TEST-63, ::TEST-64, ::TEST-65; frontend/src/pages/OrderDetail.test.tsx::TEST-66; frontend/e2e/cancel.spec.ts::TEST-67 | PASS | ae84e79 (red); 3f1fedf (green), 2998b71 (full green) |
 | FR-12 | F-08 | 2 | AC-77, AC-78, AC-79, AC-80, AC-81, AC-82, AC-83, AC-84, AC-85, AC-86, AC-87 | TEST-77 to TEST-87 | | NOT RUN | |
-| FR-13 | F-07 | 2 | AC-68, AC-69, AC-70, AC-71, AC-72, AC-73, AC-74, AC-75, AC-76 | TEST-68 to TEST-76 | | NOT RUN | |
+| FR-13 | F-07 | 2 | AC-68, AC-69, AC-70, AC-71, AC-72, AC-73, AC-74, AC-75, AC-76 | TEST-68 to TEST-76 | backend/tests/orders.pay.test.ts::TEST-68, ::TEST-69, ::TEST-70, ::TEST-71, ::TEST-72, ::TEST-73, ::TEST-74; backend/src/services/paymentRules.test.ts::TEST-69; backend/src/middleware/paymentSchema.test.ts::TEST-70; frontend/src/pages/OrderDetail.test.tsx::TEST-75; frontend/e2e/payment.spec.ts::TEST-76 | PASS | a221cba (red); c46b3bb (green) |
 | FR-14 | F-09 | 3 | To be defined in Sprint 3 contract | TBD | | NOT RUN | |
 | FR-15 | F-10 | 3 | To be defined in Sprint 3 contract | TBD | | NOT RUN | |
 | FR-16 | F-11 | 3 | To be defined in Sprint 3 contract | TBD | | NOT RUN | |
@@ -74,11 +75,11 @@
 | BR-04 | F-03, F-05 | 1 (F-03), 2 (F-05) | AC-17 (S1); AC-50 (S2 catalog edits) | TEST-17; TEST-50 (S2) | backend/tests/orders.create.test.ts::TEST-17; backend/tests/menuItems.test.ts::TEST-50 | PASS | 140c030 (S1 red), 0f3c649 (S1 green); 56fe6f6 (S2 retroactive red), 2639138 (S2 green), 0a339a1 (full green) |
 | BR-05 | F-03 | 1 | AC-23, AC-24, AC-46 | TEST-23, 24, 46 | backend/tests/orders.create.test.ts::TEST-23, ::TEST-24; backend/tests/constraints.test.ts::TEST-46 | PASS | 140c030 (red), 0f3c649 (green) |
 | BR-06 | F-04, F-06, F-08, F-09, F-12 | 1 (F-04); 2 (F-06, F-08); 3 (F-09, F-12) | AC-35 (S1 transitions); S2: AC-60, AC-61, AC-63, AC-77, AC-78, AC-79, AC-81, AC-82, AC-83; S3 in the Sprint 3 contract | TEST-35; TEST-60, 61, 63 (S2 F-06); TEST-77–79, 81–83 (S2 F-08, NOT RUN); S3 TBD | backend/src/services/orderStateMachine.test.ts::TEST-35; backend/tests/orders.operator.test.ts::TEST-35; backend/src/services/orderStateMachine.test.ts::TEST-60; backend/tests/orders.cancel.test.ts::TEST-61, ::TEST-63 | PASS (S1 and F-06 only) | c04ca45, a614473 (red); 6d1d2f7, c680623, 8fe7793, 37cf31f (S1 green); ae84e79 (F-06 red); 3f1fedf (F-06 green), 2998b71 (full green) |
-| BR-07 | F-03, F-04, R-01 | 1 | AC-27, AC-28, AC-39 | TEST-27, 28, 39 | backend/tests/orders.access.test.ts::TEST-27, ::TEST-28; backend/tests/orders.operator.test.ts::TEST-39 | PASS | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green) |
+| BR-07 | F-03, F-04, R-01, F-07 | 1; 2 (F-07) | AC-27, AC-28, AC-39; S2 (F-07): AC-74 | TEST-27, 28, 39; TEST-74 (S2 F-07) | backend/tests/orders.access.test.ts::TEST-27, ::TEST-28; backend/tests/orders.operator.test.ts::TEST-39; backend/tests/orders.pay.test.ts::TEST-74 | PASS | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green); a221cba (F-07 red), c46b3bb (F-07 green) |
 | BR-08 | F-04, R-01 | 1 | AC-26, AC-37, AC-38, AC-43 | TEST-26, 37, 38, 43 | backend/tests/orders.access.test.ts::TEST-26; backend/tests/orders.operator.test.ts::TEST-37, ::TEST-38; backend/tests/routes.access.test.ts::TEST-43 | PASS | 140c030, c04ca45, d7792c8 (red); 0f3c649, 6d1d2f7, 8f42cbd (green) |
 | BR-09 | F-08 | 2 | AC-80, AC-86 | TEST-80, 86 | | NOT RUN | |
 | BR-10 | F-06 | 2 | AC-58, AC-59, AC-60, AC-61, AC-62, AC-63 | TEST-58 to TEST-63 | backend/tests/orders.cancel.test.ts::TEST-58, ::TEST-59; backend/src/services/orderStateMachine.test.ts::TEST-60; backend/tests/orders.cancel.test.ts::TEST-61, ::TEST-62, ::TEST-63 | PASS | ae84e79 (red); 3f1fedf (green), 2998b71 (full green) |
-| BR-11 | F-07 | 2 | AC-68, AC-69, AC-70, AC-71, AC-72, AC-73, AC-74 | TEST-68 to TEST-74 | | NOT RUN | |
+| BR-11 | F-07 | 2 | AC-68, AC-69, AC-70, AC-71, AC-72, AC-73, AC-74 | TEST-68 to TEST-74 | backend/tests/orders.pay.test.ts::TEST-68, ::TEST-69; backend/src/services/paymentRules.test.ts::TEST-69; backend/src/middleware/paymentSchema.test.ts::TEST-70; backend/tests/orders.pay.test.ts::TEST-70, ::TEST-71, ::TEST-72, ::TEST-73, ::TEST-74 | PASS | a221cba (red); c46b3bb (green) |
 | BR-12 | F-09 | 3 | To be defined in Sprint 3 contract | TBD | | NOT RUN | |
 | BR-13 | F-05, R-03 | 1 (DB), 2 (API) | S1: AC-46 (DB constraints). S2: AC-51, AC-52 (API validation) | TEST-46; TEST-51, 52 (S2) | backend/tests/constraints.test.ts::TEST-46; backend/src/middleware/menuItemSchema.test.ts::TEST-51, ::TEST-52; backend/tests/menuItems.test.ts::TEST-51, ::TEST-52 | PASS | c215549 (S1 CHECK + TEST-46); 56fe6f6 (S2 retroactive red), 2639138 (S2 green), 0a339a1 (full green) |
 | BR-14 | F-03 | 1 | AC-14 (order number format) | TEST-14 | backend/tests/orders.create.test.ts::TEST-14; backend/src/services/orderRules.test.ts::TEST-15 | PASS | 140c030 (red), 0f3c649 (green) |
@@ -138,13 +139,13 @@ Defined in `docs/sprints/sprint-2/features.md`. TEST-nn verifies AC-nn.
 |---|---|---|---|
 | 47–57 | F-05 | FR-10, BR-04, BR-13 | PASS |
 | 58–67 | F-06 | FR-11, BR-06, BR-10 | PASS |
-| 68–76 | F-07 | FR-13, BR-11 | NOT RUN |
+| 68–76 | F-07 | FR-13, BR-11 | PASS |
 | 77–87 | F-08 | FR-12, BR-06, BR-09 | NOT RUN |
 | 88 (COV-01) | R-05 | NFR-10 | NOT RUN |
 | 89 (CHECK-01) | R-05 | NFR-06 | NOT RUN |
 | 90–92 | R-05, R-01 extension | NFR-01, NFR-02 | NOT RUN |
 
-Total Sprint 2 AC and test IDs: 46 each. The `PASS` on the NFR-01 and NFR-02 rows in §3 covers the Sprint 1 routes only; their Sprint 2 extension (AC-92) and the access AC of each Sprint 2 feature are `NOT RUN`. The same applies to the Sprint 2 part of BR-07 (AC-74; AC-65 is `PASS` with F-06) and BR-08 (AC-55, AC-84).
+Total Sprint 2 AC and test IDs: 46 each. The `PASS` on the NFR-01 and NFR-02 rows in §3 covers the Sprint 1 routes only; their Sprint 2 extension (AC-92) and the access AC of each Sprint 2 feature are `NOT RUN`. The same applies to BR-08 (AC-55, AC-84). The Sprint 2 access checks of BR-07 are `PASS` for cancel (AC-65, F-06) and pay (AC-74, F-07).
 
 #### F-06 results by test
 
@@ -162,6 +163,22 @@ Red is the tests-only commit `ae84e79`. Green is the implementation commit `3f1f
 | AC-65 | `backend/tests/orders.cancel.test.ts::TEST-65` | PASS | `ae84e79` | `3f1fedf`, `2998b71` |
 | AC-66 | `frontend/src/pages/OrderDetail.test.tsx::TEST-66` | PASS | `ae84e79` | `3f1fedf`, `2998b71` |
 | AC-67 | `frontend/e2e/cancel.spec.ts::TEST-67` | PASS | `ae84e79` | `3f1fedf`, `2998b71` |
+
+#### F-07 results by test
+
+Red is the tests-only commit `a221cba`. Green is the implementation commit `c46b3bb`, with the full run recorded at the same commit. Evidence: `F-07-red-a221cba.txt` and `F-07-green-c46b3bb.txt`, `F-07-green-build-c46b3bb.txt`, `F-07-green-e2e-c46b3bb.txt` in `docs/evidence/`. At red, the unit cases of TEST-69 failed because `paymentRules.ts` did not exist; TEST-73 failed with `[404, 404]` instead of `[200, 409]`.
+
+| AC | Actual test | Result | Red | Green |
+|---|---|---|---|---|
+| AC-68 | `backend/tests/orders.pay.test.ts::TEST-68` | PASS | `a221cba` | `c46b3bb` |
+| AC-69 | `backend/src/services/paymentRules.test.ts::TEST-69`; `backend/tests/orders.pay.test.ts::TEST-69` | PASS | `a221cba` | `c46b3bb` |
+| AC-70 | `backend/src/middleware/paymentSchema.test.ts::TEST-70`; `backend/tests/orders.pay.test.ts::TEST-70` | PASS | `a221cba` | `c46b3bb` |
+| AC-71 | `backend/tests/orders.pay.test.ts::TEST-71` | PASS | `a221cba` | `c46b3bb` |
+| AC-72 | `backend/tests/orders.pay.test.ts::TEST-72` | PASS | `a221cba` | `c46b3bb` |
+| AC-73 | `backend/tests/orders.pay.test.ts::TEST-73` | PASS | `a221cba` | `c46b3bb` |
+| AC-74 | `backend/tests/orders.pay.test.ts::TEST-74` | PASS | `a221cba` | `c46b3bb` |
+| AC-75 | `frontend/src/pages/OrderDetail.test.tsx::TEST-75` | PASS | `a221cba` | `c46b3bb` |
+| AC-76 | `frontend/e2e/payment.spec.ts::TEST-76` | PASS | `a221cba` | `c46b3bb` |
 
 ## 5. Coverage gaps
 
