@@ -3,9 +3,9 @@
 | Item | Value |
 |---|---|
 | Document | `docs/traceability.md` |
-| Version | 1.30 |
+| Version | 1.31 |
 | Date | 2026-11-28 |
-| Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/sprint-2/features.md`, `docs/sprints/sprint-3/features.md` |
+| Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/sprint-2/features.md`, `docs/sprints/sprint-3/features.md`, `docs/change-register.md` |
 
 ### Revision history
 | Version | Date | Change | Reason |
@@ -41,12 +41,15 @@
 | 1.28 | 2026-11-28 | CHECK-01 (TEST-89) passed on the deployed release `2f6cc46`: NFR-06 and AC-89 updated to `PASS`; the order, its stock effect and the customer1 login were the same after a restart and after a redeploy, each of which created a new revision (`docs/evidence/CHECK-01-2f6cc46.txt`); §3, §4.3 and §5 updated | R-05 post-deployment persistence check (Issue #58) |
 | 1.29 | 2026-11-28 | Sprint 3 contracts added: FR-14 to FR-17, BR-06 (S3 part), BR-10 (S3 operator path), BR-12, NFR-05 (S3 part), NFR-09 (S3 part) and NFR-11 now name their AC and test IDs; new §4.4 maps AC-93 to AC-147; every Sprint 3 test is `NOT RUN`; BR-10 reads `PASS (S2 only)` because its new Sprint 3 tests are `NOT RUN`; BR-06, NFR-05 and NFR-09 keep their earlier results for the earlier scope; §5 updated | Sprint 3 contracts written before implementation (Issue #59) |
 | 1.30 | 2026-11-28 | F-09 implemented and verified (TEST-93 to TEST-104) against contract 1.2: FR-14 and BR-12 updated to `PASS`; BR-06 updated to `PASS (S1, S2 and F-09)`, with the F-12 tests still `NOT RUN`; NFR-01 and NFR-02 note that TEST-43 and TEST-92 now sweep 14 protected routes; §4.4 records AC-93 to AC-104 with test files; red at `70096cd`, implementation and full green run at `15ea606` | F-09 Order rejection with reason (Issue #59) |
+| 1.31 | 2026-11-28 | Pre-release regression at `dad286b` recorded (backend 242, frontend 89, Playwright 11 passed; 0 failed, 0 skipped). BR-05, BR-07, BR-08 and BR-15 rows now cite the later-sprint AC that the contracts already allocate to them (AC-55, 58, 59, 65, 94 `PASS`; AC-110, 121, 124, 126, 132 `NOT RUN`). NFR-10 and AC-88 change from `PASS (pre-release)` to `PASS` on the CI run for release `2f6cc46`. §5 rewritten to list every open verification; §6 adds CHG-03 to CHG-06; new §7 gives the status of AC-01 to AC-147. No AC, test or requirement wording changed | Deliverable 2 traceability update (Issue #60) |
 
 ### How to use this file
 - Sprint 1 test IDs follow the rule **TEST-nn verifies AC-nn** (for example TEST-24 verifies AC-24).
 - Fill the **Actual test** and **Result** columns only after running the tests. Record the commit hash in **Version**.
 - Result values: `PASS`, `FAIL`, `SKIPPED`, `NOT RUN`, `INCOMPLETE`. Never mark `PASS` for a test that has not been executed. A `PASS` may carry a scope qualifier in parentheses when the recorded run is narrower than the requirement it verifies — for example `PASS (S1 baseline)` for a Sprint 1 local baseline of a requirement allocated to a later sprint — but the qualifier never replaces the five values above.
 - Sprint 2 and 3 rows are allocated now. Their AC and tests are written in the sprint contract before implementation.
+- §1 to §3 together are the requirements matrix: every baseline FR (FR-01 to FR-17), BR (BR-01 to BR-15) and NFR (NFR-01 to NFR-11). §7 lists every AC.
+- The **Version** column keeps the commits where each result was first established. All automated tests behind a `PASS` were run again on the staging head `dad286b` on 2026-11-28 and passed (`docs/evidence/RC-pre-release-dad286b.txt`, `RC-pre-release-e2e-dad286b.txt`). Manual and post-deployment checks (the NFR-08 fresh clone, LOAD-01, CHECK-01) were **not** repeated at `dad286b`. The final candidate run on `main` (CI run URL and deployed version) will be added after the release merge.
 
 ## 1. Functional requirements
 
@@ -78,17 +81,17 @@
 | BR-02 | F-02 (defines), F-03 (enforces) | 1 | AC-11, AC-21, AC-22 | TEST-11, 21, 22 | backend/src/services/menuRules.test.ts::TEST-11; backend/tests/orders.create.test.ts::TEST-21, ::TEST-22 | PASS | 140c030 (red), 0f3c649 (green) |
 | BR-03 | F-03 | 1 | AC-15, AC-16 | TEST-15, 16 | backend/src/services/orderRules.test.ts::TEST-15; backend/tests/orders.create.test.ts::TEST-15, ::TEST-16 | PASS | 140c030 (red), 0f3c649 (green) |
 | BR-04 | F-03, F-05 | 1 (F-03), 2 (F-05) | AC-17 (S1); AC-50 (S2 catalog edits) | TEST-17; TEST-50 (S2) | backend/tests/orders.create.test.ts::TEST-17; backend/tests/menuItems.test.ts::TEST-50 | PASS | 140c030 (S1 red), 0f3c649 (S1 green); 56fe6f6 (S2 retroactive red), 2639138 (S2 green), 0a339a1 (full green) |
-| BR-05 | F-03 | 1 | AC-23, AC-24, AC-46 | TEST-23, 24, 46 | backend/tests/orders.create.test.ts::TEST-23, ::TEST-24; backend/tests/constraints.test.ts::TEST-46 | PASS | 140c030 (red), 0f3c649 (green) |
+| BR-05 | F-03, F-06, F-09, F-12 | 1; 2 (F-06); 3 (F-09, F-12) | AC-23, AC-24, AC-46; S2 (F-06): AC-59; S3: AC-94 (F-09); AC-126 (F-12) | TEST-23, 24, 46; TEST-59 (S2); TEST-94 (S3 F-09); TEST-126 (S3 F-12): NOT RUN | backend/tests/orders.create.test.ts::TEST-23, ::TEST-24; backend/tests/constraints.test.ts::TEST-46; backend/tests/orders.cancel.test.ts::TEST-59; backend/tests/orders.reject.test.ts::TEST-94 | PASS (S1, F-06 and F-09) | 140c030 (red), 0f3c649 (green); ae84e79 (F-06 red), 2998b71 (green); 70096cd (F-09 red), 15ea606 (green) |
 | BR-06 | F-04, F-06, F-08, F-09, F-12 | 1 (F-04); 2 (F-06, F-08); 3 (F-09, F-12) | AC-35 (S1 transitions); S2: AC-60, AC-61, AC-63, AC-77, AC-78, AC-79, AC-81, AC-82, AC-83; S3: AC-95, AC-97, AC-98, AC-99 (F-09); AC-127, AC-128, AC-129, AC-130, AC-131 (F-12) | TEST-35; TEST-60, 61, 63 (S2 F-06); TEST-77–79, 81–83 (S2 F-08); TEST-95, 97, 98, 99 (S3 F-09); TEST-127–131 (S3 F-12): NOT RUN | backend/src/services/orderStateMachine.test.ts::TEST-35; backend/tests/orders.operator.test.ts::TEST-35; backend/src/services/orderStateMachine.test.ts::TEST-60; backend/tests/orders.cancel.test.ts::TEST-61, ::TEST-63; backend/tests/orders.fulfilment.test.ts::TEST-77, ::TEST-78, ::TEST-79; backend/src/services/orderStateMachine.test.ts::TEST-81; backend/tests/orders.fulfilment.test.ts::TEST-82, ::TEST-83; backend/src/services/orderStateMachine.test.ts::TEST-95; backend/tests/orders.reject.test.ts::TEST-97, ::TEST-98, ::TEST-99 | PASS (S1, S2 and F-09) | c04ca45, a614473 (red); 6d1d2f7, c680623, 8fe7793, 37cf31f (S1 green); ae84e79 (F-06 red); 3f1fedf (F-06 green), 2998b71 (full green); fc72fd4 (F-08 red); 7571373 (F-08 green); 70096cd (F-09 red); 15ea606 (F-09 green) |
-| BR-07 | F-03, F-04, R-01, F-07 | 1; 2 (F-07) | AC-27, AC-28, AC-39; S2 (F-07): AC-74 | TEST-27, 28, 39; TEST-74 (S2 F-07) | backend/tests/orders.access.test.ts::TEST-27, ::TEST-28; backend/tests/orders.operator.test.ts::TEST-39; backend/tests/orders.pay.test.ts::TEST-74 | PASS | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green); a221cba (F-07 red), c46b3bb (F-07 green) |
-| BR-08 | F-04, R-01, F-08 | 1; 2 (F-08) | AC-26, AC-37, AC-38, AC-43; S2 (F-08): AC-84 | TEST-26, 37, 38, 43; TEST-84 (S2 F-08) | backend/tests/orders.access.test.ts::TEST-26; backend/tests/orders.operator.test.ts::TEST-37, ::TEST-38; backend/tests/routes.access.test.ts::TEST-43; backend/tests/orders.fulfilment.test.ts::TEST-84 | PASS | 140c030, c04ca45, d7792c8 (red); 0f3c649, 6d1d2f7, 8f42cbd (green); fc72fd4 (F-08 red), 7571373 (F-08 green) |
+| BR-07 | F-03, F-04, R-01, F-06, F-07, F-10 | 1; 2 (F-06, F-07); 3 (F-10) | AC-27, AC-28, AC-39; S2: AC-65 (F-06), AC-74 (F-07); S3: AC-110 (F-10) | TEST-27, 28, 39; TEST-65, 74 (S2); TEST-110 (S3 F-10): NOT RUN | backend/tests/orders.access.test.ts::TEST-27, ::TEST-28; backend/tests/orders.operator.test.ts::TEST-39; backend/tests/orders.pay.test.ts::TEST-74; backend/tests/orders.cancel.test.ts::TEST-65 | PASS (S1 and S2) | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green); a221cba (F-07 red), c46b3bb (F-07 green); ae84e79 (F-06 red), 2998b71 (F-06 green) |
+| BR-08 | F-04, R-01, F-05, F-08, F-11, F-12 | 1; 2 (F-05, F-08); 3 (F-11, F-12) | AC-26, AC-37, AC-38, AC-43; S2 (F-08): AC-84; S2 (F-05): AC-55; S3: AC-121 (F-11), AC-132 (F-12) | TEST-26, 37, 38, 43; TEST-84 (S2 F-08); TEST-55 (S2 F-05); TEST-121, 132 (S3): NOT RUN | backend/tests/orders.access.test.ts::TEST-26; backend/tests/orders.operator.test.ts::TEST-37, ::TEST-38; backend/tests/routes.access.test.ts::TEST-43; backend/tests/orders.fulfilment.test.ts::TEST-84; backend/tests/menuItems.test.ts::TEST-55 | PASS (S1 and S2) | 140c030, c04ca45, d7792c8 (red); 0f3c649, 6d1d2f7, 8f42cbd (green); fc72fd4 (F-08 red), 7571373 (F-08 green); 56fe6f6 (F-05 retroactive red), 0a339a1 (F-05 green) |
 | BR-09 | F-08 | 2 | AC-80, AC-86 | TEST-80, 86 | backend/tests/orders.fulfilment.test.ts::TEST-80; frontend/src/pages/OperatorOrders.test.tsx::TEST-86 | PASS | fc72fd4 (red); 7571373 (green) |
 | BR-10 | F-06, F-12 | 2 (F-06); 3 (F-12) | AC-58, AC-59, AC-60, AC-61, AC-62, AC-63; S3 operator path: AC-127, AC-128, AC-129 | TEST-58 to TEST-63; TEST-127, 128, 129 (S3 F-12): NOT RUN | backend/tests/orders.cancel.test.ts::TEST-58, ::TEST-59; backend/src/services/orderStateMachine.test.ts::TEST-60; backend/tests/orders.cancel.test.ts::TEST-61, ::TEST-62, ::TEST-63 | PASS (S2 only) | ae84e79 (red); 3f1fedf (green), 2998b71 (full green) |
 | BR-11 | F-07 | 2 | AC-68, AC-69, AC-70, AC-71, AC-72, AC-73, AC-74 | TEST-68 to TEST-74 | backend/tests/orders.pay.test.ts::TEST-68, ::TEST-69; backend/src/services/paymentRules.test.ts::TEST-69; backend/src/middleware/paymentSchema.test.ts::TEST-70; backend/tests/orders.pay.test.ts::TEST-70, ::TEST-71, ::TEST-72, ::TEST-73, ::TEST-74 | PASS | a221cba (red); c46b3bb (green) |
 | BR-12 | F-09 | 3 | AC-93, AC-96, AC-100, AC-102 | TEST-93, 96, 100, 102 | backend/tests/orders.reject.test.ts::TEST-93, ::TEST-100; backend/src/middleware/orderRejectSchema.test.ts::TEST-96; frontend/src/pages/OperatorOrders.test.tsx::TEST-102 | PASS | 70096cd (red); 15ea606 (green) |
 | BR-13 | F-05, R-03 | 1 (DB), 2 (API) | S1: AC-46 (DB constraints). S2: AC-51, AC-52 (API validation) | TEST-46; TEST-51, 52 (S2) | backend/tests/constraints.test.ts::TEST-46; backend/src/middleware/menuItemSchema.test.ts::TEST-51, ::TEST-52; backend/tests/menuItems.test.ts::TEST-51, ::TEST-52 | PASS | c215549 (S1 CHECK + TEST-46); 56fe6f6 (S2 retroactive red), 2639138 (S2 green), 0a339a1 (full green) |
 | BR-14 | F-03 | 1 | AC-14 (order number format) | TEST-14 | backend/tests/orders.create.test.ts::TEST-14; backend/src/services/orderRules.test.ts::TEST-15 | PASS | 140c030 (red), 0f3c649 (green) |
-| BR-15 | F-03, F-04, F-08 | 1; 2 (F-08) | AC-25, AC-34; S2 (F-08): AC-77, AC-78, AC-79, AC-85 | TEST-25, 34; TEST-77, 78, 79, 85 (S2 F-08) | backend/tests/orders.create.test.ts::TEST-25; backend/tests/orders.operator.test.ts::TEST-34; backend/tests/orders.fulfilment.test.ts::TEST-77, ::TEST-78, ::TEST-79; backend/tests/orders.journey.test.ts::TEST-85 | PASS | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green); fc72fd4 (F-08 red), 7571373 (F-08 green) |
+| BR-15 | F-03, F-04, F-06, F-08, F-09, F-12 | 1; 2 (F-06, F-08); 3 (F-09, F-12) | AC-25, AC-34; S2 (F-08): AC-77, AC-78, AC-79, AC-85; S2 (F-06): AC-58; S3: AC-93 (F-09), AC-124 (F-12) | TEST-25, 34; TEST-77, 78, 79, 85 (S2 F-08); TEST-58 (S2 F-06); TEST-93 (S3 F-09); TEST-124 (S3 F-12): NOT RUN | backend/tests/orders.create.test.ts::TEST-25; backend/tests/orders.operator.test.ts::TEST-34; backend/tests/orders.fulfilment.test.ts::TEST-77, ::TEST-78, ::TEST-79; backend/tests/orders.journey.test.ts::TEST-85; backend/tests/orders.cancel.test.ts::TEST-58; backend/tests/orders.reject.test.ts::TEST-93 | PASS (S1, S2 and F-09) | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green); fc72fd4 (F-08 red), 7571373 (F-08 green); ae84e79, 2998b71 (F-06); 70096cd, 15ea606 (F-09) |
 
 ## 3. Non-functional requirements
 
@@ -102,8 +105,8 @@
 | NFR-06 | R-05 | 2 | Order survives restart and redeploy (AC-89) | TEST-89 (CHECK-01) | CHECK-01: `docs/evidence/CHECK-01-2f6cc46.txt` (post-deployment check on release `2f6cc46`) | PASS | 2f6cc46 (release) |
 | NFR-07 | R-02 | 1 | Standard error shape; no stack trace (AC-04, AC-44) | TEST-04, 44 | backend/tests/auth.test.ts::TEST-04; backend/tests/error.test.ts::TEST-44 | PASS | f222daa, 83f0337 (TEST-04); 9de7923 (TEST-44) |
 | NFR-08 | R-03 | 1 | Fresh clone in 8 commands or fewer; seed repeatable (AC-45) | TEST-45 | backend/tests/seed.test.ts::TEST-45; manual fresh-clone check at `0b2f7d5` (`docs/evidence/NFR-08-fresh-clone-0b2f7d5.txt` and `.png`) | PASS | c215549 (seed test); 0b2f7d5 (manual fresh-clone check, 2026-11-12) |
-| NFR-09 | F-02, F-03, R-04 | 1 partial, 3 complete | Loading, empty and error states (AC-13, AC-30, AC-31 in S1; AC-145, AC-146, AC-147 in S3) | TEST-13, 30, 31; S3: TEST-145, 146, 147 (NOT RUN) | frontend/src/pages/Menu.test.tsx::TEST-13, ::TEST-30; frontend/src/pages/MyOrders.test.tsx::TEST-31 PASS; the Sprint 1 states are verified, the R-04 final usability pass is Sprint 3 | INCOMPLETE[^nfr09] | 140c030 (red), 0f3c649 (green) |
-| NFR-10 | R-05 | 2 | At least 85% service-layer line coverage, enforced in CI (AC-88) | TEST-88 (COV-01) | COV-01: `npm run coverage --workspace=backend` in `.github/workflows/ci.yml` and `ci-docker.yml` (`test-and-docker`); 97.9% lines (560/572) over all 8 files of `backend/src/services`; gate proof with threshold 99 exits 1. `docs/evidence/COV-01-b1d3f33.txt`, `COV-01-gate-proof-b1d3f33.txt`. The release commit on `main` is not yet measured | PASS (pre-release) | b1d3f33 (gate and measurement), c15965e (full run) |
+| NFR-09 | F-02, F-03, R-04 | 1 partial, 3 complete | Loading, empty and error states (AC-13, AC-30, AC-31 in S1; AC-145, AC-146, AC-147 in S3) | TEST-13, 30, 31; S3: TEST-145, TEST-146 (UI-CHECK-01), TEST-147 (NOT RUN) | frontend/src/pages/Menu.test.tsx::TEST-13, ::TEST-30; frontend/src/pages/MyOrders.test.tsx::TEST-31 PASS; the Sprint 1 states are verified, the R-04 final usability pass is Sprint 3 | INCOMPLETE[^nfr09] | 140c030 (red), 0f3c649 (green) |
+| NFR-10 | R-05 | 2 | At least 85% service-layer line coverage, enforced in CI (AC-88) | TEST-88 (COV-01) | COV-01: `npm run coverage --workspace=backend` in `.github/workflows/ci.yml` and `ci-docker.yml` (`test-and-docker`). Release commit `2f6cc46`: 97.9% lines, gate passed in `test-and-docker` of run 46130862230 (`docs/evidence/COV-01-release-2f6cc46.txt`). Staging head `dad286b`, local: 97.79% (`RC-pre-release-dad286b.txt`). Earlier pre-release measurement 97.9% (560/572) at `b1d3f33` over all 8 files; gate proof with threshold 99 exits 1 (`COV-01-b1d3f33.txt`, `COV-01-gate-proof-b1d3f33.txt`) | PASS | b1d3f33 (gate and gate proof), 2f6cc46 (release), dad286b (local re-run) |
 | NFR-11 | F-13 | 3 | 429 after 5 failed logins in 15 minutes (AC-136 to AC-143) | TEST-136 to TEST-143 | | NOT RUN | |
 
 [^nfr05]: The result is a Sprint 1 local baseline, not a deployed measurement: one host, with the API and the load generator on the same machine (Apple M4, macOS) and PostgreSQL 16 in a local Docker container. `docs/evidence/nfr05/README.md` §2 and §5 record the environment and state the single-host limitation. Re-measurement on the deployed build is the Sprint 3 R-04 work.
@@ -146,11 +149,11 @@ Defined in `docs/sprints/sprint-2/features.md`. TEST-nn verifies AC-nn.
 | 58–67 | F-06 | FR-11, BR-06, BR-10 | PASS |
 | 68–76 | F-07 | FR-13, BR-11 | PASS |
 | 77–87 | F-08 | FR-12, BR-06, BR-09 | PASS |
-| 88 (COV-01) | R-05 | NFR-10 | PASS (pre-release) |
+| 88 (COV-01) | R-05 | NFR-10 | PASS |
 | 89 (CHECK-01) | R-05 | NFR-06 | PASS |
 | 90–92 | R-05, R-01 extension | NFR-01, NFR-02 | PASS |
 
-Total Sprint 2 AC and test IDs: 46 each. The `PASS` on the NFR-01 and NFR-02 rows in §3 covers the Sprint 1 routes and the Sprint 2 extension (AC-90 to AC-92). For BR-08, the F-08 access check (AC-84) is `PASS`; the F-05 check (AC-55) is not yet listed on the BR-08 row. The Sprint 2 access checks of BR-07 are `PASS` for cancel (AC-65, F-06) and pay (AC-74, F-07).
+Total Sprint 2 AC and test IDs: 46 each. The `PASS` on the NFR-01 and NFR-02 rows in §3 covers the Sprint 1 routes and the Sprint 2 extension (AC-90 to AC-92). For BR-08, the F-05 (AC-55) and F-08 (AC-84) access checks are `PASS`. The Sprint 2 access checks of BR-07 are `PASS` for cancel (AC-65, F-06) and pay (AC-74, F-07).
 
 #### F-06 results by test
 
@@ -209,7 +212,7 @@ Evidence: `R-05-red-6d6f86e.txt`, `R-05-green-c15965e.txt`, `R-05-green-e2e-c159
 
 | AC | Actual test | Result | Red | Green |
 |---|---|---|---|---|
-| AC-88 | `.github/workflows/ci.yml` and `ci-docker.yml` coverage step::COV-01 | PASS (pre-release) | Gate proof: non-zero exit at threshold 99 (`b1d3f33`) | `b1d3f33` |
+| AC-88 | `.github/workflows/ci.yml` and `ci-docker.yml` coverage step::COV-01 | PASS | Gate proof: non-zero exit at threshold 99 (`b1d3f33`) | `b1d3f33`; release `2f6cc46` (run 46130862230, 97.9%) |
 | AC-89 | `docs/evidence/CHECK-01-2f6cc46.txt`::CHECK-01 | PASS | None (post-deployment check) | `2f6cc46` (release) |
 | AC-90 | `backend/tests/routes.registry.test.ts::TEST-90` | PASS | `6d6f86e` | `156eb4d`, `c15965e` |
 | AC-91 | `backend/tests/routes.registry.test.ts::TEST-91` | PASS | `6d6f86e` | `156eb4d`, `c15965e` |
@@ -250,12 +253,39 @@ Red is the tests-only commit `70096cd`. Green is the implementation commit `15ea
 
 ## 5. Coverage gaps
 
-| Item | Status | Plan |
+Every baseline requirement has a feature or responsibility and at least one acceptance check. The items below are **not verified**, or verified only in part, as of `dad286b`.
+
+### 5.1 Requirements not covered by a passing test
+
+| Requirement | What is not verified | Planned test (all NOT RUN) |
 |---|---|---|
-| Requirements with no feature or responsibility | None | — |
-| Sprint 2 and 3 requirements without AC or tests | None: Sprint 2 contracts (§4.3) and Sprint 3 contracts (§4.4) are written. F-09 tests pass; the other Sprint 3 tests are `NOT RUN` | AC and STS are written before implementation of each sprint |
-| NFR-05, NFR-06, NFR-10, NFR-11 | NFR-05: a Sprint 1 local baseline is measured and recorded — `GET /api/menu` p95 1 ms and `POST /api/orders` p95 40 ms (run range 37–47 ms, the same figures as §3) with zero 5xx at 20 connections for 30 s per endpoint (`5c3f984`). NFR-10 is measured before release (COV-01, §4.3); NFR-06 passed CHECK-01 on release `2f6cc46` (`docs/evidence/CHECK-01-2f6cc46.txt`); NFR-11 has AC and tests (AC-136 to AC-143) that are `NOT RUN` until F-13 is implemented | NFR-05 re-verification on the deployed system is planned for Sprint 3, which is the sprint allocation in `docs/srs.md` (R-04 hardening plus the deployed-build measurement). NFR-06 (CHECK-01) and NFR-10 (COV-01) are Sprint 2 checks; NFR-11 is Sprint 3. |
-| BR-06 full transition table | `PENDING → ACCEPTED` (Sprint 1), `PENDING → CANCELLED` (F-06) and `ACCEPTED → PREPARING → READY → COMPLETED` (F-08) and `PENDING → REJECTED` (F-09) are built | `ACCEPTED → CANCELLED` (F-12, AC-127) is contracted and not yet built |
+| FR-15 | All of it: search, filter, pagination (F-10) | TEST-105 to TEST-115, AC-105 to AC-115 |
+| FR-16 | All of it: sales summary (F-11) | TEST-116 to TEST-123, AC-116 to AC-123 |
+| FR-17 | All of it: operator cancel and refund (F-12) | TEST-124 to TEST-135, AC-124 to AC-135 |
+| NFR-11 | All of it: login throttling (F-13) | TEST-136 to TEST-143, AC-136 to AC-143 |
+| BR-10 | Operator path (cancel only from `ACCEPTED` by an Operator; 409 from later states) | TEST-127, 128, 129 (F-12) |
+| BR-06 | `ACCEPTED → CANCELLED` and its races | TEST-127 to TEST-131 (F-12) |
+| BR-05 | Stock restoration on operator cancel | TEST-126 (F-12) |
+| BR-07 | Ownership under search filters | TEST-110 (F-10) |
+| BR-08 | Operator-only report and operator cancel | TEST-121 (F-11), TEST-132 (F-12) |
+| BR-15 | History row for operator cancel | TEST-124 (F-12) |
+| NFR-01, NFR-02 | The two routes F-11 and F-12 will add | TEST-43 and TEST-92 count updates (Sprint 3 contract §2.1) |
+| NFR-05 | **Deployed re-measurement.** Only the local Sprint 1 baseline exists: `PASS (S1 baseline)`, `GET /api/menu` p95 1 ms and `POST /api/orders` p95 40 ms (run range 37–47 ms), zero 5xx, 20 connections for 30 s per endpoint (`5c3f984`) | TEST-144 (LOAD-02), AC-144; data handling (OQ-08) to be decided first |
+| NFR-09 | **All screens.** Only the Sprint 1 screen states are verified under this requirement; FND-01 is open | TEST-145, TEST-146 (UI-CHECK-01), TEST-147; AC-145 to AC-147 |
+
+### 5.2 Limits of existing verification
+
+| Item | Limit | Plan |
+|---|---|---|
+| FR-14 / F-09 | Tested on staging only; not released to `main` or deployed | Release, then run the journey on the deployed candidate |
+| NFR-06 | CHECK-01 passed on release `2f6cc46`, before F-09 | Repeat the persistence check on the final release |
+| NFR-08 | Manual fresh-clone check last run at `0b2f7d5` (Sprint 1); only the automated TEST-45 was re-run | Repeat in final regression |
+| NFR-10 | Backend services only; frontend coverage is not measured or gated | Disclosed; no change planned |
+| F-05 (TEST-50, TEST-51) | Red evidence is retroactive (`56fe6f6`), produced after the implementation commit | Disclosed |
+| TEST-09, TEST-92 | TEST-09's red run is retroactive (§4.1); TEST-92 has no red run (§4.3) | Disclosed |
+| CI on `sprint-3-staging` | PRs get `ci.yml` only; `ci-docker.yml` does not list the branch (DEC-57) | R-04 / DEF-01 work item in the readiness plan |
+| UAT | No partner UAT re-test of FND-01 or FND-02 is recorded | UAT re-tests in the remaining-work plan |
+| API error handling | No test covers an oversized body or an unknown `/api` path (System SDS §4) | Team decision |
 
 ## 6. Approved changes log
 
@@ -263,3 +293,172 @@ Red is the tests-only commit `70096cd`. Green is the implementation commit `15ea
 |---|---|---|---|---|---|
 | CHG-01 | 2026-11-07 | FR-09 / AC-42 / TEST-42 | In-place 403 Forbidden alert rather than redirect on wrong-role navigation (DEC-23, Option A) | Matches ProtectedRoute behavior established in d7ec1c2 | Team decision |
 | CHG-02 | 2026-11-07 | Cross-cutting display brand | Rename user-facing brand display name and document titles to Omazon while preserving technical identifiers (DEC-25) | Align user-facing branding with team product name | Team decision |
+| CHG-03 | 2026-11-27, 2026-11-28 | BR-10 / F-06, F-12 | Verification split: customer path in Sprint 2 (AC-58 to AC-63, `PASS`), operator path in Sprint 3 (AC-127 to AC-129, `NOT RUN`). Requirement wording unchanged | Operator cancellation is FR-17, Sprint 3 (DEC-33) | PR #61 and PR #71 approvals |
+| CHG-04 | 2026-11-28 | BR-06 / AC-60, AC-81; TEST-43, 60, 81, 86, 92 | Sprint 3 extends facts pinned by earlier tests, each listed with its new value (Sprint 3 contract §2.1) | New transitions, routes and buttons change those facts (DEC-45) | PR #71 and PR #72 approvals |
+| CHG-05 | 2026-11-28 | F-03, F-04 order detail; FR-14 | Every history entry gains `note` (string or null) | The customer must see the rejection reason (DEC-43) | PR #71 and PR #72 approvals |
+| CHG-06 | 2026-11-28 | FR-07, FR-08 lists | Pagination is to replace the 200-row limit with F-10. **Not implemented** | System SDS already tied pagination to F-10 (DEC-46) | PR #71 approval |
+
+Rationale, release and re-test status for each change are in `docs/change-register.md`.
+
+## 7. AC status
+
+Status of AC-01 to AC-147 on 2026-11-28. **Implemented** = the behaviour exists in the code. **Run** = the verification has been executed. **Passed** = its latest recorded execution passed. **Commit** = the commit where the pass was established, then the latest re-run. "re-run `dad286b`" means the named tests passed again on the staging head (every case whose title carries the TEST ID). AC-01 to AC-87 and AC-90 to AC-92 are in released code; AC-93 to AC-104 are on `sprint-3-staging` only.
+
+| AC | Feature | Implemented | Verification run | Passed | Actual test or record | Commit |
+|---|---|---|---|---|---|---|
+
+| AC-01 | F-01 | yes | yes | yes | `backend/tests/auth.test.ts::TEST-01` | `f222daa`; re-run `dad286b` |
+| AC-02 | F-01 | yes | yes | yes | `backend/tests/auth.test.ts::TEST-02` | `f222daa`; re-run `dad286b` |
+| AC-03 | F-01 | yes | yes | yes | `backend/tests/auth.test.ts::TEST-03` | `f222daa`; re-run `dad286b` |
+| AC-04 | F-01 | yes | yes | yes | `backend/tests/auth.test.ts::TEST-04` | `f222daa`; re-run `dad286b` |
+| AC-05 | F-01 | yes | yes | yes | `backend/tests/auth.test.ts::TEST-05` | `f222daa`; re-run `dad286b` |
+| AC-06 | F-01 | yes | yes | yes | `backend/tests/auth.test.ts::TEST-06` | `f222daa`; re-run `dad286b` |
+| AC-07 | F-01 | yes | yes | yes | `backend/tests/auth.test.ts::TEST-07` | `f222daa`; re-run `dad286b` |
+| AC-08 | F-01 | yes | yes | yes | `backend/src/services/password.test.ts::TEST-08`; `backend/tests/auth.test.ts::TEST-08` | `f222daa`; re-run `dad286b` |
+| AC-09 | F-01 | yes | yes | yes | `frontend/e2e/auth.spec.ts::TEST-09` | `097da41`; re-run `dad286b` |
+| AC-10 | F-02 | yes | yes | yes | `backend/tests/menu.test.ts::TEST-10` | `0f3c649`; re-run `dad286b` |
+| AC-11 | F-02 | yes | yes | yes | `backend/src/services/menuRules.test.ts::TEST-11` | `0f3c649`; re-run `dad286b` |
+| AC-12 | F-02 | yes | yes | yes | `frontend/e2e/menu.spec.ts::TEST-12`; `frontend/src/pages/Menu.test.tsx::TEST-12` | `0f3c649`; re-run `dad286b` |
+| AC-13 | F-02 | yes | yes | yes | `frontend/src/pages/Menu.test.tsx::TEST-13` | `0f3c649`; re-run `dad286b` |
+| AC-14 | F-03 | yes | yes | yes | `backend/tests/orders.create.test.ts::TEST-14` | `0f3c649`; re-run `dad286b` |
+| AC-15 | F-03 | yes | yes | yes | `backend/src/services/orderRules.test.ts::TEST-15`; `backend/tests/orders.create.test.ts::TEST-15` | `0f3c649`; re-run `dad286b` |
+| AC-16 | F-03 | yes | yes | yes | `backend/tests/orders.create.test.ts::TEST-16` | `0f3c649`; re-run `dad286b` |
+| AC-17 | F-03 | yes | yes | yes | `backend/tests/orders.create.test.ts::TEST-17` | `0f3c649`; re-run `dad286b` |
+| AC-18 | F-03 | yes | yes | yes | `backend/src/services/orderRules.test.ts::TEST-18`; `backend/tests/orders.create.test.ts::TEST-18` | `0f3c649`; re-run `dad286b` |
+| AC-19 | F-03 | yes | yes | yes | `backend/tests/orders.create.test.ts::TEST-19` | `0f3c649`; re-run `dad286b` |
+| AC-20 | F-03 | yes | yes | yes | `backend/tests/orders.create.test.ts::TEST-20` | `0f3c649`; re-run `dad286b` |
+| AC-21 | F-03 | yes | yes | yes | `backend/tests/orders.create.test.ts::TEST-21` | `0f3c649`; re-run `dad286b` |
+| AC-22 | F-03 | yes | yes | yes | `backend/tests/orders.create.test.ts::TEST-22` | `0f3c649`; re-run `dad286b` |
+| AC-23 | F-03 | yes | yes | yes | `backend/tests/orders.create.test.ts::TEST-23` | `0f3c649`; re-run `dad286b` |
+| AC-24 | F-03 | yes | yes | yes | `backend/tests/orders.create.test.ts::TEST-24` | `0f3c649`; re-run `dad286b` |
+| AC-25 | F-03 | yes | yes | yes | `backend/tests/orders.create.test.ts::TEST-25` | `0f3c649`; re-run `dad286b` |
+| AC-26 | F-03 | yes | yes | yes | `backend/tests/orders.access.test.ts::TEST-26` | `0f3c649`; re-run `dad286b` |
+| AC-27 | F-03 | yes | yes | yes | `backend/tests/orders.access.test.ts::TEST-27` | `0f3c649`; re-run `dad286b` |
+| AC-28 | F-03 | yes | yes | yes | `backend/tests/orders.access.test.ts::TEST-28` | `0f3c649`; re-run `dad286b` |
+| AC-29 | F-03 | yes | yes | yes | `frontend/e2e/order.spec.ts::TEST-29` | `0f3c649`; re-run `dad286b` |
+| AC-30 | F-03 | yes | yes | yes | `frontend/src/pages/Menu.test.tsx::TEST-30` | `0f3c649`; re-run `dad286b` |
+| AC-31 | F-03 | yes | yes | yes | `frontend/src/pages/MyOrders.test.tsx::TEST-31` | `0f3c649`; re-run `dad286b` |
+| AC-32 | F-04 | yes | yes | yes | `backend/tests/orders.operator.test.ts::TEST-32` | `37cf31f`; re-run `dad286b` |
+| AC-33 | F-04 | yes | yes | yes | `backend/tests/orders.operator.test.ts::TEST-33` | `37cf31f`; re-run `dad286b` |
+| AC-34 | F-04 | yes | yes | yes | `backend/tests/orders.operator.test.ts::TEST-34` | `37cf31f`; re-run `dad286b` |
+| AC-35 | F-04 | yes | yes | yes | `backend/src/services/orderStateMachine.test.ts::TEST-35`; `backend/tests/orders.operator.test.ts::TEST-35` | `37cf31f`; re-run `dad286b` |
+| AC-36 | F-04 | yes | yes | yes | `backend/tests/orders.operator.test.ts::TEST-36` | `37cf31f`; re-run `dad286b` |
+| AC-37 | F-04 | yes | yes | yes | `backend/tests/orders.operator.test.ts::TEST-37` | `37cf31f`; re-run `dad286b` |
+| AC-38 | F-04 | yes | yes | yes | `backend/tests/orders.operator.test.ts::TEST-38` | `37cf31f`; re-run `dad286b` |
+| AC-39 | F-04 | yes | yes | yes | `backend/tests/orders.operator.test.ts::TEST-39` | `37cf31f`; re-run `dad286b` |
+| AC-40 | F-04 | yes | yes | yes | `backend/tests/orders.operator.test.ts::TEST-40` | `37cf31f`; re-run `dad286b` |
+| AC-41 | F-04 | yes | yes | yes | `frontend/e2e/operator.spec.ts::TEST-41` | `37cf31f`; re-run `dad286b` |
+| AC-42 | F-04 | yes | yes | yes | `frontend/e2e/operator.spec.ts::TEST-42` | `37cf31f`; re-run `dad286b` |
+| AC-43 | R-01 | yes | yes | yes | `backend/tests/routes.access.test.ts::TEST-43` | `8f42cbd`; re-run `dad286b` |
+| AC-44 | R-02 | yes | yes | yes | `backend/tests/error.test.ts::TEST-44` | `9de7923`; re-run `dad286b` |
+| AC-45 | R-03 | yes | yes | yes | `backend/tests/seed.test.ts::TEST-45` (manual fresh clone at `0b2f7d5` only) | `c215549`; re-run `dad286b` |
+| AC-46 | R-03 | yes | yes | yes | `backend/tests/constraints.test.ts::TEST-46` | `c215549`; re-run `dad286b` |
+| AC-47 | F-05 | yes | yes | yes | `backend/tests/menuItems.test.ts::TEST-47` | `0a339a1`; re-run `dad286b` |
+| AC-48 | F-05 | yes | yes | yes | `backend/tests/menuItems.test.ts::TEST-48` | `0a339a1`; re-run `dad286b` |
+| AC-49 | F-05 | yes | yes | yes | `backend/tests/menuItems.test.ts::TEST-49` | `0a339a1`; re-run `dad286b` |
+| AC-50 | F-05 | yes | yes | yes | `backend/tests/menuItems.test.ts::TEST-50` | `0a339a1`; re-run `dad286b` |
+| AC-51 | F-05 | yes | yes | yes | `backend/src/middleware/menuItemSchema.test.ts::TEST-51`; `backend/tests/menuItems.test.ts::TEST-51` | `0a339a1`; re-run `dad286b` |
+| AC-52 | F-05 | yes | yes | yes | `backend/src/middleware/menuItemSchema.test.ts::TEST-52`; `backend/tests/menuItems.test.ts::TEST-52` | `0a339a1`; re-run `dad286b` |
+| AC-53 | F-05 | yes | yes | yes | `backend/tests/menuItems.test.ts::TEST-53` | `0a339a1`; re-run `dad286b` |
+| AC-54 | F-05 | yes | yes | yes | `backend/tests/menuItems.test.ts::TEST-54` | `0a339a1`; re-run `dad286b` |
+| AC-55 | F-05 | yes | yes | yes | `backend/tests/menuItems.test.ts::TEST-55` | `0a339a1`; re-run `dad286b` |
+| AC-56 | F-05 | yes | yes | yes | `frontend/src/pages/OperatorMenu.test.tsx::TEST-56` | `0a339a1`; re-run `dad286b` |
+| AC-57 | F-05 | yes | yes | yes | `frontend/e2e/catalog.spec.ts::TEST-57` | `0a339a1`; re-run `dad286b` |
+| AC-58 | F-06 | yes | yes | yes | `backend/tests/orders.cancel.test.ts::TEST-58` | `2998b71`; re-run `dad286b` |
+| AC-59 | F-06 | yes | yes | yes | `backend/tests/orders.cancel.test.ts::TEST-59` | `2998b71`; re-run `dad286b` |
+| AC-60 | F-06 | yes | yes | yes | `backend/src/services/orderStateMachine.test.ts::TEST-60` | `2998b71`; re-run `dad286b` |
+| AC-61 | F-06 | yes | yes | yes | `backend/tests/orders.cancel.test.ts::TEST-61` | `2998b71`; re-run `dad286b` |
+| AC-62 | F-06 | yes | yes | yes | `backend/tests/orders.cancel.test.ts::TEST-62` | `2998b71`; re-run `dad286b` |
+| AC-63 | F-06 | yes | yes | yes | `backend/tests/orders.cancel.test.ts::TEST-63` | `2998b71`; re-run `dad286b` |
+| AC-64 | F-06 | yes | yes | yes | `backend/tests/orders.cancel.test.ts::TEST-64` | `2998b71`; re-run `dad286b` |
+| AC-65 | F-06 | yes | yes | yes | `backend/tests/orders.cancel.test.ts::TEST-65` | `2998b71`; re-run `dad286b` |
+| AC-66 | F-06 | yes | yes | yes | `frontend/src/pages/OrderDetail.test.tsx::TEST-66` | `2998b71`; re-run `dad286b` |
+| AC-67 | F-06 | yes | yes | yes | `frontend/e2e/cancel.spec.ts::TEST-67` | `2998b71`; re-run `dad286b` |
+| AC-68 | F-07 | yes | yes | yes | `backend/tests/orders.pay.test.ts::TEST-68` | `c46b3bb`; re-run `dad286b` |
+| AC-69 | F-07 | yes | yes | yes | `backend/src/services/paymentRules.test.ts::TEST-69`; `backend/tests/orders.pay.test.ts::TEST-69` | `c46b3bb`; re-run `dad286b` |
+| AC-70 | F-07 | yes | yes | yes | `backend/src/middleware/paymentSchema.test.ts::TEST-70`; `backend/tests/orders.pay.test.ts::TEST-70` | `c46b3bb`; re-run `dad286b` |
+| AC-71 | F-07 | yes | yes | yes | `backend/tests/orders.pay.test.ts::TEST-71` | `c46b3bb`; re-run `dad286b` |
+| AC-72 | F-07 | yes | yes | yes | `backend/tests/orders.pay.test.ts::TEST-72` | `c46b3bb`; re-run `dad286b` |
+| AC-73 | F-07 | yes | yes | yes | `backend/tests/orders.pay.test.ts::TEST-73` | `c46b3bb`; re-run `dad286b` |
+| AC-74 | F-07 | yes | yes | yes | `backend/tests/orders.pay.test.ts::TEST-74` | `c46b3bb`; re-run `dad286b` |
+| AC-75 | F-07 | yes | yes | yes | `frontend/src/pages/OrderDetail.test.tsx::TEST-75` | `c46b3bb`; re-run `dad286b` |
+| AC-76 | F-07 | yes | yes | yes | `frontend/e2e/payment.spec.ts::TEST-76` | `c46b3bb`; re-run `dad286b` |
+| AC-77 | F-08 | yes | yes | yes | `backend/tests/orders.fulfilment.test.ts::TEST-77` | `7571373`; re-run `dad286b` |
+| AC-78 | F-08 | yes | yes | yes | `backend/tests/orders.fulfilment.test.ts::TEST-78` | `7571373`; re-run `dad286b` |
+| AC-79 | F-08 | yes | yes | yes | `backend/tests/orders.fulfilment.test.ts::TEST-79` | `7571373`; re-run `dad286b` |
+| AC-80 | F-08 | yes | yes | yes | `backend/tests/orders.fulfilment.test.ts::TEST-80` | `7571373`; re-run `dad286b` |
+| AC-81 | F-08 | yes | yes | yes | `backend/src/services/orderStateMachine.test.ts::TEST-81` | `7571373`; re-run `dad286b` |
+| AC-82 | F-08 | yes | yes | yes | `backend/tests/orders.fulfilment.test.ts::TEST-82` | `7571373`; re-run `dad286b` |
+| AC-83 | F-08 | yes | yes | yes | `backend/tests/orders.fulfilment.test.ts::TEST-83` | `7571373`; re-run `dad286b` |
+| AC-84 | F-08 | yes | yes | yes | `backend/tests/orders.fulfilment.test.ts::TEST-84` | `7571373`; re-run `dad286b` |
+| AC-85 | F-08 | yes | yes | yes | `backend/tests/orders.journey.test.ts::TEST-85` | `7571373`; re-run `dad286b` |
+| AC-86 | F-08 | yes | yes | yes | `frontend/src/pages/OperatorOrders.test.tsx::TEST-86`; `frontend/src/pages/OrderDetail.test.tsx::TEST-86` | `7571373`; re-run `dad286b` |
+| AC-87 | F-08 | yes | yes | yes | `frontend/e2e/fulfilment.spec.ts::TEST-87` | `7571373`; re-run `dad286b` |
+| AC-88 | R-05 | yes | yes | yes | COV-01 (TEST-88): CI coverage step; `COV-01-release-2f6cc46.txt` | `b1d3f33`; release `2f6cc46`; re-run `dad286b` (local) |
+| AC-89 | R-05 | yes | yes | yes | CHECK-01 (TEST-89): `docs/evidence/CHECK-01-2f6cc46.txt` | release `2f6cc46`; not repeated at `dad286b` |
+| AC-90 | R-05, R-01 | yes | yes | yes | `backend/tests/routes.registry.test.ts::TEST-90` | `c15965e`; re-run `dad286b` |
+| AC-91 | R-05, R-01 | yes | yes | yes | `backend/tests/routes.registry.test.ts::TEST-91` | `c15965e`; re-run `dad286b` |
+| AC-92 | R-05, R-01 | yes | yes | yes | `backend/tests/routes.access.test.ts::TEST-92` | `c15965e`; re-run `dad286b` |
+| AC-93 | F-09 | yes | yes | yes | `backend/tests/orders.reject.test.ts::TEST-93` | `15ea606`; re-run `dad286b` |
+| AC-94 | F-09 | yes | yes | yes | `backend/tests/orders.reject.test.ts::TEST-94` | `15ea606`; re-run `dad286b` |
+| AC-95 | F-09 | yes | yes | yes | `backend/src/services/orderStateMachine.test.ts::TEST-95` | `15ea606`; re-run `dad286b` |
+| AC-96 | F-09 | yes | yes | yes | `backend/src/middleware/orderRejectSchema.test.ts::TEST-96` | `15ea606`; re-run `dad286b` |
+| AC-97 | F-09 | yes | yes | yes | `backend/tests/orders.reject.test.ts::TEST-97` | `15ea606`; re-run `dad286b` |
+| AC-98 | F-09 | yes | yes | yes | `backend/tests/orders.reject.test.ts::TEST-98` | `15ea606`; re-run `dad286b` |
+| AC-99 | F-09 | yes | yes | yes | `backend/tests/orders.reject.test.ts::TEST-99` | `15ea606`; re-run `dad286b` |
+| AC-100 | F-09 | yes | yes | yes | `backend/tests/orders.reject.test.ts::TEST-100` | `15ea606`; re-run `dad286b` |
+| AC-101 | F-09 | yes | yes | yes | `backend/tests/orders.reject.test.ts::TEST-101` | `15ea606`; re-run `dad286b` |
+| AC-102 | F-09 | yes | yes | yes | `frontend/src/pages/OperatorOrders.test.tsx::TEST-102` | `15ea606`; re-run `dad286b` |
+| AC-103 | F-09 | yes | yes | yes | `frontend/src/pages/OrderDetail.test.tsx::TEST-103` | `15ea606`; re-run `dad286b` |
+| AC-104 | F-09 | yes | yes | yes | `frontend/e2e/reject.spec.ts::TEST-104` | `15ea606`; re-run `dad286b` |
+| AC-105 | F-10 | no | no | — | TEST-105 planned; NOT RUN | — |
+| AC-106 | F-10 | no | no | — | TEST-106 planned; NOT RUN | — |
+| AC-107 | F-10 | no | no | — | TEST-107 planned; NOT RUN | — |
+| AC-108 | F-10 | no | no | — | TEST-108 planned; NOT RUN | — |
+| AC-109 | F-10 | no | no | — | TEST-109 planned; NOT RUN | — |
+| AC-110 | F-10 | no | no | — | TEST-110 planned; NOT RUN | — |
+| AC-111 | F-10 | no | no | — | TEST-111 planned; NOT RUN | — |
+| AC-112 | F-10 | no | no | — | TEST-112 planned; NOT RUN | — |
+| AC-113 | F-10 | no | no | — | TEST-113 planned; NOT RUN | — |
+| AC-114 | F-10 | no | no | — | TEST-114 planned; NOT RUN | — |
+| AC-115 | F-10 | no | no | — | TEST-115 planned; NOT RUN | — |
+| AC-116 | F-11 | no | no | — | TEST-116 planned; NOT RUN | — |
+| AC-117 | F-11 | no | no | — | TEST-117 planned; NOT RUN | — |
+| AC-118 | F-11 | no | no | — | TEST-118 planned; NOT RUN | — |
+| AC-119 | F-11 | no | no | — | TEST-119 planned; NOT RUN | — |
+| AC-120 | F-11 | no | no | — | TEST-120 planned; NOT RUN | — |
+| AC-121 | F-11 | no | no | — | TEST-121 planned; NOT RUN | — |
+| AC-122 | F-11 | no | no | — | TEST-122 planned; NOT RUN | — |
+| AC-123 | F-11 | no | no | — | TEST-123 planned; NOT RUN | — |
+| AC-124 | F-12 | no | no | — | TEST-124 planned; NOT RUN | — |
+| AC-125 | F-12 | no | no | — | TEST-125 planned; NOT RUN | — |
+| AC-126 | F-12 | no | no | — | TEST-126 planned; NOT RUN | — |
+| AC-127 | F-12 | no | no | — | TEST-127 planned; NOT RUN | — |
+| AC-128 | F-12 | no | no | — | TEST-128 planned; NOT RUN | — |
+| AC-129 | F-12 | no | no | — | TEST-129 planned; NOT RUN | — |
+| AC-130 | F-12 | no | no | — | TEST-130 planned; NOT RUN | — |
+| AC-131 | F-12 | no | no | — | TEST-131 planned; NOT RUN | — |
+| AC-132 | F-12 | no | no | — | TEST-132 planned; NOT RUN | — |
+| AC-133 | F-12 | no | no | — | TEST-133 planned; NOT RUN | — |
+| AC-134 | F-12 | no | no | — | TEST-134 planned; NOT RUN | — |
+| AC-135 | F-12 | no | no | — | TEST-135 planned; NOT RUN | — |
+| AC-136 | F-13 | no | no | — | TEST-136 planned; NOT RUN | — |
+| AC-137 | F-13 | no | no | — | TEST-137 planned; NOT RUN | — |
+| AC-138 | F-13 | no | no | — | TEST-138 planned; NOT RUN | — |
+| AC-139 | F-13 | no | no | — | TEST-139 planned; NOT RUN | — |
+| AC-140 | F-13 | no | no | — | TEST-140 planned; NOT RUN | — |
+| AC-141 | F-13 | no | no | — | TEST-141 planned; NOT RUN | — |
+| AC-142 | F-13 | no | no | — | TEST-142 planned; NOT RUN | — |
+| AC-143 | F-13 | no | no | — | TEST-143 planned; NOT RUN | — |
+| AC-144 | R-04 | no | no | — | TEST-144 planned; NOT RUN | — |
+| AC-145 | R-04 | no | no | — | TEST-145 planned; NOT RUN | — |
+| AC-146 | R-04 | no | no | — | TEST-146 planned; NOT RUN | — |
+| AC-147 | R-04 | no | no | — | TEST-147 planned; NOT RUN | — |
+
+| Total | Count |
+|---|---|
+| Acceptance criteria | 147 |
+| Implemented, run and passed | 104 (AC-01 to AC-104) |
+| Not implemented, `NOT RUN` | 43 (AC-105 to AC-147) |
+
+R-04 note: the Sprint 1 NFR-05 baseline and the Sprint 1 screen states do not satisfy AC-144 to AC-147. F-09 already wraps the rejection reason, but AC-147 also covers the pickup note and its test does not exist.
