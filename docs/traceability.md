@@ -3,9 +3,9 @@
 | Item | Value |
 |---|---|
 | Document | `docs/traceability.md` |
-| Version | 1.28 |
+| Version | 1.29 |
 | Date | 2026-11-28 |
-| Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/sprint-2/features.md` |
+| Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/sprint-2/features.md`, `docs/sprints/sprint-3/features.md` |
 
 ### Revision history
 | Version | Date | Change | Reason |
@@ -39,6 +39,7 @@
 | 1.26 | 2026-11-28 | F-08 implemented and verified (TEST-77 to TEST-87) against contract 1.0 with no contract change: FR-12 and BR-09 updated to `PASS`; BR-06 updated to `PASS (S1 and S2)`; the BR-08 row adds F-08 with AC-84 / TEST-84 and the BR-15 row adds F-08 with AC-77, AC-78, AC-79 and AC-85; §4.3 records AC-77 to AC-87 with test files; red at `fc72fd4`, implementation and full green run at `7571373` | F-08 Fulfilment workflow (Issue #57) |
 | 1.27 | 2026-11-28 | R-05 pre-release work (TEST-88, TEST-90 to TEST-92) against contract 1.0 with no contract change: NFR-10 updated to `PASS (pre-release)` with COV-01 at 97.9% line coverage of `backend/src/services` (560/572, measured at `b1d3f33`, gate-proof run exits non-zero); NFR-01 and NFR-02 add the Sprint 2 extension (TEST-90 to TEST-92; registry red at `6d6f86e`, green at `156eb4d`); §4.3 and §5 updated. NFR-06 (CHECK-01 / TEST-89) stays `NOT RUN` until the release is deployed | R-05 Delivery and quality gates (Issue #58) |
 | 1.28 | 2026-11-28 | CHECK-01 (TEST-89) passed on the deployed release `2f6cc46`: NFR-06 and AC-89 updated to `PASS`; the order, its stock effect and the customer1 login were the same after a restart and after a redeploy, each of which created a new revision (`docs/evidence/CHECK-01-2f6cc46.txt`); §3, §4.3 and §5 updated | R-05 post-deployment persistence check (Issue #58) |
+| 1.29 | 2026-11-28 | Sprint 3 contracts added: FR-14 to FR-17, BR-06 (S3 part), BR-10 (S3 operator path), BR-12, NFR-05 (S3 part), NFR-09 (S3 part) and NFR-11 now name their AC and test IDs; new §4.4 maps AC-93 to AC-147; every Sprint 3 test is `NOT RUN`; BR-10 reads `PASS (S2 only)` because its new Sprint 3 tests are `NOT RUN`; BR-06, NFR-05 and NFR-09 keep their earlier results for the earlier scope; §5 updated | Sprint 3 contracts written before implementation (Issue #59) |
 
 ### How to use this file
 - Sprint 1 test IDs follow the rule **TEST-nn verifies AC-nn** (for example TEST-24 verifies AC-24).
@@ -63,10 +64,10 @@
 | FR-11 | F-06 | 2 | AC-58, AC-59, AC-60, AC-61, AC-62, AC-63, AC-64, AC-65, AC-66, AC-67 | TEST-58 to TEST-67 | backend/tests/orders.cancel.test.ts::TEST-58, ::TEST-59; backend/src/services/orderStateMachine.test.ts::TEST-60; backend/tests/orders.cancel.test.ts::TEST-61, ::TEST-62, ::TEST-63, ::TEST-64, ::TEST-65; frontend/src/pages/OrderDetail.test.tsx::TEST-66; frontend/e2e/cancel.spec.ts::TEST-67 | PASS | ae84e79 (red); 3f1fedf (green), 2998b71 (full green) |
 | FR-12 | F-08 | 2 | AC-77, AC-78, AC-79, AC-80, AC-81, AC-82, AC-83, AC-84, AC-85, AC-86, AC-87 | TEST-77 to TEST-87 | backend/tests/orders.fulfilment.test.ts::TEST-77, ::TEST-78, ::TEST-79, ::TEST-80; backend/src/services/orderStateMachine.test.ts::TEST-81; backend/tests/orders.fulfilment.test.ts::TEST-82, ::TEST-83, ::TEST-84; backend/tests/orders.journey.test.ts::TEST-85; frontend/src/pages/OperatorOrders.test.tsx::TEST-86; frontend/src/pages/OrderDetail.test.tsx::TEST-86; frontend/e2e/fulfilment.spec.ts::TEST-87 | PASS | fc72fd4 (red); 7571373 (green) |
 | FR-13 | F-07 | 2 | AC-68, AC-69, AC-70, AC-71, AC-72, AC-73, AC-74, AC-75, AC-76 | TEST-68 to TEST-76 | backend/tests/orders.pay.test.ts::TEST-68, ::TEST-69, ::TEST-70, ::TEST-71, ::TEST-72, ::TEST-73, ::TEST-74; backend/src/services/paymentRules.test.ts::TEST-69; backend/src/middleware/paymentSchema.test.ts::TEST-70; frontend/src/pages/OrderDetail.test.tsx::TEST-75; frontend/e2e/payment.spec.ts::TEST-76 | PASS | a221cba (red); c46b3bb (green) |
-| FR-14 | F-09 | 3 | To be defined in Sprint 3 contract | TBD | | NOT RUN | |
-| FR-15 | F-10 | 3 | To be defined in Sprint 3 contract | TBD | | NOT RUN | |
-| FR-16 | F-11 | 3 | To be defined in Sprint 3 contract | TBD | | NOT RUN | |
-| FR-17 | F-12 | 3 | To be defined in Sprint 3 contract | TBD | | NOT RUN | |
+| FR-14 | F-09 | 3 | AC-93, AC-94, AC-95, AC-96, AC-97, AC-98, AC-99, AC-100, AC-101, AC-102, AC-103, AC-104 | TEST-93 to TEST-104 | | NOT RUN | |
+| FR-15 | F-10 | 3 | AC-105, AC-106, AC-107, AC-108, AC-109, AC-110, AC-111, AC-112, AC-113, AC-114, AC-115 | TEST-105 to TEST-115 | | NOT RUN | |
+| FR-16 | F-11 | 3 | AC-116, AC-117, AC-118, AC-119, AC-120, AC-121, AC-122, AC-123 | TEST-116 to TEST-123 | | NOT RUN | |
+| FR-17 | F-12 | 3 | AC-124, AC-125, AC-126, AC-127, AC-128, AC-129, AC-130, AC-131, AC-132, AC-133, AC-134, AC-135 | TEST-124 to TEST-135 | | NOT RUN | |
 
 ## 2. Business rules
 
@@ -77,13 +78,13 @@
 | BR-03 | F-03 | 1 | AC-15, AC-16 | TEST-15, 16 | backend/src/services/orderRules.test.ts::TEST-15; backend/tests/orders.create.test.ts::TEST-15, ::TEST-16 | PASS | 140c030 (red), 0f3c649 (green) |
 | BR-04 | F-03, F-05 | 1 (F-03), 2 (F-05) | AC-17 (S1); AC-50 (S2 catalog edits) | TEST-17; TEST-50 (S2) | backend/tests/orders.create.test.ts::TEST-17; backend/tests/menuItems.test.ts::TEST-50 | PASS | 140c030 (S1 red), 0f3c649 (S1 green); 56fe6f6 (S2 retroactive red), 2639138 (S2 green), 0a339a1 (full green) |
 | BR-05 | F-03 | 1 | AC-23, AC-24, AC-46 | TEST-23, 24, 46 | backend/tests/orders.create.test.ts::TEST-23, ::TEST-24; backend/tests/constraints.test.ts::TEST-46 | PASS | 140c030 (red), 0f3c649 (green) |
-| BR-06 | F-04, F-06, F-08, F-09, F-12 | 1 (F-04); 2 (F-06, F-08); 3 (F-09, F-12) | AC-35 (S1 transitions); S2: AC-60, AC-61, AC-63, AC-77, AC-78, AC-79, AC-81, AC-82, AC-83; S3 in the Sprint 3 contract | TEST-35; TEST-60, 61, 63 (S2 F-06); TEST-77–79, 81–83 (S2 F-08); S3 TBD | backend/src/services/orderStateMachine.test.ts::TEST-35; backend/tests/orders.operator.test.ts::TEST-35; backend/src/services/orderStateMachine.test.ts::TEST-60; backend/tests/orders.cancel.test.ts::TEST-61, ::TEST-63; backend/tests/orders.fulfilment.test.ts::TEST-77, ::TEST-78, ::TEST-79; backend/src/services/orderStateMachine.test.ts::TEST-81; backend/tests/orders.fulfilment.test.ts::TEST-82, ::TEST-83 | PASS (S1 and S2) | c04ca45, a614473 (red); 6d1d2f7, c680623, 8fe7793, 37cf31f (S1 green); ae84e79 (F-06 red); 3f1fedf (F-06 green), 2998b71 (full green); fc72fd4 (F-08 red); 7571373 (F-08 green) |
+| BR-06 | F-04, F-06, F-08, F-09, F-12 | 1 (F-04); 2 (F-06, F-08); 3 (F-09, F-12) | AC-35 (S1 transitions); S2: AC-60, AC-61, AC-63, AC-77, AC-78, AC-79, AC-81, AC-82, AC-83; S3: AC-95, AC-97, AC-98, AC-99 (F-09); AC-127, AC-128, AC-129, AC-130, AC-131 (F-12) | TEST-35; TEST-60, 61, 63 (S2 F-06); TEST-77–79, 81–83 (S2 F-08); TEST-95, 97, 98, 99 (S3 F-09), TEST-127–131 (S3 F-12): NOT RUN | backend/src/services/orderStateMachine.test.ts::TEST-35; backend/tests/orders.operator.test.ts::TEST-35; backend/src/services/orderStateMachine.test.ts::TEST-60; backend/tests/orders.cancel.test.ts::TEST-61, ::TEST-63; backend/tests/orders.fulfilment.test.ts::TEST-77, ::TEST-78, ::TEST-79; backend/src/services/orderStateMachine.test.ts::TEST-81; backend/tests/orders.fulfilment.test.ts::TEST-82, ::TEST-83 | PASS (S1 and S2) | c04ca45, a614473 (red); 6d1d2f7, c680623, 8fe7793, 37cf31f (S1 green); ae84e79 (F-06 red); 3f1fedf (F-06 green), 2998b71 (full green); fc72fd4 (F-08 red); 7571373 (F-08 green) |
 | BR-07 | F-03, F-04, R-01, F-07 | 1; 2 (F-07) | AC-27, AC-28, AC-39; S2 (F-07): AC-74 | TEST-27, 28, 39; TEST-74 (S2 F-07) | backend/tests/orders.access.test.ts::TEST-27, ::TEST-28; backend/tests/orders.operator.test.ts::TEST-39; backend/tests/orders.pay.test.ts::TEST-74 | PASS | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green); a221cba (F-07 red), c46b3bb (F-07 green) |
 | BR-08 | F-04, R-01, F-08 | 1; 2 (F-08) | AC-26, AC-37, AC-38, AC-43; S2 (F-08): AC-84 | TEST-26, 37, 38, 43; TEST-84 (S2 F-08) | backend/tests/orders.access.test.ts::TEST-26; backend/tests/orders.operator.test.ts::TEST-37, ::TEST-38; backend/tests/routes.access.test.ts::TEST-43; backend/tests/orders.fulfilment.test.ts::TEST-84 | PASS | 140c030, c04ca45, d7792c8 (red); 0f3c649, 6d1d2f7, 8f42cbd (green); fc72fd4 (F-08 red), 7571373 (F-08 green) |
 | BR-09 | F-08 | 2 | AC-80, AC-86 | TEST-80, 86 | backend/tests/orders.fulfilment.test.ts::TEST-80; frontend/src/pages/OperatorOrders.test.tsx::TEST-86 | PASS | fc72fd4 (red); 7571373 (green) |
-| BR-10 | F-06 | 2 | AC-58, AC-59, AC-60, AC-61, AC-62, AC-63 | TEST-58 to TEST-63 | backend/tests/orders.cancel.test.ts::TEST-58, ::TEST-59; backend/src/services/orderStateMachine.test.ts::TEST-60; backend/tests/orders.cancel.test.ts::TEST-61, ::TEST-62, ::TEST-63 | PASS | ae84e79 (red); 3f1fedf (green), 2998b71 (full green) |
+| BR-10 | F-06, F-12 | 2 (F-06); 3 (F-12) | AC-58, AC-59, AC-60, AC-61, AC-62, AC-63; S3 operator path: AC-127, AC-128, AC-129 | TEST-58 to TEST-63; TEST-127, 128, 129 (S3 F-12): NOT RUN | backend/tests/orders.cancel.test.ts::TEST-58, ::TEST-59; backend/src/services/orderStateMachine.test.ts::TEST-60; backend/tests/orders.cancel.test.ts::TEST-61, ::TEST-62, ::TEST-63 | PASS (S2 only) | ae84e79 (red); 3f1fedf (green), 2998b71 (full green) |
 | BR-11 | F-07 | 2 | AC-68, AC-69, AC-70, AC-71, AC-72, AC-73, AC-74 | TEST-68 to TEST-74 | backend/tests/orders.pay.test.ts::TEST-68, ::TEST-69; backend/src/services/paymentRules.test.ts::TEST-69; backend/src/middleware/paymentSchema.test.ts::TEST-70; backend/tests/orders.pay.test.ts::TEST-70, ::TEST-71, ::TEST-72, ::TEST-73, ::TEST-74 | PASS | a221cba (red); c46b3bb (green) |
-| BR-12 | F-09 | 3 | To be defined in Sprint 3 contract | TBD | | NOT RUN | |
+| BR-12 | F-09 | 3 | AC-93, AC-96, AC-100, AC-102 | TEST-93, 96, 100, 102 | | NOT RUN | |
 | BR-13 | F-05, R-03 | 1 (DB), 2 (API) | S1: AC-46 (DB constraints). S2: AC-51, AC-52 (API validation) | TEST-46; TEST-51, 52 (S2) | backend/tests/constraints.test.ts::TEST-46; backend/src/middleware/menuItemSchema.test.ts::TEST-51, ::TEST-52; backend/tests/menuItems.test.ts::TEST-51, ::TEST-52 | PASS | c215549 (S1 CHECK + TEST-46); 56fe6f6 (S2 retroactive red), 2639138 (S2 green), 0a339a1 (full green) |
 | BR-14 | F-03 | 1 | AC-14 (order number format) | TEST-14 | backend/tests/orders.create.test.ts::TEST-14; backend/src/services/orderRules.test.ts::TEST-15 | PASS | 140c030 (red), 0f3c649 (green) |
 | BR-15 | F-03, F-04, F-08 | 1; 2 (F-08) | AC-25, AC-34; S2 (F-08): AC-77, AC-78, AC-79, AC-85 | TEST-25, 34; TEST-77, 78, 79, 85 (S2 F-08) | backend/tests/orders.create.test.ts::TEST-25; backend/tests/orders.operator.test.ts::TEST-34; backend/tests/orders.fulfilment.test.ts::TEST-77, ::TEST-78, ::TEST-79; backend/tests/orders.journey.test.ts::TEST-85 | PASS | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green); fc72fd4 (F-08 red), 7571373 (F-08 green) |
@@ -96,13 +97,13 @@
 | NFR-02 | R-01 | 1, extended 2 and 3 | 403 for wrong role or non-owner on every protected route (AC-43, AC-27, AC-37, AC-38; Sprint 2: AC-90 to AC-92) | TEST-43, 27, 37, 38, 90, 91, 92 | backend/tests/orders.access.test.ts::TEST-27; backend/tests/orders.operator.test.ts::TEST-37, ::TEST-38; backend/tests/routes.access.test.ts::TEST-43, ::TEST-92; backend/tests/routes.registry.test.ts::TEST-90, ::TEST-91 | PASS | 140c030, c04ca45, d7792c8 (red); 0f3c649, 6d1d2f7, 8f42cbd (green); 6d6f86e (R-05 red: TEST-90, TEST-91), 156eb4d (green), c15965e (full run) |
 | NFR-03 | F-01 | 1 | bcrypt hash stored; hash never returned (AC-08) | TEST-08 | backend/tests/auth.test.ts::TEST-08; backend/src/services/password.test.ts::TEST-08 | PASS | 8398fe2 (red), f222daa (green), 2022899 (explicit `/me` field projection) |
 | NFR-04 | F-01 | 1 | 8-hour expiry (AC-07); logout invalidates at once (AC-06) | TEST-06, 07 | backend/tests/auth.test.ts::TEST-06, ::TEST-07 | PASS | 8398fe2 (red; TEST-06 reworked in 05a4f08), f222daa (green), 6e68bee (expired session deletion on lookup & startup) |
-| NFR-05 | R-04 | 3 | p95 ≤ 500 ms and zero 5xx responses for `GET /api/menu` and `POST /api/orders`, measured at 20 concurrent connections for 30 s per endpoint, database seeded with 500 orders plus an order-test item with enough stock for the whole run (NFR-05) | LOAD-01: autocannon script, raw output and tested commit saved (Sprint 3 baseline recorded in Sprint 1) | LOAD-01: `backend/benchmarks/nfr05-load.js` — 5 runs × 30 s per endpoint at 20 connections; `docs/evidence/nfr05/summary.json`, `raw/` and `run-log-5c3f984.txt`. `GET /api/menu` p50 1 ms / p95 1 ms / p99 3-4 ms at 16,640.3 req/s; `POST /api/orders` p50 10-13 ms / p95 40 ms (run range 37–47 ms) / p99 56-72 ms at 1,255.1 req/s; zero 5xx in both | PASS (S1 baseline)[^nfr05] | 5c3f984 (measured 2026-11-11) |
+| NFR-05 | R-04 | 3 | p95 ≤ 500 ms and zero 5xx responses for `GET /api/menu` and `POST /api/orders`, measured at 20 concurrent connections for 30 s per endpoint, database seeded with 500 orders plus an order-test item with enough stock for the whole run (NFR-05). Sprint 3: deployed re-measurement (AC-144) | LOAD-01: autocannon script, raw output and tested commit saved (Sprint 3 baseline recorded in Sprint 1); S3: TEST-144 (LOAD-02): NOT RUN | LOAD-01: `backend/benchmarks/nfr05-load.js` — 5 runs × 30 s per endpoint at 20 connections; `docs/evidence/nfr05/summary.json`, `raw/` and `run-log-5c3f984.txt`. `GET /api/menu` p50 1 ms / p95 1 ms / p99 3-4 ms at 16,640.3 req/s; `POST /api/orders` p50 10-13 ms / p95 40 ms (run range 37–47 ms) / p99 56-72 ms at 1,255.1 req/s; zero 5xx in both | PASS (S1 baseline)[^nfr05] | 5c3f984 (measured 2026-11-11) |
 | NFR-06 | R-05 | 2 | Order survives restart and redeploy (AC-89) | TEST-89 (CHECK-01) | CHECK-01: `docs/evidence/CHECK-01-2f6cc46.txt` (post-deployment check on release `2f6cc46`) | PASS | 2f6cc46 (release) |
 | NFR-07 | R-02 | 1 | Standard error shape; no stack trace (AC-04, AC-44) | TEST-04, 44 | backend/tests/auth.test.ts::TEST-04; backend/tests/error.test.ts::TEST-44 | PASS | f222daa, 83f0337 (TEST-04); 9de7923 (TEST-44) |
 | NFR-08 | R-03 | 1 | Fresh clone in 8 commands or fewer; seed repeatable (AC-45) | TEST-45 | backend/tests/seed.test.ts::TEST-45; manual fresh-clone check at `0b2f7d5` (`docs/evidence/NFR-08-fresh-clone-0b2f7d5.txt` and `.png`) | PASS | c215549 (seed test); 0b2f7d5 (manual fresh-clone check, 2026-11-12) |
-| NFR-09 | F-02, F-03, R-04 | 1 partial, 3 complete | Loading, empty and error states (AC-13, AC-30, AC-31 in S1) | TEST-13, 30, 31, then TBD | frontend/src/pages/Menu.test.tsx::TEST-13, ::TEST-30; frontend/src/pages/MyOrders.test.tsx::TEST-31 PASS; the Sprint 1 states are verified, the R-04 final usability pass is Sprint 3 | INCOMPLETE[^nfr09] | 140c030 (red), 0f3c649 (green) |
+| NFR-09 | F-02, F-03, R-04 | 1 partial, 3 complete | Loading, empty and error states (AC-13, AC-30, AC-31 in S1; AC-145, AC-146, AC-147 in S3) | TEST-13, 30, 31; S3: TEST-145, 146, 147 (NOT RUN) | frontend/src/pages/Menu.test.tsx::TEST-13, ::TEST-30; frontend/src/pages/MyOrders.test.tsx::TEST-31 PASS; the Sprint 1 states are verified, the R-04 final usability pass is Sprint 3 | INCOMPLETE[^nfr09] | 140c030 (red), 0f3c649 (green) |
 | NFR-10 | R-05 | 2 | At least 85% service-layer line coverage, enforced in CI (AC-88) | TEST-88 (COV-01) | COV-01: `npm run coverage --workspace=backend` in `.github/workflows/ci.yml` and `ci-docker.yml` (`test-and-docker`); 97.9% lines (560/572) over all 8 files of `backend/src/services`; gate proof with threshold 99 exits 1. `docs/evidence/COV-01-b1d3f33.txt`, `COV-01-gate-proof-b1d3f33.txt`. The release commit on `main` is not yet measured | PASS (pre-release) | b1d3f33 (gate and measurement), c15965e (full run) |
-| NFR-11 | F-13 | 3 | 429 after 5 failed logins in 15 minutes | TBD (Sprint 3) | | NOT RUN | |
+| NFR-11 | F-13 | 3 | 429 after 5 failed logins in 15 minutes (AC-136 to AC-143) | TEST-136 to TEST-143 | | NOT RUN | |
 
 [^nfr05]: The result is a Sprint 1 local baseline, not a deployed measurement: one host, with the API and the load generator on the same machine (Apple M4, macOS) and PostgreSQL 16 in a local Docker container. `docs/evidence/nfr05/README.md` §2 and §5 record the environment and state the single-host limitation. Re-measurement on the deployed build is the Sprint 3 R-04 work.
 
@@ -213,14 +214,28 @@ Evidence: `R-05-red-6d6f86e.txt`, `R-05-green-c15965e.txt`, `R-05-green-e2e-c159
 | AC-91 | `backend/tests/routes.registry.test.ts::TEST-91` | PASS | `6d6f86e` | `156eb4d`, `c15965e` |
 | AC-92 | `backend/tests/routes.access.test.ts::TEST-92` (runs with `::TEST-43`) | PASS | None (see above) | `156eb4d`, `c15965e` |
 
+### 4.4 Sprint 3 reverse view
+Defined in `docs/sprints/sprint-3/features.md`. TEST-nn verifies AC-nn.
+
+| AC / TEST | Feature | Requirements | Result |
+|---|---|---|---|
+| 93–104 | F-09 | FR-14, BR-06, BR-12 | NOT RUN |
+| 105–115 | F-10 | FR-15 | NOT RUN |
+| 116–123 | F-11 | FR-16 | NOT RUN |
+| 124–135 | F-12 | FR-17, BR-06, BR-10 | NOT RUN |
+| 136–143 | F-13 | NFR-11 | NOT RUN |
+| 144–147 (TEST-144 is LOAD-02, TEST-146 is UI-CHECK-01) | R-04 | NFR-05, NFR-09 | NOT RUN |
+
+Total Sprint 3 AC and test IDs: 55 each.
+
 ## 5. Coverage gaps
 
 | Item | Status | Plan |
 |---|---|---|
 | Requirements with no feature or responsibility | None | — |
-| Sprint 2 and 3 requirements without AC or tests | Sprint 2: none, contracts written (§4.3). Sprint 3: expected, contracts not yet written | AC and STS are written before implementation of each sprint |
-| NFR-05, NFR-06, NFR-10, NFR-11 | NFR-05: a Sprint 1 local baseline is measured and recorded — `GET /api/menu` p95 1 ms and `POST /api/orders` p95 40 ms (run range 37–47 ms, the same figures as §3) with zero 5xx at 20 connections for 30 s per endpoint (`5c3f984`). NFR-10 is measured before release (COV-01, §4.3); NFR-06 passed CHECK-01 on release `2f6cc46` (`docs/evidence/CHECK-01-2f6cc46.txt`); NFR-11 remains not measurable until Sprint 3 | NFR-05 re-verification on the deployed system is planned for Sprint 3, which is the sprint allocation in `docs/srs.md` (R-04 hardening plus the deployed-build measurement). NFR-06 (CHECK-01) and NFR-10 (COV-01) are Sprint 2 checks; NFR-11 is Sprint 3. |
-| BR-06 full transition table | `PENDING → ACCEPTED` (Sprint 1), `PENDING → CANCELLED` (F-06) and `ACCEPTED → PREPARING → READY → COMPLETED` (F-08) are built | F-09 and F-12 follow in the Sprint 3 contracts |
+| Sprint 2 and 3 requirements without AC or tests | None: Sprint 2 contracts (§4.3) and Sprint 3 contracts (§4.4) are written. Sprint 3 tests are `NOT RUN` | AC and STS are written before implementation of each sprint |
+| NFR-05, NFR-06, NFR-10, NFR-11 | NFR-05: a Sprint 1 local baseline is measured and recorded — `GET /api/menu` p95 1 ms and `POST /api/orders` p95 40 ms (run range 37–47 ms, the same figures as §3) with zero 5xx at 20 connections for 30 s per endpoint (`5c3f984`). NFR-10 is measured before release (COV-01, §4.3); NFR-06 passed CHECK-01 on release `2f6cc46` (`docs/evidence/CHECK-01-2f6cc46.txt`); NFR-11 has AC and tests (AC-136 to AC-143) that are `NOT RUN` until F-13 is implemented | NFR-05 re-verification on the deployed system is planned for Sprint 3, which is the sprint allocation in `docs/srs.md` (R-04 hardening plus the deployed-build measurement). NFR-06 (CHECK-01) and NFR-10 (COV-01) are Sprint 2 checks; NFR-11 is Sprint 3. |
+| BR-06 full transition table | `PENDING → ACCEPTED` (Sprint 1), `PENDING → CANCELLED` (F-06) and `ACCEPTED → PREPARING → READY → COMPLETED` (F-08) are built | `PENDING → REJECTED` (F-09, AC-95) and `ACCEPTED → CANCELLED` (F-12, AC-127) are contracted and not yet built |
 
 ## 6. Approved changes log
 
