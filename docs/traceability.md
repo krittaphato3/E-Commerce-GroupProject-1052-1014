@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Document | `docs/traceability.md` |
-| Version | 1.31 |
+| Version | 1.32 |
 | Date | 2026-11-28 |
 | Related | `docs/srs.md`, `docs/features.md`, `docs/sprints/sprint-1/features.md`, `docs/sprints/sprint-2/features.md`, `docs/sprints/sprint-3/features.md`, `docs/change-register.md` |
 
@@ -42,6 +42,7 @@
 | 1.29 | 2026-11-28 | Sprint 3 contracts added: FR-14 to FR-17, BR-06 (S3 part), BR-10 (S3 operator path), BR-12, NFR-05 (S3 part), NFR-09 (S3 part) and NFR-11 now name their AC and test IDs; new §4.4 maps AC-93 to AC-147; every Sprint 3 test is `NOT RUN`; BR-10 reads `PASS (S2 only)` because its new Sprint 3 tests are `NOT RUN`; BR-06, NFR-05 and NFR-09 keep their earlier results for the earlier scope; §5 updated | Sprint 3 contracts written before implementation (Issue #59) |
 | 1.30 | 2026-11-28 | F-09 implemented and verified (TEST-93 to TEST-104) against contract 1.2: FR-14 and BR-12 updated to `PASS`; BR-06 updated to `PASS (S1, S2 and F-09)`, with the F-12 tests still `NOT RUN`; NFR-01 and NFR-02 note that TEST-43 and TEST-92 now sweep 14 protected routes; §4.4 records AC-93 to AC-104 with test files; red at `70096cd`, implementation and full green run at `15ea606` | F-09 Order rejection with reason (Issue #59) |
 | 1.31 | 2026-11-28 | Pre-release regression at `dad286b` recorded (backend 242, frontend 89, Playwright 11 passed; 0 failed, 0 skipped). BR-05, BR-07, BR-08 and BR-15 rows now cite the later-sprint AC that the contracts already allocate to them (AC-55, 58, 59, 65, 94 `PASS`; AC-110, 121, 124, 126, 132 `NOT RUN`). NFR-10 and AC-88 change from `PASS (pre-release)` to `PASS` on the CI run for release `2f6cc46`. §5 rewritten to list every open verification; §6 adds CHG-03 to CHG-06; new §7 gives the status of AC-01 to AC-147. No AC, test or requirement wording changed | Deliverable 2 traceability update (Issue #60) |
+| 1.32 | 2026-11-28 | CR-01 contract revision (proposed, not implemented): BR-01 and BR-02 marked revision in progress; BR-05 names the planned AC-154; new §4.5 maps AC-148 to AC-160; §5.1 and §7 list them, all `NOT RUN`; AC-10 and AC-18 notes that their passes are for the earlier wording. No test was run | CR-01 contract revision (Issue #77) |
 
 ### How to use this file
 - Sprint 1 test IDs follow the rule **TEST-nn verifies AC-nn** (for example TEST-24 verifies AC-24).
@@ -77,11 +78,11 @@
 
 | Requirement | Feature | Sprint | AC / verification target | Planned test | Actual test (file::name) | Result | Version |
 |---|---|---|---|---|---|---|---|
-| BR-01 | F-03 | 1 | AC-18, AC-19 | TEST-18, 19 | backend/src/services/orderRules.test.ts::TEST-18; backend/tests/orders.create.test.ts::TEST-18, ::TEST-19 | PASS | 140c030 (red), 0f3c649 (green) |
-| BR-02 | F-02 (defines), F-03 (enforces) | 1 | AC-11, AC-21, AC-22 | TEST-11, 21, 22 | backend/src/services/menuRules.test.ts::TEST-11; backend/tests/orders.create.test.ts::TEST-21, ::TEST-22 | PASS | 140c030 (red), 0f3c649 (green) |
+| BR-01 | F-03 | 1 | AC-18, AC-19; CR-01: AC-18 (revised), AC-148 to AC-151, AC-155, AC-156, AC-160 | TEST-18, 19; CR-01: TEST-18 (revised), TEST-148 to 151, 155, 156, 160: NOT RUN | backend/src/services/orderRules.test.ts::TEST-18; backend/tests/orders.create.test.ts::TEST-18, ::TEST-19 | INCOMPLETE: revision in progress (CR-01)[^cr01] | 140c030 (red), 0f3c649 (green) (the `PASS` recorded for the wording before CR-01); CR-01 not implemented |
+| BR-02 | F-02 (defines), F-03 (enforces) | 1 | AC-11, AC-21, AC-22; CR-01: AC-10 (revised), AC-152, AC-153, AC-157 to AC-159 | TEST-11, 21, 22; CR-01: TEST-10 (revised), TEST-152, 153, 157 to 159: NOT RUN | backend/src/services/menuRules.test.ts::TEST-11; backend/tests/orders.create.test.ts::TEST-21, ::TEST-22 | INCOMPLETE: revision in progress (CR-01)[^cr01] | 140c030 (red), 0f3c649 (green) (the `PASS` recorded for the wording before CR-01); CR-01 not implemented |
 | BR-03 | F-03 | 1 | AC-15, AC-16 | TEST-15, 16 | backend/src/services/orderRules.test.ts::TEST-15; backend/tests/orders.create.test.ts::TEST-15, ::TEST-16 | PASS | 140c030 (red), 0f3c649 (green) |
 | BR-04 | F-03, F-05 | 1 (F-03), 2 (F-05) | AC-17 (S1); AC-50 (S2 catalog edits) | TEST-17; TEST-50 (S2) | backend/tests/orders.create.test.ts::TEST-17; backend/tests/menuItems.test.ts::TEST-50 | PASS | 140c030 (S1 red), 0f3c649 (S1 green); 56fe6f6 (S2 retroactive red), 2639138 (S2 green), 0a339a1 (full green) |
-| BR-05 | F-03, F-06, F-09, F-12 | 1; 2 (F-06); 3 (F-09, F-12) | AC-23, AC-24, AC-46; S2 (F-06): AC-59; S3: AC-94 (F-09); AC-126 (F-12) | TEST-23, 24, 46; TEST-59 (S2); TEST-94 (S3 F-09); TEST-126 (S3 F-12): NOT RUN | backend/tests/orders.create.test.ts::TEST-23, ::TEST-24; backend/tests/constraints.test.ts::TEST-46; backend/tests/orders.cancel.test.ts::TEST-59; backend/tests/orders.reject.test.ts::TEST-94 | PASS (S1, F-06 and F-09) | 140c030 (red), 0f3c649 (green); ae84e79 (F-06 red), 2998b71 (green); 70096cd (F-09 red), 15ea606 (green) |
+| BR-05 | F-03, F-06, F-09, F-12 | 1; 2 (F-06); 3 (F-09, F-12) | AC-23, AC-24, AC-46; S2 (F-06): AC-59; S3: AC-94 (F-09); AC-126 (F-12); CR-01: AC-154 | TEST-23, 24, 46; TEST-59 (S2); TEST-94 (S3 F-09); TEST-126 (S3 F-12): NOT RUN; TEST-154 (CR-01): NOT RUN | backend/tests/orders.create.test.ts::TEST-23, ::TEST-24; backend/tests/constraints.test.ts::TEST-46; backend/tests/orders.cancel.test.ts::TEST-59; backend/tests/orders.reject.test.ts::TEST-94 | PASS (S1, F-06 and F-09) | 140c030 (red), 0f3c649 (green); ae84e79 (F-06 red), 2998b71 (green); 70096cd (F-09 red), 15ea606 (green) |
 | BR-06 | F-04, F-06, F-08, F-09, F-12 | 1 (F-04); 2 (F-06, F-08); 3 (F-09, F-12) | AC-35 (S1 transitions); S2: AC-60, AC-61, AC-63, AC-77, AC-78, AC-79, AC-81, AC-82, AC-83; S3: AC-95, AC-97, AC-98, AC-99 (F-09); AC-127, AC-128, AC-129, AC-130, AC-131 (F-12) | TEST-35; TEST-60, 61, 63 (S2 F-06); TEST-77–79, 81–83 (S2 F-08); TEST-95, 97, 98, 99 (S3 F-09); TEST-127–131 (S3 F-12): NOT RUN | backend/src/services/orderStateMachine.test.ts::TEST-35; backend/tests/orders.operator.test.ts::TEST-35; backend/src/services/orderStateMachine.test.ts::TEST-60; backend/tests/orders.cancel.test.ts::TEST-61, ::TEST-63; backend/tests/orders.fulfilment.test.ts::TEST-77, ::TEST-78, ::TEST-79; backend/src/services/orderStateMachine.test.ts::TEST-81; backend/tests/orders.fulfilment.test.ts::TEST-82, ::TEST-83; backend/src/services/orderStateMachine.test.ts::TEST-95; backend/tests/orders.reject.test.ts::TEST-97, ::TEST-98, ::TEST-99 | PASS (S1, S2 and F-09) | c04ca45, a614473 (red); 6d1d2f7, c680623, 8fe7793, 37cf31f (S1 green); ae84e79 (F-06 red); 3f1fedf (F-06 green), 2998b71 (full green); fc72fd4 (F-08 red); 7571373 (F-08 green); 70096cd (F-09 red); 15ea606 (F-09 green) |
 | BR-07 | F-03, F-04, R-01, F-06, F-07, F-10 | 1; 2 (F-06, F-07); 3 (F-10) | AC-27, AC-28, AC-39; S2: AC-65 (F-06), AC-74 (F-07); S3: AC-110 (F-10) | TEST-27, 28, 39; TEST-65, 74 (S2); TEST-110 (S3 F-10): NOT RUN | backend/tests/orders.access.test.ts::TEST-27, ::TEST-28; backend/tests/orders.operator.test.ts::TEST-39; backend/tests/orders.pay.test.ts::TEST-74; backend/tests/orders.cancel.test.ts::TEST-65 | PASS (S1 and S2) | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green); a221cba (F-07 red), c46b3bb (F-07 green); ae84e79 (F-06 red), 2998b71 (F-06 green) |
 | BR-08 | F-04, R-01, F-05, F-08, F-11, F-12 | 1; 2 (F-05, F-08); 3 (F-11, F-12) | AC-26, AC-37, AC-38, AC-43; S2 (F-08): AC-84; S2 (F-05): AC-55; S3: AC-121 (F-11), AC-132 (F-12) | TEST-26, 37, 38, 43; TEST-84 (S2 F-08); TEST-55 (S2 F-05); TEST-121, 132 (S3): NOT RUN | backend/tests/orders.access.test.ts::TEST-26; backend/tests/orders.operator.test.ts::TEST-37, ::TEST-38; backend/tests/routes.access.test.ts::TEST-43; backend/tests/orders.fulfilment.test.ts::TEST-84; backend/tests/menuItems.test.ts::TEST-55 | PASS (S1 and S2) | 140c030, c04ca45, d7792c8 (red); 0f3c649, 6d1d2f7, 8f42cbd (green); fc72fd4 (F-08 red), 7571373 (F-08 green); 56fe6f6 (F-05 retroactive red), 0a339a1 (F-05 green) |
@@ -92,6 +93,8 @@
 | BR-13 | F-05, R-03 | 1 (DB), 2 (API) | S1: AC-46 (DB constraints). S2: AC-51, AC-52 (API validation) | TEST-46; TEST-51, 52 (S2) | backend/tests/constraints.test.ts::TEST-46; backend/src/middleware/menuItemSchema.test.ts::TEST-51, ::TEST-52; backend/tests/menuItems.test.ts::TEST-51, ::TEST-52 | PASS | c215549 (S1 CHECK + TEST-46); 56fe6f6 (S2 retroactive red), 2639138 (S2 green), 0a339a1 (full green) |
 | BR-14 | F-03 | 1 | AC-14 (order number format) | TEST-14 | backend/tests/orders.create.test.ts::TEST-14; backend/src/services/orderRules.test.ts::TEST-15 | PASS | 140c030 (red), 0f3c649 (green) |
 | BR-15 | F-03, F-04, F-06, F-08, F-09, F-12 | 1; 2 (F-06, F-08); 3 (F-09, F-12) | AC-25, AC-34; S2 (F-08): AC-77, AC-78, AC-79, AC-85; S2 (F-06): AC-58; S3: AC-93 (F-09), AC-124 (F-12) | TEST-25, 34; TEST-77, 78, 79, 85 (S2 F-08); TEST-58 (S2 F-06); TEST-93 (S3 F-09); TEST-124 (S3 F-12): NOT RUN | backend/tests/orders.create.test.ts::TEST-25; backend/tests/orders.operator.test.ts::TEST-34; backend/tests/orders.fulfilment.test.ts::TEST-77, ::TEST-78, ::TEST-79; backend/tests/orders.journey.test.ts::TEST-85; backend/tests/orders.cancel.test.ts::TEST-58; backend/tests/orders.reject.test.ts::TEST-93 | PASS (S1, S2 and F-09) | 140c030 (red), 0f3c649 (F-03 green), 6d1d2f7 (F-04 green); fc72fd4 (F-08 red), 7571373 (F-08 green); ae84e79, 2998b71 (F-06); 70096cd, 15ea606 (F-09) |
+
+[^cr01]: CR-01 (CHG-07) is a proposed revision of BR-01 and BR-02 (`docs/srs.md` §11.1). The **Actual test** cell and the commits record results for the wording before CR-01, which is what the code still does. Nothing for the revised wording is implemented or run (§4.5). The CR-01 additions to the BR-05 row do not change its recorded result, which does not cover AC-154.
 
 ## 3. Non-functional requirements
 
@@ -251,6 +254,27 @@ Red is the tests-only commit `70096cd`. Green is the implementation commit `15ea
 | AC-103 | `frontend/src/pages/OrderDetail.test.tsx::TEST-103` | PASS | `70096cd` (the 2 rejected-order cases failed; the "no reason line" case already passed) | `15ea606` |
 | AC-104 | `frontend/e2e/reject.spec.ts::TEST-104` | PASS | `70096cd` | `15ea606` |
 
+### 4.5 CR-01 reverse view (proposed, not implemented)
+Defined in `docs/sprints/sprint-1/features.md`, F-02 and F-03 "Revision 1.4 (CR-01)". TEST-nn verifies AC-nn.
+
+| AC / TEST | Draft ID | Feature | Requirements | Planned test file | Result |
+|---|---|---|---|---|---|
+| 148 | D-1 | F-03 | BR-01 | `backend/tests/orders.quantityCap.test.ts` | NOT RUN |
+| 149 | D-2 | F-03 | BR-01 | `orders.quantityCap.test.ts`; `backend/src/services/orderRules.test.ts` | NOT RUN |
+| 150 | D-3 | F-03 | BR-01 | `orders.quantityCap.test.ts` | NOT RUN |
+| 151 | D-4 | F-03 | BR-01 | `orders.quantityCap.test.ts` | NOT RUN |
+| 152 | D-5 | F-03 | BR-02 | `orders.quantityCap.test.ts` | NOT RUN |
+| 153 | D-6 | F-03 | BR-02 | `orders.quantityCap.test.ts` | NOT RUN |
+| 154 | D-7 | F-03 | BR-05, BR-01 | `orders.quantityCap.test.ts` | NOT RUN |
+| 155 | D-8 | F-03 | BR-01 | `frontend/src/pages/Menu.test.tsx` | NOT RUN |
+| 156 | D-9 | F-03 | BR-01 | `orders.quantityCap.test.ts` | NOT RUN |
+| 157 | — | F-03 | BR-02 | `orders.quantityCap.test.ts` | NOT RUN |
+| 158 | — | F-02 | BR-02, FR-04 | `backend/tests/menu.test.ts` | NOT RUN |
+| 159 | — | F-03 | BR-02, FR-05 | `frontend/src/pages/Menu.test.tsx` | NOT RUN |
+| 160 | — | F-03 | BR-01 | `backend/src/services/menuRules.test.ts`; `orders.quantityCap.test.ts` | NOT RUN |
+
+Total CR-01 new AC and test IDs: 13 each (AC-148 to AC-160). Revised: AC-10 / TEST-10 and AC-18 / TEST-18; their revised wording and values are `NOT RUN`. AC-19 / TEST-19 is unchanged. The change to the `AC-21 / AC-30` E2E journey has no TEST ID (DEC-66) and is `NOT RUN`.
+
 ## 5. Coverage gaps
 
 Every baseline requirement has a feature or responsibility and at least one acceptance check. The items below are **not verified**, or verified only in part, as of `dad286b`.
@@ -259,6 +283,7 @@ Every baseline requirement has a feature or responsibility and at least one acce
 
 | Requirement | What is not verified | Planned test (all NOT RUN) |
 |---|---|---|
+| BR-01, BR-02 (CR-01 revision) | The whole revised rule; not implemented | TEST-148 to TEST-160; revised TEST-10 and TEST-18 |
 | FR-15 | All of it: search, filter, pagination (F-10) | TEST-105 to TEST-115, AC-105 to AC-115 |
 | FR-16 | All of it: sales summary (F-11) | TEST-116 to TEST-123, AC-116 to AC-123 |
 | FR-17 | All of it: operator cancel and refund (F-12) | TEST-124 to TEST-135, AC-124 to AC-135 |
@@ -302,7 +327,7 @@ Rationale, release and re-test status for each change are in `docs/change-regist
 
 ## 7. AC status
 
-Status of AC-01 to AC-147 on 2026-11-28. **Implemented** = the behaviour exists in the code. **Run** = the verification has been executed. **Passed** = its latest recorded execution passed. **Commit** = the commit where the pass was established, then the latest re-run. "re-run `dad286b`" means the named tests passed again on the staging head (every case whose title carries the TEST ID). AC-01 to AC-87 and AC-90 to AC-92 are in released code; AC-93 to AC-104 are on `sprint-3-staging` only.
+Status of AC-01 to AC-160 on 2026-11-28. **Implemented** = the behaviour exists in the code. **Run** = the verification has been executed. **Passed** = its latest recorded execution passed. **Commit** = the commit where the pass was established, then the latest re-run. "re-run `dad286b`" means the named tests passed again on the staging head (every case whose title carries the TEST ID). AC-01 to AC-87 and AC-90 to AC-92 are in released code; AC-93 to AC-104 are on `sprint-3-staging` only. AC-148 to AC-160 belong to the proposed CR-01 revision; the AC-10 and AC-18 rows report the wording before that revision.
 
 | AC | Feature | Implemented | Verification run | Passed | Actual test or record | Commit |
 |---|---|---|---|---|---|---|
@@ -316,7 +341,7 @@ Status of AC-01 to AC-147 on 2026-11-28. **Implemented** = the behaviour exists 
 | AC-07 | F-01 | yes | yes | yes | `backend/tests/auth.test.ts::TEST-07` | `f222daa`; re-run `dad286b` |
 | AC-08 | F-01 | yes | yes | yes | `backend/src/services/password.test.ts::TEST-08`; `backend/tests/auth.test.ts::TEST-08` | `f222daa`; re-run `dad286b` |
 | AC-09 | F-01 | yes | yes | yes | `frontend/e2e/auth.spec.ts::TEST-09` | `097da41`; re-run `dad286b` |
-| AC-10 | F-02 | yes | yes | yes | `backend/tests/menu.test.ts::TEST-10` | `0f3c649`; re-run `dad286b` |
+| AC-10 | F-02 | yes | yes | yes | `backend/tests/menu.test.ts::TEST-10` (wording before CR-01; the revised wording is NOT RUN) | `0f3c649`; re-run `dad286b` |
 | AC-11 | F-02 | yes | yes | yes | `backend/src/services/menuRules.test.ts::TEST-11` | `0f3c649`; re-run `dad286b` |
 | AC-12 | F-02 | yes | yes | yes | `frontend/e2e/menu.spec.ts::TEST-12`; `frontend/src/pages/Menu.test.tsx::TEST-12` | `0f3c649`; re-run `dad286b` |
 | AC-13 | F-02 | yes | yes | yes | `frontend/src/pages/Menu.test.tsx::TEST-13` | `0f3c649`; re-run `dad286b` |
@@ -324,7 +349,7 @@ Status of AC-01 to AC-147 on 2026-11-28. **Implemented** = the behaviour exists 
 | AC-15 | F-03 | yes | yes | yes | `backend/src/services/orderRules.test.ts::TEST-15`; `backend/tests/orders.create.test.ts::TEST-15` | `0f3c649`; re-run `dad286b` |
 | AC-16 | F-03 | yes | yes | yes | `backend/tests/orders.create.test.ts::TEST-16` | `0f3c649`; re-run `dad286b` |
 | AC-17 | F-03 | yes | yes | yes | `backend/tests/orders.create.test.ts::TEST-17` | `0f3c649`; re-run `dad286b` |
-| AC-18 | F-03 | yes | yes | yes | `backend/src/services/orderRules.test.ts::TEST-18`; `backend/tests/orders.create.test.ts::TEST-18` | `0f3c649`; re-run `dad286b` |
+| AC-18 | F-03 | yes | yes | yes | `backend/src/services/orderRules.test.ts::TEST-18`; `backend/tests/orders.create.test.ts::TEST-18` (wording before CR-01; the revised wording is NOT RUN) | `0f3c649`; re-run `dad286b` |
 | AC-19 | F-03 | yes | yes | yes | `backend/tests/orders.create.test.ts::TEST-19` | `0f3c649`; re-run `dad286b` |
 | AC-20 | F-03 | yes | yes | yes | `backend/tests/orders.create.test.ts::TEST-20` | `0f3c649`; re-run `dad286b` |
 | AC-21 | F-03 | yes | yes | yes | `backend/tests/orders.create.test.ts::TEST-21` | `0f3c649`; re-run `dad286b` |
@@ -454,11 +479,24 @@ Status of AC-01 to AC-147 on 2026-11-28. **Implemented** = the behaviour exists 
 | AC-145 | R-04 | no | no | — | TEST-145 planned; NOT RUN | — |
 | AC-146 | R-04 | no | no | — | TEST-146 planned; NOT RUN | — |
 | AC-147 | R-04 | no | no | — | TEST-147 planned; NOT RUN | — |
+| AC-148 | F-03 (CR-01) | no | no | — | TEST-148 planned; NOT RUN | — |
+| AC-149 | F-03 (CR-01) | no | no | — | TEST-149 planned; NOT RUN | — |
+| AC-150 | F-03 (CR-01) | no | no | — | TEST-150 planned; NOT RUN | — |
+| AC-151 | F-03 (CR-01) | no | no | — | TEST-151 planned; NOT RUN | — |
+| AC-152 | F-03 (CR-01) | no | no | — | TEST-152 planned; NOT RUN | — |
+| AC-153 | F-03 (CR-01) | no | no | — | TEST-153 planned; NOT RUN | — |
+| AC-154 | F-03 (CR-01) | no | no | — | TEST-154 planned; NOT RUN | — |
+| AC-155 | F-03 (CR-01) | no | no | — | TEST-155 planned; NOT RUN | — |
+| AC-156 | F-03 (CR-01) | no | no | — | TEST-156 planned; NOT RUN | — |
+| AC-157 | F-03 (CR-01) | no | no | — | TEST-157 planned; NOT RUN | — |
+| AC-158 | F-02 (CR-01) | no | no | — | TEST-158 planned; NOT RUN | — |
+| AC-159 | F-03 (CR-01) | no | no | — | TEST-159 planned; NOT RUN | — |
+| AC-160 | F-03 (CR-01) | no | no | — | TEST-160 planned; NOT RUN | — |
 
 | Total | Count |
 |---|---|
-| Acceptance criteria | 147 |
+| Acceptance criteria | 160 |
 | Implemented, run and passed | 104 (AC-01 to AC-104) |
-| Not implemented, `NOT RUN` | 43 (AC-105 to AC-147) |
+| Not implemented, `NOT RUN` | 56 (AC-105 to AC-160) |
 
 R-04 note: the Sprint 1 NFR-05 baseline and the Sprint 1 screen states do not satisfy AC-144 to AC-147. F-09 already wraps the rejection reason, but AC-147 also covers the pickup note and its test does not exist.
